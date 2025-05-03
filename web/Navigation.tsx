@@ -520,7 +520,7 @@ const NavIcons: Component<{
           </Show>
         </ExternalLink> */}
 
-        <Item
+        {/* <Item
           onClick={() => {
             clearTours()
             window.location.href = location.origin
@@ -529,7 +529,7 @@ const NavIcons: Component<{
           <Tooltip tip="Show Welcome Tours" position="top">
             <Info />
           </Tooltip>
-        </Item>
+        </Item> */}
       </div>
     </>
   )
