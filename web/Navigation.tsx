@@ -511,14 +511,14 @@ const NavIcons: Component<{
           </ExternalLink>
         </Show>
 
-        <ExternalLink href="https://discord.agnai.chat" newtab ariaLabel="Discord">
+        {/* <ExternalLink href="https://discord.agnai.chat" newtab ariaLabel="Discord">
           <Show when={props.mode === 'dark'}>
             <DiscordLightIcon />
           </Show>
           <Show when={props.mode === 'light'}>
             <DiscordDarkIcon />
           </Show>
-        </ExternalLink>
+        </ExternalLink> */}
 
         <Item
           onClick={() => {
