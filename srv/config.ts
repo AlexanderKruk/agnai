@@ -133,6 +133,7 @@ export const config = {
     policies: !!env('SHOW_POLICIES', ''),
     inject: env('INJECT', ''),
     chatCounts: !!env('CHAT_COUNTS', ''),
+    simpleChat: !!env('SIMPLE_CHAT', ''),
   },
 
   patreon: {

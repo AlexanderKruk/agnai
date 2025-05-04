@@ -23,6 +23,7 @@ export interface AppConfig {
   apiAccess?: boolean
   guidanceAccess?: boolean
   flags?: string
+  simpleChat?: boolean
   patreonAuth?: {
     clientId: string
   }

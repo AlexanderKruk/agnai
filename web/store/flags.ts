@@ -15,4 +15,5 @@ export const defaultFlags = {
   google: false,
   reschema: false,
   forceAds: false,
+  simpleChat: false,
 } satisfies { [key: string]: boolean }

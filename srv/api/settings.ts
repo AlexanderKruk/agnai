@@ -117,6 +117,7 @@ export async function getAppConfig(user?: AppSchema.User) {
       policies: config.ui.policies,
       authUrls: config.auth.urls,
       pipelineProxyEnabled: config.pipelineProxy,
+      simpleChat: config.ui.simpleChat,
       horde: {
         models,
         workers: workers.filter((w) => w.type === 'text'),
