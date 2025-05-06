@@ -63,7 +63,8 @@ const App: Component = () => {
         <Route path="/saga/:id" component={SagaDetail} />
       </Show>
       <Route path="/chat/:id" component={ChatDetail} />
-      <Route path={['/info', '/']} component={HomePage} />
+      <Route path="/info" component={HomePage} />
+      <Route path="/" component={() => <Redirect internal="/character/list" />} />
       <Route path="/presets/:id" component={lazy(() => import('./pages/GenerationPresets'))} />
       <Route
         path="/presets"
@@ -118,7 +119,7 @@ const App: Component = () => {
         <Route path="/recovery" component={ResetPasswordPage} />
       </Show>
       <Route path="/faq" component={FAQ} />
-      <Route path="*" component={HomePage} />
+      <Route path="*" component={() => <Redirect internal="/character/list" />} />
     </Router>
   )
 }
