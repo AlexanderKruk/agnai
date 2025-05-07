@@ -38,8 +38,7 @@ export const getChatDetail = handle(async ({ userId, params }) => {
 
 export const getAllChats = handle(async (req) => {
   const chats = await store.chats.getAllChats(req.userId!)
-  const charIds = getCharacterIds(chats)
-  const characters = await store.characters.getCharacterList(Array.from(charIds), req.userId!)
+  const characters = await store.characters.getCharacterList([])
   return { chats, characters }
 })
 
@@ -54,5 +53,5 @@ function getCharacterIds(chats: Document[]) {
     }
   }
 
-  return Array.from(charIds)
+  return charIds
 }

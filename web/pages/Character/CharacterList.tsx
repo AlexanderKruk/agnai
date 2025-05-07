@@ -66,13 +66,11 @@ const CharacterList: Component = () => {
 
   const state = chatStore((s) => {
     const allChars: ListCharacter[] = s.allChars.list
-      .filter((ch) => ch.userId === user.user?._id)
       .map<ListCharacter>((ch) => ({ ...ch, chat: findLatestChat(ch._id, chats) }))
 
     return {
       allChars,
-      list: allChars.filter((ch) => ch.userId === user.user?._id && !ch.favorite),
-
+      list: allChars.filter((ch) => !ch.favorite),
       loading: s.allLoading,
       loaded: s.loaded,
     }
@@ -102,7 +100,6 @@ const CharacterList: Component = () => {
     const dir = sortDirection()
     const sorted = state.list
       .slice()
-      .filter((ch) => ch.userId === user.user?._id)
       .filter((ch) => ch.name.toLowerCase().includes(search().toLowerCase().trim()))
       .filter((ch) => tags.filter.length === 0 || ch.tags?.some((t) => tags.filter.includes(t)))
       .filter((ch) => !ch.tags || !ch.tags.some((t) => tags.hidden.includes(t)))

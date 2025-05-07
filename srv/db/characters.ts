@@ -177,16 +177,28 @@ export async function getCharacterList(charIds: string[], userId?: string) {
     voiceDisabled: 1,
     folder: 1,
   }
-  if (userId) {
+  
+  // If both charIds and userId are provided, get those characters plus user's characters
+  if (userId && charIds.length > 0) {
     const list = await db('character')
       .find({ $or: [{ _id: { $in: charIds } }, { userId }] })
       .project(project)
       .toArray()
     return list
   }
-
+  
+  // If only charIds are provided, get just those characters
+  if (charIds.length > 0) {
+    const list = await db('character')
+      .find({ _id: { $in: charIds } })
+      .project(project)
+      .toArray()
+    return list
+  }
+  
+  // If no charIds provided, return all characters
   const list = await db('character')
-    .find({ _id: { $in: charIds } })
+    .find({})
     .project(project)
     .toArray()
   return list
