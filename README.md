@@ -178,3 +178,28 @@ $ pnpm run typecheck
 ```
 
 This project is tested with BrowserStack.
+
+# Public Character Configuration
+
+The application supports a special mode where characters created by a specific user are accessible to all users. 
+
+## How to Use
+1. Set the `PUBLIC_CHARACTER_USER_ID` environment variable in your `.env` file
+2. Find the user ID of the account that will create public characters:
+   - You can find this by looking at the MongoDB database in the `user` collection
+   - Or by checking the network requests in the browser developer tools when logged in as that user
+3. Add that user ID to your `.env` file:
+   ```
+   PUBLIC_CHARACTER_USER_ID=00000000-0000-0000-0000-000000000000
+   ```
+4. Restart the application
+
+## How It Works
+- Characters created by the specified user will be visible to all other users
+- Users can create chats with these public characters
+- Your own characters remain private and only accessible to you 
+- The public characters are treated as read-only for other users (they can't edit or delete them)
+
+## Security Considerations
+- Choose a dedicated account to be the public character creator
+- Be mindful of the content of public characters as they will be accessible to all users

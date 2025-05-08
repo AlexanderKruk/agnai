@@ -3,6 +3,7 @@ import { db } from './client'
 import { AppSchema } from '../../common/types/schema'
 import { now } from './util'
 import { UpdateFilter } from 'mongodb'
+import { config } from '../config'
 
 export type CharacterUpdate = Partial<
   Pick<
@@ -81,6 +82,14 @@ export async function createCharacter(
 }
 
 export async function updateCharacter(id: string, userId: string, char: CharacterUpdate) {
+  // Check if this is a public character (which should be protected)
+  if (config.publicCharacterUserId && config.publicCharacterUserId !== userId) {
+    const character = await db('character').findOne({ _id: id })
+    if (character && character.userId === config.publicCharacterUserId) {
+      throw new Error('Cannot modify public characters')
+    }
+  }
+
   const edit = { ...char, updatedAt: now() }
   if (edit.avatar === undefined) {
     delete edit.avatar
@@ -117,6 +126,14 @@ export async function bulkUpdate(
 }
 
 export async function partialUpdateCharacter(id: string, userId: string, char: CharacterUpdate) {
+  // Check if this is a public character (which should be protected)
+  if (config.publicCharacterUserId && config.publicCharacterUserId !== userId) {
+    const character = await db('character').findOne({ _id: id })
+    if (character && character.userId === config.publicCharacterUserId) {
+      throw new Error('Cannot modify public characters')
+    }
+  }
+
   const edit = { ...char, updatedAt: now() }
 
   await db('character').updateOne({ _id: id, userId }, { $set: edit })
@@ -130,18 +147,22 @@ export async function getCharacter(
   // First try to find the character with the userId check
   const char = await db('character').findOne({ _id: id, userId })
   
-  // If not found and userId is provided, try to find just by _id
-  if (!char) {
-    const anyChar = await db('character').findOne({ _id: id })
-    return anyChar || undefined
+  // If not found and userId is provided, check if it belongs to the public characters user
+  if (!char && config.publicCharacterUserId) {
+    const publicChar = await db('character').findOne({ _id: id, userId: config.publicCharacterUserId })
+    return publicChar || undefined
   }
   
   return char || undefined
 }
 
 export async function getCharacters(userId: string) {
+  const query = config.publicCharacterUserId 
+    ? { $or: [{ userId }, { userId: config.publicCharacterUserId }] } 
+    : { userId };
+    
   const list = await db('character')
-    .find({ userId })
+    .find(query)
     .project({
       _id: 1,
       userId: 1,
@@ -162,6 +183,14 @@ export async function getCharacters(userId: string) {
 }
 
 export async function deleteCharacter(opts: { charId: string; userId: string }) {
+  // Check if this is a public character (which should be protected)
+  if (config.publicCharacterUserId) {
+    const character = await db('character').findOne({ _id: opts.charId })
+    if (character && character.userId === config.publicCharacterUserId && opts.userId !== config.publicCharacterUserId) {
+      throw new Error('Cannot delete public characters')
+    }
+  }
+
   await db('character').deleteOne({ _id: opts.charId, userId: opts.userId, kind: 'character' }, {})
   const chats = await db('chat').find({ characterId: opts.charId, userId: opts.userId }).toArray()
   await db('chat-message').deleteMany({ chatId: { $in: chats.map((ch) => ch._id) } })
@@ -186,27 +215,39 @@ export async function getCharacterList(charIds: string[], userId?: string) {
     folder: 1,
   }
   
-  // If both charIds and userId are provided, get those characters plus user's characters
-  if (userId && charIds.length > 0) {
-    const list = await db('character')
-      .find({ $or: [{ _id: { $in: charIds } }, { userId }] })
-      .project(project)
-      .toArray()
-    return list
-  }
+  // Build a query that includes either specified charIds, the user's own characters, or public characters
+  let query: any = {};
   
-  // If only charIds are provided, get just those characters
   if (charIds.length > 0) {
-    const list = await db('character')
-      .find({ _id: { $in: charIds } })
-      .project(project)
-      .toArray()
-    return list
+    query._id = { $in: charIds };
   }
   
-  // If no charIds provided, return all characters
+  if (userId) {
+    if (charIds.length > 0) {
+      // If we have specific charIds and a userId, show those chars plus the user's own chars and public chars
+      const conditions = [{ _id: { $in: charIds } }, { userId }];
+      
+      if (config.publicCharacterUserId) {
+        conditions.push({ userId: config.publicCharacterUserId });
+      }
+      
+      query = { $or: conditions };
+    } else {
+      // If we only have userId but no charIds, show the user's chars and public chars
+      if (config.publicCharacterUserId) {
+        query = { $or: [{ userId }, { userId: config.publicCharacterUserId }] };
+      } else {
+        query = { userId };
+      }
+    }
+  } else if (charIds.length === 0) {
+    // If no userId and no charIds, don't return all characters
+    // Just return an empty array
+    return [];
+  }
+  
   const list = await db('character')
-    .find({})
+    .find(query)
     .project(project)
     .toArray()
   return list

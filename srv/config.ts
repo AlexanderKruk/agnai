@@ -60,6 +60,7 @@ export const config = {
       .filter((name) => !!name.trim()),
     oauth: !!env('OAUTH_ENABLED', ''),
   },
+  publicCharacterUserId: env('PUBLIC_CHARACTER_USER_ID', ''),
   jwtSecret: env('JWT_SECRET'),
   jwtPrivateKey: env('JWT_PRIVATE_KEY', ''),
   jwtPublicKey: env('JWT_PUBLIC_KEY', ''),
