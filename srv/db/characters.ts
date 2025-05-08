@@ -127,7 +127,15 @@ export async function getCharacter(
   userId: string,
   id: string
 ): Promise<AppSchema.Character | undefined> {
+  // First try to find the character with the userId check
   const char = await db('character').findOne({ _id: id, userId })
+  
+  // If not found and userId is provided, try to find just by _id
+  if (!char) {
+    const anyChar = await db('character').findOne({ _id: id })
+    return anyChar || undefined
+  }
+  
   return char || undefined
 }
 
