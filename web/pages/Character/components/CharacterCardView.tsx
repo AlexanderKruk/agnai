@@ -27,7 +27,7 @@ export const CharacterCardView: Component<ViewProps> = (props) => {
           <Show when={props.showGrouping}>
             <h2 class="text-xl font-bold">{group.label}</h2>
           </Show>
-          <div class="grid w-full grid-cols-[repeat(auto-fit,minmax(160px,1fr))] flex-row flex-wrap justify-start gap-2 py-2">
+          <div class="grid w-full grid-cols-[repeat(auto-fit,minmax(320px,1fr))] flex-row flex-wrap justify-start gap-2 py-2">
             <For each={group.list}>
               {(char) => (
                 <Character
@@ -56,9 +56,9 @@ const Character: Component<CardProps> = (props) => {
   const [opts, setOpts] = createSignal(false)
   const nav = useNavigate()
 
-  let ref: any
+  let imageAreaRef: HTMLDivElement | undefined
 
-  const size = 20
+  const size = 18
 
   const handleCreateChatAndNavigate = async () => {
     if (opts()) return
@@ -75,15 +75,14 @@ const Character: Component<CardProps> = (props) => {
 
   return (
     <div
-      ref={ref}
-      class="bg-800 flex cursor-pointer flex-col items-center justify-between gap-1 rounded-lg border-[1px] border-[var(--bg-700)] hover:border-[var(--hl-500)]"
+      class="bg-800 flex flex-row rounded-lg border-[1px] border-[var(--bg-700)] hover:border-[var(--hl-500)] cursor-pointer aspect-[16/9] overflow-hidden"
       onClick={handleCreateChatAndNavigate}
     >
-      <div class="w-full pointer-events-none">
-        <div class="block h-32 w-full justify-center overflow-hidden rounded-lg rounded-b-none">
+      <div ref={imageAreaRef} class="relative w-1/3 h-full flex-shrink-0">
+        <div class="absolute inset-0 pointer-events-none">
           <Switch>
             <Match when={props.char.visualType === 'sprite' && props.char.sprite}>
-              <AvatarContainer container={ref} body={props.char.sprite} />
+              <AvatarContainer container={imageAreaRef!} body={props.char.sprite} />
             </Match>
             <Match when={props.char.avatar}>
               <img
@@ -94,82 +93,87 @@ const Character: Component<CardProps> = (props) => {
               />
             </Match>
             <Match when>
-              <div class="bg-700 flex h-32 w-full items-center justify-center rounded-lg rounded-b-none">
-                <VenetianMask size={24} />
+              <div class="bg-700 flex h-full w-full items-center justify-center">
+                <VenetianMask size={32} />
               </div>
             </Match>
           </Switch>
         </div>
-      </div>
-      <div class="w-full text-sm">
-        <div class="pointer-events-none overflow-hidden text-ellipsis whitespace-nowrap px-1 text-center font-bold">
-          {props.char.name}
+
+        <div
+          class="absolute top-1.5 left-1.5 z-10 cursor-pointer rounded-md border-[1px] border-[var(--bg-400)] bg-[var(--bg-700)] p-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            props.toggleFavorite(!props.char.favorite);
+          }}
+          aria-label="Toggle Favorite"
+        >
+          <Show when={props.char.favorite}>
+            <Star size={size} class="text-900 fill-[var(--text-900)]" />
+          </Show>
+          <Show when={!props.char.favorite}>
+            <Star size={size} />
+          </Show>
         </div>
-        <div class="pointer-events-none text-600 line-clamp-3 h-[3rem] text-ellipsis px-1 text-center text-xs font-normal">
-          {props.char.description}
-        </div>
-        <div class="flex justify-between p-1">
-          <div class="pointer-events-none text-500 text-xs italic">
-            {props.char.chat ? toDuration(new Date(props.char.chat.updatedAt)) + ' ago' : ''}
-          </div>
-        </div>
-        <div class="float-left ml-[3px] mt-[-221px]">
+
+        <div class="absolute top-1.5 right-1.5 z-10">
           <div
-            class="z-10 cursor-pointer rounded-md border-[1px] border-[var(--bg-400)] bg-[var(--bg-700)] p-[2px]"
+            class="relative cursor-pointer rounded-md border-[1px] border-[var(--bg-400)] bg-[var(--bg-700)] p-1"
             onClick={(e) => {
               e.stopPropagation();
-              props.toggleFavorite(!props.char.favorite);
+              setOpts(true);
             }}
-            aria-label="Toggle Favorite"
           >
-            <Show when={props.char.favorite}>
-              <Star size={size} class="text-900 fill-[var(--text-900)]" />
-            </Show>
-            <Show when={!props.char.favorite}>
-              <Star size={size} />
-            </Show>
+            <Menu size={size} class="icon-button" color="var(--bg-100)" />
+            <DropMenu
+              show={opts()}
+              close={() => setOpts(false)}
+              customPosition="right-0 top-full mt-1"
+            >
+              <div class="flex flex-col gap-1 p-1.5">
+                <Button onClick={(e) => { e.stopPropagation(); props.edit(); setOpts(false); }} aria-label="Edit" alignLeft size="sm">
+                  <Pencil size={size - 2} /> Edit
+                </Button>
+                <Button
+                  alignLeft
+                  onClick={(e) => { e.stopPropagation(); nav(`/character/create/${props.char._id}`); setOpts(false); }}
+                  size="sm"
+                >
+                  <Copy size={size - 2} /> Duplicate
+                </Button>
+                <Button
+                  alignLeft
+                  size="sm"
+                  schema="red"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpts(false);
+                    props.delete();
+                  }}
+                >
+                  <Trash size={size - 2} /> Delete
+                </Button>
+              </div>
+            </DropMenu>
           </div>
         </div>
-        <div
-          class="float-right mr-[3px] mt-[-221px] flex justify-end"
-          onClick={(e) => { 
-            e.stopPropagation(); 
-            setOpts(true); 
-          }}
-        >
-          <div class="z-10 cursor-pointer rounded-md border-[1px] border-[var(--bg-400)] bg-[var(--bg-700)] p-[2px]">
-            <Menu size={size} class="icon-button" color="var(--bg-100)" />
-          </div>
-          <DropMenu
-            show={opts()}
-            close={() => setOpts(false)}
-            customPosition="right-[9px] top-[6px]"
-          >
-            <div class="flex flex-col gap-2 p-2">
-              <Button onClick={(e) => { e.stopPropagation(); props.edit(); setOpts(false); }} aria-label="Edit" alignLeft size="sm">
-                <Pencil size={size} /> Edit
-              </Button>
-              <Button
-                alignLeft
-                onClick={(e) => { e.stopPropagation(); nav(`/character/create/${props.char._id}`); setOpts(false); }}
-                size="sm"
-              >
-                <Copy /> Duplicate
-              </Button>
-              <Button
-                alignLeft
-                size="sm"
-                schema="red"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setOpts(false)
-                  props.delete()
-                }}
-              >
-                <Trash /> Delete
-              </Button>
-            </div>
-          </DropMenu>
+      </div>
+
+      <div class="w-2/3 h-full flex flex-col justify-between p-2 text-sm overflow-hidden">
+        <div class="flex-shrink-0 overflow-hidden text-ellipsis whitespace-nowrap pb-1 font-bold text-base leading-tight">
+          {props.char.name}
+        </div>
+
+        <div class="flex-grow overflow-hidden text-600 text-xs font-normal leading-snug">
+          <p class="h-full w-full" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">
+            {props.char.description}
+          </p>
+        </div>
+
+        <div class="flex-shrink-0 pt-1 text-500 text-xs italic" style="min-height: 1.5em;">
+          <Show when={props.char.chat?.updatedAt}>
+            {toDuration(new Date(props.char.chat!.updatedAt)) + ' ago'}
+          </Show>
         </div>
       </div>
     </div>
