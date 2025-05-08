@@ -241,9 +241,6 @@ const CharacterList: Component = () => {
           </div>
         </div>
       </div>
-      <div class="flex justify-center pb-2" classList={{ hidden: view() === 'folders' }}>
-        <ManualPaginate pager={pager} />
-      </div>
       <Characters
         allCharacters={sortedChars()}
         characters={pager.items()}
