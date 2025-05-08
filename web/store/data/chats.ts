@@ -241,27 +241,24 @@ export async function getAllChats() {
     return res
   }
 
-  const characters = await loadItem('characters')
-  const chats = (await loadItem('chats')) as AllChat[]
-
-  if (!chats?.length) {
-    const [char] = characters
-    const { chat, msg } = createNewChat(char, {
-      mode: 'standard',
-      scenarioIds: [],
-      name: 'Your first conversation',
-      greeting: undefined,
-      scenario: undefined,
-      sampleChat: undefined,
-      overrides: undefined,
-      useOverrides: false,
-    })
-    await localApi.saveChats([chat])
-
-    if (msg) await localApi.saveMessages(chat._id, [msg])
-
-    chats.push(chat)
+  // Fetch public characters from the database for guest users
+  let characters: AppSchema.Character[] = []
+  try {
+    const guestCharRes = await api.get<{ characters: AppSchema.Character[] }>('/guest/characters')
+    if (guestCharRes.result && guestCharRes.result.characters) {
+      characters = guestCharRes.result.characters
+    } else {
+      console.error('Failed to fetch guest characters:', guestCharRes.error)
+      // Optionally, you could fall back to local storage or an empty list here
+      // For now, we'll proceed with an empty character list if the API fails
+    }
+  } catch (error) {
+    console.error('Error fetching guest characters:', error)
+    // Proceed with an empty character list in case of an exception
   }
+
+  // Guest users will have an empty chat list by default when fetching characters from DB
+  const chats: AllChat[] = []
 
   return localApi.result({ chats, characters })
 }

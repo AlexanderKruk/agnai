@@ -13,6 +13,7 @@ import selfhost from './json'
 import voice from './voice'
 import { config } from '../config'
 import announcements from './announcements'
+import guestRouter from './guest'
 import { apiKeyUsage } from './auth'
 import { generateImageApi, inferenceApi, inferenceModels } from './chat/inference'
 
@@ -21,6 +22,7 @@ const router = Router()
 router.use('/user', user)
 router.use('/chat', chat)
 router.use('/character', character)
+router.use('/guest', guestRouter)
 router.use('/classify', classify)
 router.use('/admin', subscriptions)
 router.use('/admin', admin)

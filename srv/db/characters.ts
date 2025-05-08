@@ -252,3 +252,36 @@ export async function getCharacterList(charIds: string[], userId?: string) {
     .toArray()
   return list
 }
+
+export async function getPublicCharacters(): Promise<AppSchema.Character[]> {
+  if (!config.publicCharacterUserId) {
+    console.warn('publicCharacterUserId is not configured. No public characters will be served to guests.');
+    return [];
+  }
+
+  const list = await db('character')
+    .find({ userId: config.publicCharacterUserId })
+    .project({
+      _id: 1,
+      userId: 1,
+      name: 1,
+      avatar: 1,
+      description: 1,
+      favorite: 1,
+      tags: 1,
+      createdAt: 1,
+      updatedAt: 1,
+      voice: 1,
+      voiceDisabled: 1,
+      folder: 1,
+      persona: 1,
+      sampleChat: 1,
+      greeting: 1,
+      scenario: 1,
+      visualType: 1,
+      sprite: 1,
+    })
+    .toArray();
+
+  return list as AppSchema.Character[];
+}
