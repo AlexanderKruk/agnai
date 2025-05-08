@@ -109,13 +109,18 @@ const Character: Component<CardProps> = (props) => {
           {props.char.description}
         </div>
         <div class="flex justify-between p-1">
-          <button
+          <div class="pointer-events-none text-500 text-xs italic">
+            {props.char.chat ? toDuration(new Date(props.char.chat.updatedAt)) + ' ago' : ''}
+          </div>
+        </div>
+        <div class="float-left ml-[3px] mt-[-221px]">
+          <div
+            class="z-10 cursor-pointer rounded-md border-[1px] border-[var(--bg-400)] bg-[var(--bg-700)] p-[2px]"
             onClick={(e) => {
-              e.stopPropagation()
-              props.toggleFavorite(!props.char.favorite)
+              e.stopPropagation();
+              props.toggleFavorite(!props.char.favorite);
             }}
             aria-label="Toggle Favorite"
-            class="z-10"
           >
             <Show when={props.char.favorite}>
               <Star size={size} class="text-900 fill-[var(--text-900)]" />
@@ -123,26 +128,10 @@ const Character: Component<CardProps> = (props) => {
             <Show when={!props.char.favorite}>
               <Star size={size} />
             </Show>
-          </button>
-
-          <div class="pointer-events-none text-500 text-xs italic">
-            {props.char.chat ? toDuration(new Date(props.char.chat.updatedAt)) + ' ago' : ''}
-          </div>
-        </div>
-        <div class="float-left ml-[3px] mt-[-224px]">
-          <div
-            class="z-10 cursor-pointer rounded-md border-[1px] border-[var(--bg-400)] bg-[var(--bg-700)] p-[2px]"
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              props.download(); 
-            }}
-            aria-label="Download Character"
-          >
-            <Download size={size} />
           </div>
         </div>
         <div
-          class="float-right mr-[3px] mt-[-224px] flex justify-end"
+          class="float-right mr-[3px] mt-[-221px] flex justify-end"
           onClick={(e) => { 
             e.stopPropagation(); 
             setOpts(true); 
