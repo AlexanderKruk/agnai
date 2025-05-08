@@ -421,7 +421,7 @@ function getSortFunction(field: SortField, direction: SortDirection) {
 
 function getListCache(): ListCache {
   const existing = storage.localGetItem(CACHE_KEY)
-  const defaultCache: ListCache = { sort: { field: 'modified', direction: 'desc' }, view: 'list' }
+  const defaultCache: ListCache = { sort: { field: 'modified', direction: 'desc' }, view: 'cards' }
 
   if (!existing) {
     return defaultCache
