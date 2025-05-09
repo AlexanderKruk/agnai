@@ -101,7 +101,7 @@ const Character: Component<CardProps> = (props) => {
         </div>
       </div>
 
-      <div class="w-2/3 h-full flex flex-col justify-between p-2 text-sm overflow-hidden">
+      <div class="w-2/3 h-full flex flex-col justify-between px-3 py-2 text-sm overflow-hidden">
         <div class="flex justify-between items-start">
           <div class="flex-grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap pb-1 font-bold text-base leading-tight">
             {props.char.name}
@@ -167,7 +167,7 @@ const Character: Component<CardProps> = (props) => {
         </div>
 
         <div class="flex-grow overflow-hidden text-600 text-xs font-normal leading-snug">
-          <p class="h-full w-full" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">
+          <p class="h-full w-full" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line;">
             {props.char.description}
           </p>
         </div>
