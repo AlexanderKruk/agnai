@@ -8,7 +8,7 @@ import {
   ArrowRight,
   Copy,
   Download,
-  Menu,
+  MoreVertical,
   MessageCirclePlus,
   Pencil,
   Star,
@@ -101,20 +101,20 @@ const Character: Component<CardProps> = (props) => {
         </div>
       </div>
 
-      <div class="w-2/3 h-full flex flex-col justify-between px-3 py-2 text-sm overflow-hidden">
+      <div class="w-2/3 h-full flex flex-col justify-between px-3 pt-2 text-sm overflow-hidden">
         <div class="flex justify-between items-start">
           <div class="flex-grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap pb-1 font-bold text-base leading-tight">
             {props.char.name}
           </div>
-          <div class="z-10 -mt-1 -mr-1">
+          <div class="z-10 -mt-1 -mr-2">
             <div
-              class="relative cursor-pointer rounded-md border-[1px] border-[var(--bg-400)] bg-[var(--bg-700)] p-1"
+              class="relative cursor-pointer rounded-md p-1"
               onClick={(e) => {
                 e.stopPropagation();
                 setOpts(true);
               }}
             >
-              <Menu size={size} class="icon-button" color="var(--bg-100)" />
+              <MoreVertical size={size} class="icon-button" color="var(--bg-100)" />
               <DropMenu
                 show={opts()}
                 close={() => setOpts(false)}
@@ -172,7 +172,7 @@ const Character: Component<CardProps> = (props) => {
           </p>
         </div>
 
-        <div class="flex-shrink-0 pt-1 text-500 text-xs italic" style="min-height: 1.5em;">
+        <div class="flex-shrink-0 py-1 text-500 text-xs italic">
           <Show when={props.char.chat?.updatedAt}>
             {toDuration(new Date(props.char.chat!.updatedAt)) + ' ago'}
           </Show>
