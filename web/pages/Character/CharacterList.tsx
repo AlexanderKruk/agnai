@@ -197,6 +197,7 @@ const CharacterList: Component = () => {
             />
           </div>
 
+          
           <div class="flex flex-wrap">
             <Select
               class="m-1 ml-0 bg-[var(--bg-600)]"
@@ -222,7 +223,7 @@ const CharacterList: Component = () => {
 
           <TagSelect class="m-1" />
         </div>
-
+        <Show when={user.user?.admin}>
         <div class="flex flex-wrap">
           <div class="py-1">
             <Button schema="secondary" onClick={() => setView(getNextView())}>
@@ -239,7 +240,8 @@ const CharacterList: Component = () => {
               </Switch>
             </Button>
           </div>
-        </div>
+          </div>
+        </Show>
       </div>
       <Characters
         allCharacters={sortedChars()}
@@ -418,7 +420,7 @@ function getSortFunction(field: SortField, direction: SortDirection) {
 
 function getListCache(): ListCache {
   const existing = storage.localGetItem(CACHE_KEY)
-  const defaultCache: ListCache = { sort: { field: 'modified', direction: 'desc' }, view: 'cards' }
+  const defaultCache: ListCache = { sort: { field: 'conversed', direction: 'desc' }, view: 'cards' }
 
   if (!existing) {
     return defaultCache
