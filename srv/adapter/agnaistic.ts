@@ -27,6 +27,7 @@ import { sanitise, sanitiseAndTrim, trimResponseV2 } from '/common/requests/util
 import { obtainLock, releaseLock } from '../api/chat/lock'
 import { getServerConfiguration } from '../db/admin'
 import { handleGemini } from './gemini'
+import { handleA1111ForgeAdapter } from './a1111forge'
 
 export type SubscriptionPreset = Awaited<NonNullable<ReturnType<typeof getSubscriptionPreset>>>
 
@@ -405,6 +406,7 @@ export const handlers: { [key in AIAdapter]: ModelAdapter } = {
   petals: handlePetals,
   agnaistic: handleAgnaistic,
   venus: handleVenus,
+  a1111forge: handleA1111ForgeAdapter,
 }
 
 export function getHandlers(settings: Partial<AppSchema.GenSettings>) {

@@ -5,8 +5,8 @@ import {
   SD_SAMPLER,
   SD_SAMPLER_REV,
 } from '../../../../common/image'
-import Select from '../../../shared/Select'
-import TextInput from '../../../shared/TextInput'
+import Select, { Option } from '/web/shared/Select'
+import TextInput from '/web/shared/TextInput'
 import { settingStore, userStore } from '../../../store'
 import { ImageSettings } from '/common/types/image-schema'
 import { SetStoreFunction } from 'solid-js/store'
@@ -15,7 +15,7 @@ import { Toggle } from '/web/shared/Toggle'
 import Button, { ToggleButton } from '/web/shared/Button'
 import { Info, X } from 'lucide-solid'
 import { Card, Pill } from '/web/shared/Card'
-import { InlineRangeInput } from '/web/shared/RangeInput'
+import RangeInput, { InlineRangeInput } from '/web/shared/RangeInput'
 
 export const NovelSettings: Component<{
   cfg: ImageSettings
@@ -432,6 +432,58 @@ export const AgnaiSettings: Component<{
     </>
   )
 }
+
+export const A1111ForgeSettings: Component<{
+  cfg: ImageSettings;
+  setter: SetStoreFunction<ImageSettings>;
+}> = (props) => {
+  const samplers = Object.entries(SD_SAMPLER_REV).map(([key, value]) => ({
+    label: value,
+    value: key,
+  }));
+  return (
+    <>
+      <div class="text-xl">A1111 Forge API Settings</div>
+      <TextInput
+        fieldName="a1111forgeUrl"
+        label="A1111 Forge API URL"
+        helperText="Base URL for the A1111 Forge API. E.g. http://localhost:7861. If self-hosting, use your local address."
+        placeholder="E.g. http://localhost:7861"
+        value={props.cfg.a1111forge?.url}
+        onChange={(ev) =>
+          props.setter('a1111forge', 'url', ev.currentTarget.value)
+        }
+      />
+      <Select
+        fieldName="a1111forgeSampler"
+        items={samplers}
+        label="A1111 Forge Sampler"
+        value={props.cfg.a1111forge?.sampler ?? SD_SAMPLER['Euler a']}
+        onChange={(opt) => {
+          props.setter('a1111forge', 'sampler', opt.value)
+        }}
+      />
+      <RangeInput
+        fieldName="a1111forgeSubseed"
+        min={-1}
+        max={1000000000}
+        step={1}
+        value={props.cfg.a1111forge?.subseed ?? -1}
+        label="Subseed (-1 for random)"
+        onChange={(val: number) => props.setter('a1111forge', 'subseed', val)}
+      />
+      <RangeInput
+        fieldName="a1111forgeSubseedStrength"
+        min={0}
+        max={1}
+        step={0.01}
+        value={props.cfg.a1111forge?.subseed_strength ?? 0}
+        label="Subseed Strength (0 to 1)"
+        onChange={(val: number) => props.setter('a1111forge', 'subseed_strength', val)}
+      />
+    </>
+  );
+};
 
 const Th: Component<{ children?: any }> = (props) => (
   <th

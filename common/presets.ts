@@ -447,5 +447,9 @@ export function getFallbackPreset(adapter: AIAdapter): Partial<AppSchema.GenSett
 
     case 'venus':
       return deepClone(defaultPresets.venus)
+
+    case 'a1111forge':
+      return deepClone(defaultPresets.basic)
   }
+  return deepClone(defaultPresets.basic);
 }

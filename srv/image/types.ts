@@ -41,6 +41,8 @@ export type ImageRequestOpts = {
   override?: string
   raw_prompt: string | undefined
   params?: ImageGenerateRequest['params']
+  noAffix?: boolean
+  model?: string
 }
 
 export type ImageAdapter = (

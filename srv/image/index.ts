@@ -8,6 +8,7 @@ import { saveFile } from '../api/upload'
 import { handleSDImage } from './stable-diffusion'
 import { sendGuest, sendMany, sendOne } from '../api/ws'
 import { handleHordeImage } from './horde'
+import { handleA1111ForgeImage } from './a1111forge'
 import { AppSchema } from '/common/types'
 import { ImageSettings } from '/common/types/image-schema'
 
@@ -162,7 +163,7 @@ async function runImageGenerate(options: {
   guestId: string | undefined
   opts: ImageGenerateRequest
 }) {
-  const { imageSettings, user, prompt, log, guestId, opts } = options
+  const { imageSettings, user, prompt, log, guestId, opts: originalRequestOpts } = options
 
   let image: ImageAdapterResponse | undefined
   let output: string = ''
@@ -170,17 +171,21 @@ async function runImageGenerate(options: {
 
   const negative = imageSettings?.negative || DEFAULT_NEGATIVE
 
+  log.debug({ settings: imageSettings, settingsType: imageSettings?.type, originalRequestId: originalRequestOpts.requestId }, '[AGN AI DEBUG] runImageGenerate called with settings:')
+
   try {
     switch (imageSettings?.type || 'horde') {
       case 'novel':
+        log.info('[AGN AI DEBUG] Dispatching to NovelAI handler')
         image = await handleNovelImage(
           {
             user,
             prompt,
             negative,
             settings: imageSettings,
-            params: opts.params,
-            raw_prompt: opts.prompt,
+            params: originalRequestOpts.params,
+            raw_prompt: originalRequestOpts.prompt,
+            noAffix: originalRequestOpts.noAffix,
           },
           log,
           guestId
@@ -188,16 +193,17 @@ async function runImageGenerate(options: {
         break
 
       case 'sd':
-      case 'agnai':
+        log.info('[AGN AI DEBUG] Dispatching to SD handler')
         image = await handleSDImage(
           {
             user,
             prompt,
             negative,
             settings: imageSettings,
-            override: opts.model,
-            params: opts.params,
-            raw_prompt: opts.prompt,
+            override: originalRequestOpts.model,
+            params: originalRequestOpts.params,
+            raw_prompt: originalRequestOpts.prompt,
+            noAffix: originalRequestOpts.noAffix,
           },
           log,
           guestId
@@ -205,20 +211,62 @@ async function runImageGenerate(options: {
         break
 
       case 'horde':
-      default:
+        log.info('[AGN AI DEBUG] Dispatching to Horde handler')
         image = await handleHordeImage(
           {
             user,
             prompt,
             negative,
             settings: imageSettings,
-            params: opts.params,
-            raw_prompt: opts.prompt,
+            params: originalRequestOpts.params,
+            raw_prompt: originalRequestOpts.prompt,
+            noAffix: originalRequestOpts.noAffix,
           },
           log,
           guestId
         )
         break
+
+      case 'a1111forge':
+        log.info('[AGN AI DEBUG] Dispatching to A1111 Forge handler')
+        image = await handleA1111ForgeImage(
+          {
+            settings: imageSettings,
+            user,
+            prompt,
+            negative,
+            noAffix: originalRequestOpts.noAffix,
+            params: originalRequestOpts.params,
+            raw_prompt: originalRequestOpts.prompt
+          },
+          log,
+          guestId
+        )
+        break
+
+      default: {
+        log.warn({ settingsType: imageSettings?.type, hasHordeSettings: !!user.images?.horde, isGuest: !!guestId }, '[AGN AI DEBUG] Image type not handled or settings undefined, falling to default handler.')
+        const hordeSettings = user.images?.horde
+        if (hordeSettings || guestId) {
+          log.info('[AGN AI DEBUG] Attempting Horde fallback in default case.')
+          image = await handleHordeImage(
+            {
+              user,
+              prompt,
+              negative,
+              settings: { ...imageSettings, type: 'horde', horde: hordeSettings } as ImageSettings,
+              params: originalRequestOpts.params,
+              raw_prompt: originalRequestOpts.prompt,
+              noAffix: originalRequestOpts.noAffix,
+            },
+            log,
+            guestId
+          )
+        } else {
+          log.error({ settingsType: imageSettings?.type }, '[AGN AI DEBUG] No image type or handler found, and no Horde fallback possible.')
+          error = `Image generation type "${imageSettings?.type}" is not configured or supported.`
+        }
+      }
     }
   } catch (ex: any) {
     log.error(
@@ -226,6 +274,12 @@ async function runImageGenerate(options: {
       `[${imageSettings?.type || 'default'}] Image generation failed `
     )
     error = ex.message || ex
+  }
+
+  if (error && !image) {
+    log.error({ error, settingsType: imageSettings?.type, prompt }, '[AGN AI DEBUG] Image generation failed with error.')
+  } else if (!image) {
+    log.warn({ settingsType: imageSettings?.type, prompt }, '[AGN AI DEBUG] Image generation resulted in no image and no explicit error.')
   }
 
   return { image, output, error }

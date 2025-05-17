@@ -37,6 +37,14 @@ export type AdapterOptions = {
   settings: AdapterSetting[]
   options: Array<keyof PresetAISettings>
   load?: (user?: AppSchema.User | null) => AdapterSetting[]
+  /** Optional type specifier, e.g., 'image', 'text' */
+  type?: string; 
+  isImage?: boolean;
+  isStreaming?: boolean;
+  isChat?: boolean;
+  instructions?: string;
+  canStream?: boolean;
+  multiModal?: boolean;
 }
 
 export const MODE_SETTINGS: {
@@ -143,6 +151,7 @@ export const AI_ADAPTERS = [
   'mancer',
   'petals',
   'venus',
+  'a1111forge',
 ] as const
 export const CHAT_ADAPTERS = ['default', ...AI_ADAPTERS] as const
 
@@ -419,19 +428,20 @@ export type HordeWorker = {
 export const ADAPTER_LABELS: { [key in AIAdapter]: string } = {
   horde: 'Horde',
   'third-party': 'Third-Party / Self-Host',
-  kobold: 'Third-Party / Self-Host',
+  kobold: 'KoboldAI',
   novel: 'NovelAI',
-  ooba: 'Textgen',
+  ooba: 'Oobabooga',
   openai: 'OpenAI',
-  scale: 'Scale',
+  scale: 'Scale API',
   claude: 'Claude',
-  goose: 'Goose AI',
+  goose: 'GooseAI',
   replicate: 'Replicate',
   openrouter: 'OpenRouter',
   mancer: 'Mancer',
   petals: 'Petals',
   agnaistic: 'Agnaistic',
   venus: 'Venus',
+  a1111forge: 'A1111 Forge',
 }
 
 export const INSTRUCT_SERVICES: { [key in AIAdapter]?: boolean } = {

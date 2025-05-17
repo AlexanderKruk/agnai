@@ -966,6 +966,14 @@ export function getContextLimit(
 
     case 'venus':
       return Math.min(configuredMax, 7800) - genAmount
+    
+    // Add a default case to handle 'a1111forge' and any other AIAdapter not explicitly listed
+    default:
+      // For unlisted adapters, or those where context limit isn't specialized (like image adapters),
+      // fall back to the configuredMax minus generation amount, or just configuredMax if genAmount is not relevant.
+      // For an image adapter like a1111forge, context limit for text prompts is less critical in the same way.
+      // Returning configuredMax - genAmount is a safe default.
+      return configuredMax - genAmount;
   }
 }
 

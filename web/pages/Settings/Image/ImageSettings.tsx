@@ -15,7 +15,7 @@ import { RootModal } from '/web/shared/Modal'
 import { ImageSettings } from '/common/types/image-schema'
 import { isChatPage } from '/web/shared/hooks'
 import { createStore } from 'solid-js/store'
-import { AgnaiSettings, HordeSettings, NovelSettings, SDSettings } from './ServiceSettings'
+import { AgnaiSettings, HordeSettings, NovelSettings, SDSettings, A1111ForgeSettings } from './ServiceSettings'
 import { FormLabel } from '/web/shared/FormLabel'
 import { PresetSelect } from '/web/shared/PresetSelect'
 import { getPresetOptions } from '/web/shared/adapter'
@@ -50,6 +50,10 @@ const init: ImageSettings = {
     sampler: SD_SAMPLER['Euler a'],
     ucPreset: '0',
     qualityTags: true,
+  },
+  a1111forge: {
+    sampler: SD_SAMPLER['Euler a'],
+    url: 'http://localhost:7861',
   },
 }
 
@@ -134,6 +138,7 @@ export const ImageSettingsModal = () => {
       { label: 'Horde', value: 'horde' },
       { label: 'NovelAI', value: 'novel' },
       { label: 'Stable Diffusion', value: 'sd' },
+      { label: 'A1111 Forge', value: 'a1111forge' },
     ]
 
     if (canUseImages()) {
@@ -330,6 +335,10 @@ export const ImageSettingsModal = () => {
 
         <div class={store.type === 'agnai' ? subclass : 'hidden'}>
           <AgnaiSettings cfg={store} setter={setStore} />
+        </div>
+
+        <div class={store.type === 'a1111forge' ? subclass : 'hidden'}>
+          <A1111ForgeSettings cfg={store} setter={setStore} />
         </div>
 
         <Divider />

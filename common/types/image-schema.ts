@@ -1,4 +1,4 @@
-type ImageType = NovelSettings | HordeSettings | SDSettings | AgnaiSettings
+type ImageType = NovelSettings | HordeSettings | SDSettings | AgnaiSettings | A1111ForgeApiSettings
 
 export type BaseImageSettings = {
   type: ImageType['type']
@@ -25,6 +25,7 @@ export type ImageSettings = BaseImageSettings & {
   horde: Omit<HordeSettings, 'type'>
   sd: Omit<SDSettings, 'type'>
   agnai: Omit<AgnaiSettings, 'type'>
+  a1111forge: Omit<A1111ForgeApiSettings, 'type'>
 }
 
 export type NovelSettings = {
@@ -53,4 +54,12 @@ export type AgnaiSettings = {
   sampler: string
   draftMode: boolean
   loras?: Array<{ id: string; clipStrength: number; modelStrength: number; enabled: boolean }>
+}
+
+export type A1111ForgeApiSettings = {
+  type: 'a1111forge'
+  sampler: string
+  url: string
+  subseed?: number
+  subseed_strength?: number
 }
