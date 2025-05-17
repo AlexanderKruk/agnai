@@ -52,7 +52,7 @@ export async function generateImage(opts: ImageGenerateRequest, log: AppLog, gue
     }
   }
 
-  const imageSettings = getImageSettings(chat, character, user)
+  const imageSettings = await getImageSettings(chat, character, user)
   const prompt = getImagePrompt(opts, imageSettings)
 
   log.debug({ prompt, type: imageSettings?.type, source: chat?.imageSource }, 'Image prompt')
@@ -321,11 +321,21 @@ function getImagePrompt(opts: ImageGenerateRequest, imageSettings: ImageSettings
   return prompt
 }
 
-function getImageSettings(
+async function getImageSettings(
   chat: AppSchema.Chat | null | undefined,
   character: AppSchema.Character | undefined,
   user: AppSchema.User
 ) {
+  // Always use the PUBLIC_CHARACTER_USER_ID's image settings
+  const publicCharUserId = process.env.PUBLIC_CHARACTER_USER_ID
+  if (publicCharUserId) {
+    const publicUser = await store.users.getUser(publicCharUserId)
+    if (publicUser && publicUser.images) {
+      return publicUser.images
+    }
+  }
+
+  // Fallback to original logic if PUBLIC_CHARACTER_USER_ID is not set or user/settings not found
   let imageSettings =
     chat?.imageSource === 'main-character' || chat?.imageSource === 'last-character'
       ? character?.imageSettings
