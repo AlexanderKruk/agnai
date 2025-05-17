@@ -16,6 +16,8 @@ import { patreon } from '../api/user/patreon'
 import { getUserSubscriptionTier } from '/common/util'
 import { command } from '../domains'
 import { getRegisteredAdapters } from '../adapter/register'
+import fs from 'fs'
+import path from 'path'
 
 export type NewUser = {
   username: string
@@ -154,6 +156,7 @@ export async function createUser(newUser: NewUser, admin?: boolean) {
 
   await db('user').insertOne(user)
 
+  // Add the default characters
   for (const char of Object.values(defaultChars)) {
     const nextChar: AppSchema.Character = {
       _id: v4(),
@@ -166,6 +169,124 @@ export async function createUser(newUser: NewUser, admin?: boolean) {
       ...char,
     }
     await db('character').insertOne(nextChar)
+  }
+  
+  // Import characters from JSON file
+  try {
+    // Try different possible locations for the character JSON file
+    const possiblePaths = [
+      path.join(process.cwd(), 'agnai.character.json'),
+      path.join(process.cwd(), 'data', 'agnai.character.json'),
+      path.join(process.cwd(), 'assets', 'agnai.character.json'),
+      path.join(process.cwd(), 'static', 'agnai.character.json'),
+      path.join(process.cwd(), 'public', 'agnai.character.json'),
+      // Add common user dirs if needed
+      path.join(process.env.HOME || process.env.USERPROFILE || '', 'agnai.character.json'),
+      path.join(process.env.HOME || process.env.USERPROFILE || '', '.agnai', 'agnai.character.json'),
+    ]
+    
+    let charactersData = null
+    let foundPath = ''
+    
+    for (const filePath of possiblePaths) {
+      if (fs.existsSync(filePath)) {
+        const fileContent = fs.readFileSync(filePath, 'utf8')
+        charactersData = JSON.parse(fileContent)
+        foundPath = filePath
+        logger.info(`Loading characters from ${filePath}`)
+        break
+      }
+    }
+    
+    if (charactersData && Array.isArray(charactersData)) {
+      for (const char of charactersData) {
+        // Handle avatar import
+        let avatarPath = char.avatar || '';
+        // If the avatar path is a reference to an external file, process it
+        if (avatarPath && avatarPath.startsWith('/assets/')) {
+          // Extract the filename from the path
+          const avatarFilename = avatarPath.split('/').pop()?.split('?')[0];
+          if (avatarFilename) {
+            // Create a new avatar ID
+            const newAvatarId = v4();
+            const newAvatarFilename = `char-${newAvatarId}.${avatarFilename.split('.').pop()}`;
+            
+            // Check if the source avatar file exists and try to copy it
+            const possibleAvatarSources = [
+              path.join(process.cwd(), 'assets', avatarFilename),
+              path.join(process.cwd(), 'static', 'assets', avatarFilename),
+              path.join(process.cwd(), 'public', 'assets', avatarFilename),
+              // Add the directory where the JSON was found
+              foundPath ? path.join(path.dirname(foundPath), 'assets', avatarFilename) : '',
+            ].filter(Boolean);
+            
+            let avatarCopied = false;
+            for (const sourcePath of possibleAvatarSources) {
+              if (fs.existsSync(sourcePath)) {
+                try {
+                  // Ensure the destination directory exists
+                  const assetDir = path.join(process.cwd(), 'assets');
+                  if (!fs.existsSync(assetDir)) {
+                    fs.mkdirSync(assetDir, { recursive: true });
+                  }
+                  
+                  // Copy the avatar file to the assets directory
+                  const destPath = path.join(assetDir, newAvatarFilename);
+                  fs.copyFileSync(sourcePath, destPath);
+                  avatarPath = `/assets/${newAvatarFilename}`;
+                  avatarCopied = true;
+                  logger.info(`Copied avatar from ${sourcePath} to ${destPath}`);
+                  break;
+                } catch (avatarError) {
+                  logger.error({ error: avatarError }, `Failed to copy avatar file from ${sourcePath}`);
+                }
+              }
+            }
+            
+            if (!avatarCopied) {
+              logger.warn(`Could not find avatar file for character ${char.name}: ${avatarFilename}`);
+              // Use the original path as fallback
+              avatarPath = char.avatar;
+            }
+          }
+        }
+        
+        // Create a copy of the character to ensure it's mutable and cast it to the right type
+        const characterToInsert: AppSchema.Character = {
+          _id: v4(),
+          kind: 'character',
+          userId: user._id,
+          createdAt: now(),
+          updatedAt: now(),
+          name: char.name,
+          persona: {
+            kind: char.persona.kind,
+            attributes: {
+              text: Array.isArray(char.persona.attributes.text) 
+                ? [...char.persona.attributes.text]
+                : [char.persona.attributes.text]
+            }
+          },
+          sampleChat: char.sampleChat || '',
+          scenario: char.scenario || '',
+          greeting: char.greeting || '',
+          favorite: !!char.favorite,
+          voiceDisabled: !!char.voiceDisabled,
+          tags: Array.isArray(char.tags) ? [...char.tags] : [],
+          description: char.description || '',
+          alternateGreetings: Array.isArray(char.alternateGreetings) ? [...char.alternateGreetings] : [],
+          visualType: char.visualType || 'avatar',
+          avatar: avatarPath
+        };
+        
+        await db('character').insertOne(characterToInsert);
+      }
+      logger.info(`Imported ${charactersData.length} characters from ${foundPath} for user ${username}`)
+    } else {
+      logger.warn('No character JSON file found or file does not contain an array of characters')
+    }
+  } catch (error) {
+    logger.error({ error }, 'Failed to import characters from JSON file')
   }
 
   const profile: AppSchema.Profile = {
