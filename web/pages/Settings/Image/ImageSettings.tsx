@@ -32,6 +32,7 @@ const init: ImageSettings = {
   summaryPrompt: '',
   template: '',
   type: 'horde',
+  summaryPresetId: 'agnai-default',
   agnai: {
     model: '',
     sampler: SD_SAMPLER['Euler a'],
@@ -157,7 +158,12 @@ export const ImageSettingsModal = () => {
       () => cfg(),
       (cfg) => {
         if (!cfg) return
-        setStore({ ...init, ...cfg })
+        setStore({ 
+          ...init, 
+          ...cfg,
+          summariseChat: cfg.summariseChat ?? true,
+          summaryPresetId: cfg.summaryPresetId ?? 'agnai-default'
+        })
       }
     )
   )
