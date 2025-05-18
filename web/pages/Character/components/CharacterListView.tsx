@@ -7,6 +7,7 @@ import { CharacterAvatar } from '/web/shared/AvatarIcon'
 import { Copy, Download, Edit, MessageCircle, MoreHorizontal, Star, Trash } from 'lucide-solid'
 import { DropMenu } from '/web/shared/DropMenu'
 import Button from '/web/shared/Button'
+import { userStore } from '../../../store'
 
 export const CharacterListView: Component<ViewProps> = (props) => {
   return (
@@ -47,6 +48,7 @@ const Character: Component<{
   download: () => void
   toggleFavorite: (value: boolean) => void
 }> = (props) => {
+  const user = userStore()
   return (
     <div class="bg-800 flex w-full flex-row items-center justify-between gap-4 rounded-xl px-2 py-1 hover:bg-[var(--bg-700)]">
       <A
@@ -61,13 +63,15 @@ const Character: Component<{
           <span class="ellipsis">{props.char.description}</span>
         </div>
       </A>
-      <CharacterListOptions
-        char={props.char}
-        delete={props.delete}
-        download={props.download}
-        edit={props.edit}
-        toggleFavorite={props.toggleFavorite}
-      />
+      <Show when={user.user?.admin}>
+        <CharacterListOptions
+          char={props.char}
+          delete={props.delete}
+          download={props.download}
+          edit={props.edit}
+          toggleFavorite={props.toggleFavorite}
+        />
+      </Show>
     </div>
   )
 }
@@ -81,6 +85,7 @@ const CharacterListOptions: Component<{
 }> = (props) => {
   const [listOpts, setListOpts] = createSignal(false)
   const nav = useNavigate()
+  const user = userStore()
 
   return (
     <div>

@@ -516,8 +516,6 @@ const MessageOptions: Component<{
     }
   }
 
-  const open = createMemo(() => props.showMore[0]())
-
   const logic = createMemo(() => {
     const items: Record<
       UI.MessageOption,
@@ -603,17 +601,7 @@ const MessageOptions: Component<{
     return items
   })
 
-  const showInner = createMemo(() => {
-    const logics = logic()
-    for (const opt of Object.values(logics)) {
-      if (!opt.outer.outer && opt.show) return true
-    }
-
-    return false
-  })
-
   const order = createMemo(() => {
-    open()
     logic()
 
     return Object.entries(props.ui.msgOptsInline)
@@ -635,7 +623,6 @@ const MessageOptions: Component<{
               outer={def.outer.outer}
               show={def.show}
               label={def.label}
-              open={open()}
               onClick={closer(def.onClick)}
               class={def.class}
               schema={def.schema}
@@ -646,25 +633,6 @@ const MessageOptions: Component<{
         }}
       </For>
 
-      <div
-        class="flex items-center"
-        classList={{ 'tour-message-opts': props.index === 0, hidden: !showInner() }}
-        onClick={() => props.showMore[1](true)}
-      >
-        <MoreHorizontal class="icon-button" />
-      </div>
-
-      <Show when={showInner()}>
-        <DropMenu
-          class="p-1"
-          horz="left"
-          vert="down"
-          show={open()}
-          close={() => props.showMore[1](false)}
-        >
-          <div class="flex flex-col gap-1" id={`inner-${props.msg._id}`}></div>
-        </DropMenu>
-      </Show>
       <Show
         when={
           (props.last || (props.msg.adapter === 'image' && props.msg.imagePrompt)) &&
@@ -688,6 +656,14 @@ const MessageOptions: Component<{
           <RefreshCw size={18} />
         </div>
       </Show>
+
+      <div
+        class="icon-button"
+        onClick={props.onRemove}
+        title="Delete"
+      >
+        <Trash size={18} />
+      </div>
     </div>
   )
 }
@@ -696,14 +672,13 @@ const MessageOption: Component<{
   schema?: ButtonSchema
   class?: string
   id: string
-  open: boolean | undefined
   show: boolean | undefined
   outer: boolean
   onClick: () => void
   label: string
   children: any
 }> = (props) => {
-  const show = createMemo(() => (!props.outer && props.open) || props.outer)
+  const show = createMemo(() => (!props.outer && props.show) || props.outer)
 
   return (
     <Show when={props.show && show()}>
@@ -760,7 +735,7 @@ function wrapWithQuoteElement(str: string) {
   return str.replace(
     // we first match code blocks AND html tags
     // to ensure we do NOTHING to what's inside them
-    // then we match "regular quotes" and“'pretty quotes” as capture group
+    // then we match "regular quotes" and"pretty quotes" as capture group
     /<[\s\S]*?>|```[\s\S]*?```|``[\s\S]*?``|`[\s\S]*?`|(\".+?\")|(\u201C.+?\u201D)/gm,
     wrapCaptureGroups
   )
@@ -775,7 +750,7 @@ function wrapCaptureGroups(
   if (regularQuoted) {
     return '<q>"' + regularQuoted.replace(/\"/g, '') + '"</q>'
   } else if (curlyQuoted) {
-    return '<q>“' + curlyQuoted.replace(/\u201C|\u201D/g, '') + '”</q>'
+    return '<q>" ' + curlyQuoted.replace(/\u201C|\u201D/g, '') + ' "</q>'
   } else {
     return match
   }

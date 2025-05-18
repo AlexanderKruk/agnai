@@ -26,7 +26,7 @@ import { DropMenu } from '/web/shared/DropMenu'
 import { HelpModal, RootModal } from '/web/shared/Modal'
 import TextInput from '/web/shared/TextInput'
 import { on } from 'solid-js'
-import { characterStore, chatStore } from '/web/store'
+import { characterStore, chatStore, userStore } from '/web/store'
 import { ManualPaginate, usePagination } from '/web/shared/Paginate'
 import Divider from '/web/shared/Divider'
 import { useResizeObserver } from '/web/shared/hooks'
@@ -304,6 +304,7 @@ const FolderContents: Component<{
 
 const Character: Component<CardProps & { folder: () => void }> = (props) => {
   const drag = createDraggable(props.char._id, props.char)
+  const user = userStore()
   return (
     <div class="flex w-[calc(100%-24px)] select-none items-center gap-2 rounded-md border-[1px] border-[var(--bg-800)] hover:border-[var(--bg-600)]">
       <div ref={(ref) => drag(ref)} class="cursor-grab" style={{ 'touch-action': 'none' }}>
@@ -325,13 +326,15 @@ const Character: Component<CardProps & { folder: () => void }> = (props) => {
         </div>
       </A>
 
-      <CharacterListOptions
-        char={props.char}
-        delete={props.delete}
-        download={props.download}
-        edit={props.edit}
-        toggleFavorite={props.toggleFavorite}
-      />
+      <Show when={user.user?.admin}>
+        <CharacterListOptions
+          char={props.char}
+          delete={props.delete}
+          download={props.download}
+          edit={props.edit}
+          toggleFavorite={props.toggleFavorite}
+        />
+      </Show>
     </div>
   )
 }

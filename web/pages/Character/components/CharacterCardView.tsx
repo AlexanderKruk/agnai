@@ -17,7 +17,7 @@ import {
 } from 'lucide-solid'
 import { DropMenu } from '/web/shared/DropMenu'
 import Button from '/web/shared/Button'
-import { chatStore, type NewChat } from '../../../store'
+import { chatStore, type NewChat, userStore } from '../../../store'
 import { isLoggedIn } from '/web/store/api'
 
 export const CharacterCardView: Component<ViewProps> = (props) => {
@@ -56,6 +56,7 @@ export const CharacterCardView: Component<ViewProps> = (props) => {
 const Character: Component<CardProps> = (props) => {
   const [opts, setOpts] = createSignal(false)
   const nav = useNavigate()
+  const user = userStore()
 
   let imageAreaRef: HTMLDivElement | undefined
 
@@ -112,64 +113,66 @@ const Character: Component<CardProps> = (props) => {
           <div class="flex-grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap pb-1 font-bold text-base leading-tight">
             {props.char.name}
           </div>
-          <div class="z-10 -mt-1 -mr-2">
-            <div
-              class="relative cursor-pointer rounded-md p-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpts(true);
-              }}
-            >
-              <MoreVertical size={size} class="icon-button" color="var(--bg-100)" />
-              <DropMenu
-                show={opts()}
-                close={() => setOpts(false)}
-                customPosition="right-0 top-full mt-1"
+          <Show when={user.user?.admin}>
+            <div class="z-10 -mt-1 -mr-2">
+              <div
+                class="relative cursor-pointer rounded-md p-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpts(true);
+                }}
               >
-                <div class="flex flex-col gap-1 p-1.5">
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      props.toggleFavorite(!props.char.favorite);
-                      setOpts(false);
-                    }}
-                    aria-label="Toggle Favorite"
-                    alignLeft
-                    size="sm"
-                  >
-                    <Show when={props.char.favorite}>
-                      <Star size={size - 2} class="text-900 fill-[var(--text-900)]" /> Unfavorite
-                    </Show>
-                    <Show when={!props.char.favorite}>
-                      <Star size={size - 2} /> Favorite
-                    </Show>
-                  </Button>
-                  <Button onClick={(e) => { e.stopPropagation(); props.edit(); setOpts(false); }} aria-label="Edit" alignLeft size="sm">
-                    <Pencil size={size - 2} /> Edit
-                  </Button>
-                  <Button
-                    alignLeft
-                    onClick={(e) => { e.stopPropagation(); nav(`/character/create/${props.char._id}`); setOpts(false); }}
-                    size="sm"
-                  >
-                    <Copy size={size - 2} /> Duplicate
-                  </Button>
-                  <Button
-                    alignLeft
-                    size="sm"
-                    schema="red"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpts(false);
-                      props.delete();
-                    }}
-                  >
-                    <Trash size={size - 2} /> Delete
-                  </Button>
-                </div>
-              </DropMenu>
+                <MoreVertical size={size} class="icon-button" color="var(--bg-100)" />
+                <DropMenu
+                  show={opts()}
+                  close={() => setOpts(false)}
+                  customPosition="right-0 top-full mt-1"
+                >
+                  <div class="flex flex-col gap-1 p-1.5">
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        props.toggleFavorite(!props.char.favorite);
+                        setOpts(false);
+                      }}
+                      aria-label="Toggle Favorite"
+                      alignLeft
+                      size="sm"
+                    >
+                      <Show when={props.char.favorite}>
+                        <Star size={size - 2} class="text-900 fill-[var(--text-900)]" /> Unfavorite
+                      </Show>
+                      <Show when={!props.char.favorite}>
+                        <Star size={size - 2} /> Favorite
+                      </Show>
+                    </Button>
+                    <Button onClick={(e) => { e.stopPropagation(); props.edit(); setOpts(false); }} aria-label="Edit" alignLeft size="sm">
+                      <Pencil size={size - 2} /> Edit
+                    </Button>
+                    <Button
+                      alignLeft
+                      onClick={(e) => { e.stopPropagation(); nav(`/character/create/${props.char._id}`); setOpts(false); }}
+                      size="sm"
+                    >
+                      <Copy size={size - 2} /> Duplicate
+                    </Button>
+                    <Button
+                      alignLeft
+                      size="sm"
+                      schema="red"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpts(false);
+                        props.delete();
+                      }}
+                    >
+                      <Trash size={size - 2} /> Delete
+                    </Button>
+                  </div>
+                </DropMenu>
+              </div>
             </div>
-          </div>
+          </Show>
         </div>
 
         <div class="flex-grow overflow-hidden text-600 text-xs font-normal leading-snug">
