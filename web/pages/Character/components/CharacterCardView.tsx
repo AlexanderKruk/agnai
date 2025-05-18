@@ -85,7 +85,7 @@ const Character: Component<CardProps> = (props) => {
       class="bg-800 flex flex-row rounded-lg border-[1px] border-[var(--bg-700)] hover:border-[var(--hl-500)] cursor-pointer aspect-[16/9] overflow-hidden"
       onClick={handleCreateChatAndNavigate}
     >
-      <div ref={imageAreaRef} class="relative w-1/3 h-full flex-shrink-0">
+      <div ref={imageAreaRef} class="relative w-5/12 h-full flex-shrink-0">
         <div class="absolute inset-0 pointer-events-none">
           <Switch>
             <Match when={props.char.visualType === 'sprite' && props.char.sprite}>
@@ -108,9 +108,12 @@ const Character: Component<CardProps> = (props) => {
         </div>
       </div>
 
-      <div class="w-2/3 h-full flex flex-col justify-between px-3 pt-2 text-sm overflow-hidden">
+      <div class="w-7/12 h-full flex flex-col justify-between px-3 pt-2 text-sm overflow-hidden">
         <div class="flex justify-between items-start">
-          <div class="flex-grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap pb-1 font-bold text-base leading-tight">
+          <div
+            class="flex-grow min-w-0 pb-1 font-bold text-base leading-tight"
+            style="-webkit-line-clamp: 2; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden;"
+          >
             {props.char.name}
           </div>
           <Show when={user.user?.admin}>
