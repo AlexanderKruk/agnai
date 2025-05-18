@@ -84,7 +84,7 @@ const CharacterChats: Component = () => {
       return
     }
 
-    const char = chars.list.find((c) => c._id === params.id)
+    const char = params.id ? state.chars[params.id] : undefined
     setComponentPageTitle(char ? `${char.name} chats` : 'Chats')
   })
 
@@ -184,7 +184,7 @@ const CharacterChats: Component = () => {
           <CharacterSelect
             class="m-1 shrink-0 w-48 sm:w-72"
             fieldName="char"
-            items={chars.list}
+            items={Object.values(state.chars)}
             emptyLabel="All Characters"
             value={charId()}
             onChange={(char) => setCharId(char?._id)}
@@ -198,12 +198,12 @@ const CharacterChats: Component = () => {
 
       <Show
         when={pager.items().length}
-        fallback={<NoChats character={chars.list.find((c) => c._id === params.id)?.name} />}
+        fallback={<NoChats character={params.id ? state.chars[params.id]?.name : undefined} />}
       >
         <Chats
           allChars={state.chars}
           chats={pager.items()}
-          chars={chars.list}
+          chars={Object.values(state.chars)}
           sortField={sortField()}
           sortDirection={sortDirection()}
           charId={charId()}
@@ -217,7 +217,7 @@ const CharacterChats: Component = () => {
       <ImportChatModal
         show={showImport()}
         close={() => setImport(false)}
-        char={chars.list.find((c) => c._id === charId())}
+        char={charId() ? state.chars[charId()!] : undefined}
       />
     </Page>
   )
