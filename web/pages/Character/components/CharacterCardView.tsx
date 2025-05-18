@@ -18,6 +18,7 @@ import {
 import { DropMenu } from '/web/shared/DropMenu'
 import Button from '/web/shared/Button'
 import { chatStore, type NewChat } from '../../../store'
+import { isLoggedIn } from '/web/store/api'
 
 export const CharacterCardView: Component<ViewProps> = (props) => {
   return (
@@ -62,6 +63,11 @@ const Character: Component<CardProps> = (props) => {
 
   const handleCreateChatAndNavigate = async () => {
     if (opts()) return
+
+    if (!isLoggedIn()) {
+      nav('/login', { replace: true })
+      return
+    }
 
     try {
       const newChatProps: NewChat = { name: props.char.name, useOverrides: false }

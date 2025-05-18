@@ -68,6 +68,13 @@ const CreateChatForm: Component<{
   const [state, setState] = createStore(getInitState(chars.char))
   const [selectedId, setSelected] = createSignal<string | undefined>(params.id)
 
+  createEffect(() => {
+    // If the user is not logged in, redirect to the login page.
+    if (!isLoggedIn()) {
+      nav('/login', { replace: true })
+    }
+  })
+
   const scenarios = createMemo(() => {
     if (!scen.length) return [{ value: '', label: 'You have no scenarios' }]
     return [{ value: '', label: 'None' }, ...scen.map((s) => ({ label: s.name, value: s._id }))]

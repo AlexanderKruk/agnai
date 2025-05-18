@@ -15,7 +15,7 @@ import Select, { Option } from '../../shared/Select'
 import TextInput from '../../shared/TextInput'
 import { AppSchema } from '../../../common/types/schema'
 import { Import, Plus, SortAsc, SortDesc, LayoutList, Image, RefreshCcw } from 'lucide-solid'
-import { A, useSearchParams } from '@solidjs/router'
+import { A, useSearchParams, useNavigate } from '@solidjs/router'
 import ImportCharacterModal from '../Character/ImportCharacter'
 import DeleteCharacterModal from '../Character/DeleteCharacter'
 import { storage, setComponentPageTitle } from '../../shared/util'
@@ -33,6 +33,7 @@ import { ManualPaginate, usePagination } from '/web/shared/Paginate'
 import { Page } from '/web/Layout'
 import { DragDropProvider, DragDropSensors } from '@thisbeyond/solid-dnd'
 import { isMobile } from '/web/shared/hooks'
+import { isLoggedIn } from '/web/store/api'
 
 const CACHE_KEY = 'agnai-charlist-cache'
 
@@ -377,6 +378,15 @@ const Characters: Component<{
 
 const EditCharacter: Component<{ char?: AppSchema.Character; close: () => void }> = (props) => {
   const [footer, setFooter] = createSignal<any>()
+  const user = userStore()
+  const navigate = useNavigate()
+
+  createEffect(() => {
+    if (props.char && !isLoggedIn()) {
+      props.close()
+      navigate('/login', { replace: true })
+    }
+  })
 
   return (
     <Modal
