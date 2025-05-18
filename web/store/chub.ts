@@ -58,13 +58,13 @@ export const chubStore = createStore<ChubState>(
   'chub',
   initState
 )((_, setState) => {
-  fetch('https://api.chub.ai/tags')
-    .then((res) => res.json())
-    .then((result) => {
-      setStoredValue('chub-tags', result.tags)
-      setState({ officialTags: result.tags })
-    })
-    .catch(() => null)
+  // fetch('https://api.chub.ai/tags', { method: 'POST' })
+  //   .then((res) => res.json())
+  //   .then((result) => {
+  //     setStoredValue('chub-tags', result.tags)
+  //     setState({ officialTags: result.tags })
+  //   })
+  //   .catch(() => null)
 
   return {
     setSearch(_, query: string) {
