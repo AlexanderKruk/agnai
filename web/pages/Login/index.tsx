@@ -33,74 +33,77 @@ const LoginPage: Component = () => {
   })
 
   return (
-    <Page class="flex w-full flex-col items-center">
-      <div class="my-4 border-b border-white/5" />
-      <PageHeader
-        title={
-          <div class="flex w-full justify-center">
-            <Show when={query.callback} fallback="Welcome">
-              Authorizing
-            </Show>
-          </div>
-        }
-        subtitle={
-          <div class="flex flex-wrap items-center justify-center">
-            <Show when={store.loggedIn}>You are already logged in.</Show>
-            <Show when={!store.loggedIn}>
-              <Button size="pill" onClick={() => setRegister(false)}>
-                Login
-              </Button>
-              &nbsp; to your account or&nbsp;
-              <Button size="pill" onClick={() => setRegister(true)}>
-                Register
-              </Button>
-              &nbsp;or continue as a guest.
-            </Show>
-          </div>
-        }
-      />
-      <div class="w-full max-w-sm">
-        <Show when={register()}>
-          <RegisterForm isLoading={store.loading} />
-        </Show>
-        <Show when={!register()}>
-          <LoginForm isLoading={store.loading} />
-        </Show>
-        <Show when={loginError()}>
-          <Divider />
-          <Alert schema="error" title="Failed to log in.">
-            {loginError()}
-          </Alert>
-        </Show>
-      </div>
-
-      <Show when={cfg.config.policies}>
-        <div class="mt-2">
-          By logging in or registering, you agree that you are 18 years or older and agree to the{' '}
-          <A class="link" href="/terms-of-service">
-            Terms
-          </A>{' '}
-          and{' '}
-          <A class="link" href="/privacy-policy">
-            Privacy Policy
-          </A>
-          .
+    <Page class="flex w-full flex-col items-center md:h-screen">
+      <div class="hidden md:block md:grow" />
+      <div class="flex flex-col items-center">
+        <div class="my-4 border-b border-white/5" />
+        <PageHeader
+          title={
+            <div class="flex w-full justify-center">
+              <Show when={query.callback} fallback="Welcome">
+                Authorizing
+              </Show>
+            </div>
+          }
+          subtitle={
+            <div class="flex flex-wrap items-center justify-center mt-6">
+              <Show when={store.loggedIn}>You are already logged in.</Show>
+              <Show when={!store.loggedIn}>
+                <Button size="pill" onClick={() => setRegister(false)}>
+                  Login
+                </Button>
+                &nbsp; to your account or&nbsp;
+                <Button size="pill" onClick={() => setRegister(true)}>
+                  Register
+                </Button>
+              </Show>
+            </div>
+          }
+        />
+        <div class="w-full max-w-sm">
+          <Show when={register()}>
+            <RegisterForm isLoading={store.loading} />
+          </Show>
+          <Show when={!register()}>
+            <LoginForm isLoading={store.loading} />
+          </Show>
+          <Show when={loginError()}>
+            <Divider />
+            <Alert schema="error" title="Failed to log in.">
+              {loginError()}
+            </Alert>
+          </Show>
         </div>
-      </Show>
 
-      <div class="mt-8 w-full gap-4">
-        <p class="flex justify-center text-xl text-[var(--hl-400)]">Why register?</p>
-        <div class="flex flex-col items-center">
-          <p>
-            You don't need to register to use Agnaistic. You can use it anonymously and no data will
-            be stored on any servers.
-          </p>
-          <p>
-            If you choose to register your data will be stored and accessible on any devices you
-            login with.
-          </p>
-        </div>
+        <Show when={cfg.config.policies}>
+          <div class="mt-2">
+            By logging in or registering, you agree that you are 18 years or older and agree to the{' '}
+            <A class="link" href="/terms-of-service">
+              Terms
+            </A>{' '}
+            and{' '}
+            <A class="link" href="/privacy-policy">
+              Privacy Policy
+            </A>
+            .
+          </div>
+        </Show>
+
+        {/* <div class="mt-8 w-full gap-4">
+          <p class="flex justify-center text-xl text-[var(--hl-400)]">Why register?</p>
+          <div class="flex flex-col items-center">
+            <p>
+              You don't need to register to use Agnaistic. You can use it anonymously and no data will
+              be stored on any servers.
+            </p>
+            <p>
+              If you choose to register your data will be stored and accessible on any devices you
+              login with.
+            </p>
+          </div>
+        </div> */}
       </div>
+      <div class="hidden md:block md:grow-[2]" />
     </Page>
   )
 }
