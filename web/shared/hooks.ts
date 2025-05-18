@@ -375,10 +375,24 @@ export function useAsyncStorage<T = any>(id: string, initialValue: T) {
 }
 
 export function getStoredValue<T = any>(id: string, initialValue: T) {
-  const key = `agnaistic-ls-${id}`
-  const init = localStorage.getItem(key) || JSON.stringify(initialValue)
-  const value = JSON.parse(init)
-  return value
+  const key = `agnaistic-ls-${id}`;
+  let storedValue = localStorage.getItem(key);
+
+  // Check if the stored value is null or the literal string "undefined"
+  if (storedValue === null || storedValue === "undefined") {
+    // If so, use the initialValue, ensuring it's stringified for parsing
+    storedValue = JSON.stringify(initialValue);
+  }
+
+  // Now, parse the storedValue (which is either valid JSON or stringified initialValue)
+  try {
+    const value = JSON.parse(storedValue);
+    return value;
+  } catch (error) {
+    console.warn(`Error parsing stored value for key "${key}". Falling back to initial value. Value was:`, storedValue, error);
+    // If parsing still fails, return initialValue directly.
+    return initialValue;
+  }
 }
 
 export function setStoredValue(id: string, value: any) {

@@ -20,6 +20,7 @@ import {
   Sliders,
   Speaker,
   Sun,
+  User,
   Volume2,
   VolumeX,
   Wand2,
@@ -59,13 +60,13 @@ import {
 import WizardIcon from './icons/WizardIcon'
 import { soundEmitter } from './shared/Audio/playable-events'
 import Tooltip from './shared/Tooltip'
-import { DiscordDarkIcon, DiscordLightIcon } from './icons/DiscordIcon'
+// import { DiscordDarkIcon, DiscordLightIcon } from './icons/DiscordIcon'
 import { Badge } from './shared/Card'
 import { navStore } from './subnav'
 import { getRgbaFromVar } from './shared/colors'
 import { CallToAction } from './shared/CallToAction'
-import Button from './shared/Button'
-import { clearTours } from './tours'
+// import Button from './shared/Button'
+// import { clearTours } from './tours'
 
 const Navigation: Component = () => {
   let parent: any
@@ -181,7 +182,7 @@ const Navigation: Component = () => {
                   class="flex h-8 w-full items-center justify-center rounded-lg font-bold"
                   aria-hidden="true"
                 >
-                  Agn<span class="text-[var(--hl-500)]">ai</span>
+                  Porno<span class="text-[var(--hl-500)]">AI</span>
                   {suffix()}
                 </div>
               </A>
@@ -278,9 +279,9 @@ const UserNavigation: Component = () => {
           </MultiItem>
         </Show>
 
-        <CharacterLink />
+        <CharacterLink user={user} />
 
-        <ChatLink />
+        <ChatLink user={user} />
 
         <Show when={guidance()}>
           <Item href="/saga" ariaLabel="Sagas Preview">
@@ -288,8 +289,9 @@ const UserNavigation: Component = () => {
             Sagas Preview
           </Item>
         </Show>
+        <Show when={!!user.user?.admin}>
+          <Library />
 
-        <Library />
         <MultiItem>
           <Item href="/presets" ariaLabel="Presets">
             <Sliders aria-hidden="true" />
@@ -301,7 +303,7 @@ const UserNavigation: Component = () => {
             </A>
           </EndItem>
         </MultiItem>
-
+        </Show>
         <Show when={menu.flags.sounds}>
           <Sounds />
         </Show>
@@ -364,10 +366,10 @@ const GuestNavigation: Component = () => {
           </Item>
         </Show>
 
-        <Show when={menu.guest}>
+        {/* <Show when={menu.guest}>
           <UserProfile />
 
-          <CharacterLink />
+          <CharacterLink user={user} />
 
           <Show when={menu.flags.chub}>
             <Item href="/chub" ariaLabel="Character hub">
@@ -376,7 +378,7 @@ const GuestNavigation: Component = () => {
             </Item>
           </Show>
 
-          <ChatLink />
+          <ChatLink user={user} />
 
           <Library />
 
@@ -403,7 +405,7 @@ const GuestNavigation: Component = () => {
           <Show when={menu.flags.sounds}>
             <Sounds />
           </Show>
-        </Show>
+        </Show> */}
 
         <NavIcons
           supportEmail={menu.config.serverConfig?.supportEmail}
@@ -449,7 +451,7 @@ const NavIcons: Component<{
             </Tooltip>
           </ExternalLink>
         </Show>
-
+        <Show when={!!props.user.user?.admin}>
         <Item href="/faq" ariaLabel="Open FAQ page">
           <HelpCircle aria-hidden="true" />
         </Item>
@@ -457,7 +459,6 @@ const NavIcons: Component<{
         <Item onClick={() => settingStore.modal(true)} ariaLabel="Open settings page">
           <Settings aria-hidden="true" />
         </Item>
-
         <Item
           onClick={() => settingStore.imageSettings(true)}
           ariaLabel="Image Settings"
@@ -465,7 +466,6 @@ const NavIcons: Component<{
         >
           <Image aria-hidden="true" />
         </Item>
-
         <Item
           ariaLabel="Toggle between light and dark mode"
           onClick={() => {
@@ -476,7 +476,7 @@ const NavIcons: Component<{
             <Moon aria-hidden="true" />
           </Show>
         </Item>
-
+        </Show>
         <Item
           onClick={() => {
             if (props.showMenu) settingStore.closeMenu()
@@ -687,7 +687,8 @@ const Sounds: Component<{}> = (props) => {
   )
 }
 
-const CharacterLink = () => {
+const CharacterLink = ({user}: {user: UserState}) => {
+
   return (
     <MultiItem>
       <Item
@@ -696,19 +697,21 @@ const CharacterLink = () => {
         onClick={() => soundEmitter.emit('menu-item-clicked', 'characters')}
         class="tour-character"
       >
-        <WizardIcon aria-hidden="true" />
+        <User aria-hidden="true" />
         <span aria-hidden="true"> Characters </span>
       </Item>
-      <EndItem>
-        <A class="icon-button" href="/editor" role="button" aria-label="Add a new character">
-          <Plus aria-hidden="true" />
-        </A>
-      </EndItem>
+      <Show when={!!user?.user?.admin}>
+        <EndItem>
+          <A class="icon-button" href="/editor" role="button" aria-label="Add a new character">
+            <Plus aria-hidden="true" />
+          </A>
+        </EndItem>
+      </Show>
     </MultiItem>
   )
 }
 
-const ChatLink = () => {
+const ChatLink = ({user}: {user: UserState}) => {
   return (
     <MultiItem>
       <Item
@@ -719,11 +722,13 @@ const ChatLink = () => {
         <MessageCircle fill="var(--bg-100)" aria-hidden="true" />
         <span aria-hidden="true"> Chats </span>
       </Item>
-      <EndItem>
-        <A class="icon-button" href="/chats/create" role="button" aria-label="Create a new chat">
-          <Plus aria-hidden="true" />
-        </A>
-      </EndItem>
+      <Show when={!!user.user?.admin}>
+          <EndItem>
+            <A class="icon-button" href="/chats/create" role="button" aria-label="Create a new chat">
+              <Plus aria-hidden="true" />
+          </A>
+        </EndItem>
+      </Show>
     </MultiItem>
   )
 }
@@ -767,7 +772,7 @@ export const UserProfile = () => {
           <span aria-hidden="true">{chars.impersonating?.name || user.profile?.handle}</span>
         </Item>
         <div class="flex items-center">
-          <Button
+          {/* <Button
             class="text-600 text-xs"
             schema="secondary"
             size="sm"
@@ -778,8 +783,8 @@ export const UserProfile = () => {
             }}
           >
             Persona
-            {/* <VenetianMask aria-hidden="true" /> */}
-          </Button>
+             <VenetianMask aria-hidden="true" /> 
+          </Button> */}
         </div>
       </div>
     </>
