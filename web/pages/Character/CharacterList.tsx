@@ -162,7 +162,7 @@ const CharacterList: Component = () => {
 
   return (
     <Page>
-      <PageHeader
+      {/* <PageHeader
         title={
           <div class="flex w-full justify-between">
             <div>Characters</div>
@@ -171,7 +171,7 @@ const CharacterList: Component = () => {
                 <Import />
                 <span class="hidden sm:inline">Import</span>
               </Button>
-
+              <Show when={user.user?.admin}>
               <A href="/character/create">
                 <Button>
                   <Plus />
@@ -182,46 +182,52 @@ const CharacterList: Component = () => {
               <Button onClick={() => chatStore.getAllChats()}>
                 <RefreshCcw />
               </Button>
+              </Show>
             </div>
           </div>
         }
-      />
+      /> */}
 
-      <div class="ma mb-2 flex justify-between">
-        <div class="flex flex-wrap">
-          <div class="m-1 ml-0 mr-1">
-            <TextInput
-              fieldName="search"
-              placeholder="Search by name..."
-              onChange={(ev) => setSearch(ev.currentTarget.value)}
-            />
-          </div>
-
-          
-          <div class="flex flex-wrap">
-            <Select
-              class="m-1 ml-0 bg-[var(--bg-600)]"
-              fieldName="sortBy"
-              items={sortOptions}
-              value={sortField()}
-              onChange={(next) => setSortField(next.value as SortField)}
-            />
-
-            <div class="mr-1 py-1">
-              <Button
-                schema="secondary"
-                class="rounded-xl"
-                onClick={() => {
-                  const next = sortDirection() === 'asc' ? 'desc' : 'asc'
-                  setSortDirection(next)
-                }}
-              >
-                {sortDirection() === 'asc' ? <SortAsc /> : <SortDesc />}
-              </Button>
+      <div class="ma mb-2 mt-4 flex justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:flex-wrap">
+          {/* Group for Search and Tags */}
+          <div class="flex w-full items-center sm:w-auto mb-1 sm:mb-0 md:mr-2">
+            <div class="flex-grow m-1 ml-0 mr-1"> {/* Search Input Wrapper */}
+              <TextInput
+                fieldName="search"
+                placeholder="Search by name..."
+                onChange={(ev) => setSearch(ev.currentTarget.value)}
+              />
             </div>
+            {/* TagSelect moved here */}
+            <TagSelect class="m-1 shrink-0 w-32 sm:w-48" />
           </div>
-
-          <TagSelect class="m-1" />
+          
+          {/* Sort Controls Group (conditionally rendered for admins) */}
+          <Show when={user.user?.admin}>
+            <div class="flex flex-wrap items-center mt-1 sm:mt-0">
+              <Select
+                class="m-1 ml-0 bg-[var(--bg-600)]"
+                fieldName="sortBy"
+                items={sortOptions}
+                value={sortField()}
+                onChange={(next) => setSortField(next.value as SortField)}
+              />
+              <div class="mr-1 py-1">
+                <Button
+                  schema="secondary"
+                  class="rounded-xl"
+                  onClick={() => {
+                    const next = sortDirection() === 'asc' ? 'desc' : 'asc'
+                    setSortDirection(next)
+                  }}
+                >
+                  {sortDirection() === 'asc' ? <SortAsc /> : <SortDesc />}
+                </Button>
+              </div>
+            </div>
+          </Show>
+          {/* Original TagSelect location was after the sort controls div, it is now removed from there. */}
         </div>
         <Show when={user.user?.admin}>
         <div class="flex flex-wrap">
@@ -254,7 +260,7 @@ const CharacterList: Component = () => {
         sortDirection={sortDirection()}
         favorites={favorites()}
       />
-      <div class="flex justify-center pb-5 pt-2" classList={{ hidden: view() === 'folders' }}>
+      <div class="flex justify-center pb-5 pt-5" classList={{ hidden: view() === 'folders' }}>
         <ManualPaginate pager={pager} />
       </div>
 

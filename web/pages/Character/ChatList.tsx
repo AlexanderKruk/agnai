@@ -161,7 +161,7 @@ const CharacterChats: Component = () => {
 
   return (
     <Page class="">
-      <PageHeader
+      {/* <PageHeader
         title={
           <div class="flex w-full justify-between">
             <div>Chats</div>
@@ -170,52 +170,30 @@ const CharacterChats: Component = () => {
             </div>
           </div>
         }
-      />
+      /> */}
 
-      <div class="flex flex-wrap gap-1">
-        <div>
-          <TextInput
-            fieldName="search"
-            placeholder="Search..."
-            onKeyUp={(ev) => setSearch(ev.currentTarget.value)}
-          />
-        </div>
-
-        <CharacterSelect
-          class="w-48"
-          fieldName="char"
-          items={chars.list}
-          emptyLabel="All Characters"
-          value={charId()}
-          onChange={(char) => setCharId(char?._id)}
-        />
-
-        <div class="flex flex-wrap gap-1">
-          <Select
-            class="bg-[var(--bg-600)]"
-            fieldName="sortBy"
-            items={sortOptions().filter((opt) => (charId() ? opt.kind === 'chat' : true))}
-            value={sortField()}
-            onChange={(next) => setSortField(next.value as SortType)}
-          />
-
-          <div>
-            <Button
-              schema="secondary"
-              class="rounded-xl"
-              onClick={() => {
-                const next = sortDirection() === 'asc' ? 'desc' : 'asc'
-                setSortDirection(next as SortDirection)
-              }}
-            >
-              {sortDirection() === 'asc' ? <SortAsc /> : <SortDesc />}
-            </Button>
+      <div class="flex flex-col sm:flex-row sm:items-start sm:flex-wrap gap-1 mt-4">
+        <div class="flex w-full items-center sm:w-auto mb-1 sm:mb-0 md:mr-2">
+          <div class="flex-grow m-1 ml-0 mr-1">
+            <TextInput
+              fieldName="search"
+              placeholder="Search..."
+              onKeyUp={(ev) => setSearch(ev.currentTarget.value)}
+            />
           </div>
+          <CharacterSelect
+            class="m-1 shrink-0 w-48 sm:w-72"
+            fieldName="char"
+            items={chars.list}
+            emptyLabel="All Characters"
+            value={charId()}
+            onChange={(char) => setCharId(char?._id)}
+          />
         </div>
       </div>
 
       <div class="flex justify-center pb-5 pt-2">
-        <ManualPaginate pager={pager} />
+        {/* <ManualPaginate pager={pager} /> */}
       </div>
 
       <Show
@@ -232,7 +210,7 @@ const CharacterChats: Component = () => {
         />
       </Show>
 
-      <div class="flex justify-center pb-5 pt-2">
+      <div class="flex justify-center pb-5 pt-8">
         <ManualPaginate pager={pager} />
       </div>
 
@@ -332,7 +310,7 @@ const Chats: Component<{
                 )}
               </For>
             </div>
-            <Divider />
+            {/* <Divider /> */}
           </>
         )}
       </For>

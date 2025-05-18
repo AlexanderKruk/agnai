@@ -67,8 +67,8 @@ const CharacterSelect: Component<{
             <ChevronDown />
           </span>
         </Button>
-        <DropMenu show={opts()} close={() => setOpts(false)} customPosition="top-[8px] left-[0px]">
-          <div class="flex max-h-[400px] max-w-[50vw] flex-col sm:max-w-[280px]">
+        <DropMenu show={opts()} close={() => setOpts(false)} customPosition="top-[8px] left-[0px]" class="w-full">
+          <div class="flex max-h-[400px] max-w-[calc(100vw-40px)] flex-col sm:max-w-[300px]">
             <CharacterSelectList
               items={props.items}
               onSelect={onChange}

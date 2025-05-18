@@ -46,8 +46,8 @@ const TagSelect: Component<{
             <ChevronDown />
           </span>
         </Button>
-        <DropMenu show={opts()} close={() => setOpts(false)} customPosition="top-[8px] left-[0px]">
-          <div class="flex max-h-[50vh] max-w-[50vw] flex-col sm:max-w-[30vw]">
+        <DropMenu show={opts()} close={() => setOpts(false)} customPosition="top-[8px] left-[0px]" class="w-full">
+          <div class="flex max-h-[50vh] max-w-[calc(100vw-40px)] flex-col sm:max-w-48">
             <div class="flex-1 overflow-y-auto">
               <div class="flex flex-col gap-2 p-2">
                 <div
