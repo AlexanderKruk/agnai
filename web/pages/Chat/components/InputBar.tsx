@@ -8,6 +8,10 @@ import {
   Send,
   StopCircle,
   Zap,
+  Download,
+  RotateCcw,
+  Trash,
+  MoreVertical,
 } from 'lucide-solid'
 import {
   Component,
@@ -272,90 +276,14 @@ const InputBar: Component<{
         </div>
       </Show>
 
-      <div class="flex h-[40px] items-center sm:hidden">
-        <a
-          href="#"
-          role="button"
-          aria-label="Open impersonation menu"
-          class="icon-button"
-          onClick={() => settingStore.toggleImpersonate(true)}
-        >
-          <AvatarIcon
-            avatarUrl={chars.impersonating?.avatar || user.profile?.avatar}
-            format={{ corners: 'circle', size: 'sm' }}
-            class="ml-1 mr-2"
-          />
-        </a>
-      </div>
-      <Show when={complete()}>
-        <AutoComplete
-          options={completeOpts()}
-          close={() => setComplete(false)}
-          onSelect={onCompleteSelect}
-          dir="up"
-          offset={44}
-        />
-      </Show>
-      <TextInput
-        fieldName="chatInput"
-        isMultiline
-        spellcheck
-        lang={props.char?.culture}
-        ref={ref! as any}
-        value={text()}
-        placeholder={placeholder()}
-        parentClass="flex w-full"
-        classList={{ 'blur-md': dragging() }}
-        class="input-bar max-h-[120px] min-h-[40px] rounded-r-none hover:bg-[var(--bg-800)] active:bg-[var(--bg-800)]"
-        onKeyDown={(ev) => {
-          if (ev.key === '@') {
-            setComplete(true)
-          }
-
-          const canMobileSend = mob() ? user.ui.mobileSendOnEnter : true
-          if (ev.key === 'Enter' && !ev.shiftKey && canMobileSend) {
-            if (complete()) return
-            send()
-            ev.preventDefault()
-          }
-        }}
-        onChange={updateText}
-        textarea={{
-          onDragOver: (ev) => {
-            console.log('on-drag-over', ev.dataTransfer?.files?.[0]?.size)
-            setDragging(true)
-          },
-          onDragExit: () => {
-            console.log('on-drag-exit')
-            setDragging(false)
-          },
-          onDragEnd: (ev) => {
-            console.log('drag-end', ev.dataTransfer?.files?.[0]?.size)
-            setDragging(false)
-          },
-          onDrop: (ev) => {
-            ev.preventDefault()
-            console.log('onDrop', ev.dataTransfer?.files?.[0]?.size)
-            setDragging(false)
-            const file = ev.dataTransfer?.files[0]
-            if (!file) return
-
-            attach(file)
-          },
-          ondrop: (ev) => {
-            console.log('ondrop', ev.dataTransfer?.files?.[0]?.size)
-          },
-        }}
-      />
       <Button
         schema="clear"
         onClick={onButtonClick}
         class="tour-message-actions h-full bg-[var(--bg-800)] px-2 py-2"
       >
-        <MoreHorizontal class="icon-button" />
+        <MoreVertical class="icon-button" />
       </Button>
-
-      <DropMenu show={menu()} close={() => setMenu(false)} vert="up" horz="left">
+      <DropMenu show={menu()} close={() => setMenu(false)} vert="up" horz="right">
         <div class="flex w-48 flex-col gap-2 p-2">
           <Button
             schema="secondary"
@@ -445,8 +373,119 @@ const InputBar: Component<{
               Attach Image
             </LabelButton>
           </Show>
+          <hr class="my-1 border-[var(--bg-600)]" />
+          <Button
+            schema="secondary"
+            class="w-full"
+            onClick={() => {
+              setMenu(false)
+              chatStore.option({ modal: 'export' })
+            }}
+            alignLeft
+          >
+            <Download size={18} /> Download
+          </Button>
+          <Button
+            schema="secondary"
+            class="w-full"
+            onClick={() => {
+              setMenu(false)
+              chatStore.option({ modal: 'restart' })
+            }}
+            alignLeft
+          >
+            <RotateCcw size={18} /> Restart
+          </Button>
+          <Button
+            schema="secondary"
+            class="w-full"
+            onClick={() => {
+              setMenu(false)
+              chatStore.option({ modal: 'delete' })
+            }}
+            alignLeft
+          >
+            <Trash size={18} /> Delete
+          </Button>
         </div>
       </DropMenu>
+
+      <div class="flex h-[40px] items-center sm:hidden">
+        <a
+          href="#"
+          role="button"
+          aria-label="Open impersonation menu"
+          class="icon-button"
+          onClick={() => settingStore.toggleImpersonate(true)}
+        >
+          <AvatarIcon
+            avatarUrl={chars.impersonating?.avatar || user.profile?.avatar}
+            format={{ corners: 'circle', size: 'sm' }}
+            class="ml-1 mr-2"
+          />
+        </a>
+      </div>
+      <Show when={complete()}>
+        <AutoComplete
+          options={completeOpts()}
+          close={() => setComplete(false)}
+          onSelect={onCompleteSelect}
+          dir="up"
+          offset={44}
+        />
+      </Show>
+      <TextInput
+        fieldName="chatInput"
+        isMultiline
+        spellcheck
+        lang={props.char?.culture}
+        ref={ref! as any}
+        value={text()}
+        placeholder={placeholder()}
+        parentClass="flex w-full"
+        classList={{ 'blur-md': dragging() }}
+        class="input-bar max-h-[120px] min-h-[40px] rounded-r-none hover:bg-[var(--bg-800)] active:bg-[var(--bg-800)]"
+        onKeyDown={(ev) => {
+          if (ev.key === '@') {
+            setComplete(true)
+          }
+
+          const canMobileSend = mob() ? user.ui.mobileSendOnEnter : true
+          if (ev.key === 'Enter' && !ev.shiftKey && canMobileSend) {
+            if (complete()) return
+            send()
+            ev.preventDefault()
+          }
+        }}
+        onChange={updateText}
+        textarea={{
+          onDragOver: (ev) => {
+            console.log('on-drag-over', ev.dataTransfer?.files?.[0]?.size)
+            setDragging(true)
+          },
+          onDragExit: () => {
+            console.log('on-drag-exit')
+            setDragging(false)
+          },
+          onDragEnd: (ev) => {
+            console.log('drag-end', ev.dataTransfer?.files?.[0]?.size)
+            setDragging(false)
+          },
+          onDrop: (ev) => {
+            ev.preventDefault()
+            console.log('onDrop', ev.dataTransfer?.files?.[0]?.size)
+            setDragging(false)
+            const file = ev.dataTransfer?.files[0]
+            if (!file) return
+
+            attach(file)
+          },
+          ondrop: (ev) => {
+            console.log('ondrop', ev.dataTransfer?.files?.[0]?.size)
+          },
+        }}
+      />
+
       <Switch>
         <Match when={user.user?.speechtotext && (text() === '' || listening())}>
           <div class="flex h-full items-center">
