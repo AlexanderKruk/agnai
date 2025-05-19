@@ -18,6 +18,7 @@ import { command } from '../domains'
 import { getRegisteredAdapters } from '../adapter/register'
 import fs from 'fs'
 import path from 'path'
+import { agnaiPresets } from '../../common/presets/agnaistic'
 
 export type NewUser = {
   username: string
@@ -309,59 +310,14 @@ export async function createUser(newUser: NewUser, admin?: boolean) {
   const sub = getCachedSubscriptionModels().find((m) => m.isDefaultSub)
   if (sub) {
     const preset: AppSchema.UserGenPreset = {
+      ...agnaiPresets.agnai,
+      ...sub,
       _id: v4(),
       kind: 'gen-setting',
-      maxTokens: sub.maxTokens,
-      name: 'My Preset',
-      repetitionPenalty: sub.repetitionPenalty,
-      repetitionPenaltyRange: sub.repetitionPenaltyRange,
-      repetitionPenaltySlope: sub.repetitionPenaltySlope,
-      tailFreeSampling: sub.tailFreeSampling,
-      temp: sub.temp,
-      topA: sub.topA,
-      topK: sub.topK,
-      topP: sub.topP,
-      typicalP: sub.typicalP,
+      name: 'Agnaistic',
       userId: user._id,
-      addBosToken: sub.addBosToken,
-      antiBond: sub.antiBond,
-      banEosToken: sub.banEosToken,
-      cfgOppose: sub.cfgOppose,
-      cfgScale: sub.cfgScale,
-      doSample: sub.doSample,
-      dynatemp_exponent: sub.dynatemp_exponent,
-      dynatemp_range: sub.dynatemp_range,
-      earlyStopping: sub.earlyStopping,
-      encoderRepitionPenalty: sub.encoderRepitionPenalty,
-      epsilonCutoff: sub.epsilonCutoff,
-      frequencyPenalty: sub.frequencyPenalty,
-      etaCutoff: sub.etaCutoff,
-      gaslight: sub.gaslight,
-      maxContextLength: sub.maxContextLength,
-      registered: sub.registered,
-      memoryChatEmbedLimit: sub.memoryChatEmbedLimit,
-      memoryContextLimit: sub.memoryContextLimit,
-      memoryDepth: sub.memoryDepth,
-      memoryReverseWeight: sub.memoryReverseWeight,
-      memoryUserEmbedLimit: sub.memoryUserEmbedLimit,
-      minP: sub.minP,
-      mirostatLR: sub.mirostatLR,
-      mirostatTau: sub.mirostatTau,
-      modelFormat: sub.modelFormat,
-      mirostatToggle: sub.mirostatToggle,
-      penaltyAlpha: sub.penaltyAlpha,
-      phraseBias: sub.phraseBias,
-      phraseRepPenalty: sub.phraseRepPenalty,
-      presencePenalty: sub.presencePenalty,
-      prefill: sub.prefill,
-      streamResponse: sub.streamResponse,
-      thirdPartyFormat: sub.thirdPartyFormat,
-      thirdPartyModel: sub.thirdPartyModel,
-      service: sub.service,
-      smoothingCurve: sub.smoothingCurve,
-      smoothingFactor: sub.smoothingFactor,
-      tokenHealing: sub.tokenHealing,
-      tempLast: sub.tempLast,
+      service: 'agnaistic',
+      promptOrder: agnaiPresets.agnai.promptOrder || [],
     }
 
     await db('gen-setting').insertOne(preset)
