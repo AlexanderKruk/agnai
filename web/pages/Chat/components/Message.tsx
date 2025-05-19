@@ -618,17 +618,16 @@ const MessageOptions: Component<{
           const def = logic()[item.key]
 
           return (
-            <MessageOption
-              id={props.msg._id}
-              outer={def.outer.outer}
-              show={def.show}
-              label={def.label}
-              onClick={closer(def.onClick)}
-              class={def.class}
-              schema={def.schema}
-            >
-              {def.icon({ size: 18 })}
-            </MessageOption>
+            <Show when={def.outer.outer && def.show}>
+              <MessageOption
+                id={props.msg._id}
+                onClick={closer(def.onClick)}
+                class={def.class}
+                label={def.label}
+              >
+                {def.icon({ size: 18 })}
+              </MessageOption>
+            </Show>
           )
         }}
       </For>
@@ -669,41 +668,24 @@ const MessageOptions: Component<{
 }
 
 const MessageOption: Component<{
-  schema?: ButtonSchema
-  class?: string
-  id: string
-  show: boolean | undefined
-  outer: boolean
-  onClick: () => void
-  label: string
-  children: any
+  class?: string;
+  id: string;
+  onClick: () => void;
+  label: string;
+  children: JSX.Element;
 }> = (props) => {
-  const show = createMemo(() => (!props.outer && props.show) || props.outer)
-
   return (
-    <Show when={props.show && show()}>
-      <Portal mount={document.querySelector(`#${props.outer ? 'outer' : 'inner'}-${props.id}`)!}>
-        <Show when={props.outer}>
-          <div class={`icon-button ${props.class || ''}`} onClick={props.onClick}>
-            {props.children}
-          </div>
-        </Show>
-
-        <Show when={!props.outer}>
-          <Button
-            class={`${props.class || ''} w-full min-w-max`}
-            schema={props.schema || 'secondary'}
-            onClick={props.onClick}
-            size="sm"
-            alignLeft
-          >
-            {props.children} {props.label}
-          </Button>
-        </Show>
-      </Portal>
-    </Show>
-  )
-}
+    <Portal mount={document.querySelector(`#outer-${props.id}`)!}>
+      <div
+        class={`icon-button ${props.class || ''}`}
+        onClick={props.onClick}
+        title={props.label}
+      >
+        {props.children}
+      </div>
+    </Portal>
+  );
+};
 
 function retryMessage(original: AppSchema.ChatMessage, split: SplitMessage) {
   if (original.adapter !== 'image') {
