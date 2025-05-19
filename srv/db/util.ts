@@ -59,7 +59,17 @@ export const STARTER_CHARACTER: AppSchema.Character = {
   updatedAt: '',
   favorite: false,
   visualType: 'avatar',
-  ...defaultChars.Robot,
+  name: '',
+  persona: {
+    kind: 'attributes',
+    attributes: {
+      species: [],
+      personality: [],
+    },
+  },
+  sampleChat: '',
+  scenario: '',
+  greeting: '',
 }
 
 export async function wait(ms: number) {

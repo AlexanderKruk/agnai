@@ -157,18 +157,25 @@ export async function createUser(newUser: NewUser, admin?: boolean) {
   await db('user').insertOne(user)
 
   // Add the default characters
-  for (const char of Object.values(defaultChars)) {
-    const nextChar: AppSchema.Character = {
-      _id: v4(),
-      kind: 'character',
-      userId: user._id,
-      favorite: false,
-      visualType: 'avatar',
-      updatedAt: now(),
-      createdAt: now(),
-      ...char,
+  if (Object.keys(defaultChars).length > 0) {
+    for (const char of Object.values(defaultChars)) {
+      const typedChar = char as Pick<AppSchema.Character, 'name' | 'persona' | 'sampleChat' | 'scenario' | 'greeting'>
+      const nextChar: AppSchema.Character = {
+        _id: v4(),
+        kind: 'character',
+        userId: user._id,
+        favorite: false,
+        visualType: 'avatar',
+        updatedAt: now(),
+        createdAt: now(),
+        name: typedChar.name,
+        persona: typedChar.persona,
+        sampleChat: typedChar.sampleChat,
+        scenario: typedChar.scenario,
+        greeting: typedChar.greeting,
+      }
+      await db('character').insertOne(nextChar)
     }
-    await db('character').insertOne(nextChar)
   }
   
   // Import characters from JSON file
