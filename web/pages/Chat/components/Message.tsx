@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   Braces,
   ImagePlus,
+  PlusCircle,
 } from 'lucide-solid'
 import {
   Accessor,
@@ -401,19 +402,33 @@ const Message: Component<MessageProps> = (props) => {
                       <span class="dot-flashing bg-[var(--hl-700)]"></span>
                     </span>
                   </Show>
-                  <Show when={ctx.waiting?.image && ctx.waiting.messageId === props.msg._id}>
-                    <div class="flex w-full justify-center">
-                      <RelativeSpinner speed={imageSpeed()} />{' '}
-                      <span
-                        class="text-500 text-xs italic"
-                        classList={{ hidden: !ctx.status?.wait_time }}
-                      >
-                        {ctx.status?.wait_time || '0'}s
-                      </span>
-                    </div>
-                  </Show>
 
-                  <MessageImages msg={props.msg} />
+                  {/* MessageImages now handles the flex layout for images, loader, and add button */}
+                  <MessageImages msg={props.msg}>
+                    {/* Show loader placeholder for a NEWLY generating image for THIS message */}
+                    <Show when={ctx.waiting?.image && ctx.waiting.messageId === props.msg._id}>
+                      <div class="mt-2 h-32 w-32 rounded-md border border-dashed border-neutral-600 flex flex-col items-center justify-center p-2">
+                        <RelativeSpinner speed={imageSpeed()} />
+                        <Show when={ctx.status && ctx.status.wait_time && parseFloat(String(ctx.status.wait_time)) > 0}>
+                          <span class="text-500 text-xs italic mt-1">
+                            {ctx.status!.wait_time}s
+                          </span>
+                        </Show>
+                      </div>
+                    </Show>
+
+                    {/* "Add Image" button/placeholder */}
+                    <Show when={!content().generating && !!props.msg.characterId && !props.msg.system && !props.msg.event && props.msg.adapter !== 'image' && (!ctx.waiting?.image || ctx.waiting.messageId !== props.msg._id)}>
+                      <div
+                        class="icon-button mt-2 flex h-32 w-32 items-center justify-center rounded-md border border-dashed border-neutral-600"
+                        title="Add another image"
+                        onClick={() => msgStore.createImage(props.msg._id, true)}
+                      >
+                        <ImagePlus size={24} />
+                      </div>
+                    </Show>
+                  </MessageImages>
+
                   <Show when={!props.partial && props.last}>
                     <div class="flex items-center justify-center gap-2">
                       <For each={props.msg.actions}>
@@ -551,9 +566,9 @@ const MessageOptions: Component<{
         label: 'Generate Image',
         class: 'image-btn',
         outer: props.ui.msgOptsInline.image,
-        show: !props.msg.system && !props.msg.event && props.msg.adapter !== 'image' && !props.partial && !props.msg.json,
+        show: false,
         onClick: () => {
-          msgStore.createImage(props.msg._id, false, props.msg.msg)
+          // msgStore.createImage(props.msg._id, false, props.msg.msg)
         },
         icon: ImagePlus,
       },
@@ -563,7 +578,7 @@ const MessageOptions: Component<{
         label: 'Edit',
         class: 'edit-btn',
         outer: props.ui.msgOptsInline.edit,
-        show: props.msg.adapter !== 'image' && !props.partial,
+        show: !props.msg.characterId && props.msg.adapter !== 'image' && !props.partial,
         onClick: props.startEdit,
         icon: Pencil,
       },

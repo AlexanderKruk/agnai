@@ -1,4 +1,4 @@
-import { Component, createEffect, createSignal, For, on, onMount, Show } from 'solid-js'
+import { Component, createEffect, createSignal, For, on, onMount, JSX } from 'solid-js'
 import { AppSchema } from '/common/types'
 import { getAssetUrl, storage } from '/web/shared/util'
 import { settingStore } from '/web/store/settings'
@@ -17,7 +17,7 @@ type ImageButton = {
   onClick: () => void
 }
 
-export const MessageImages: Component<{ msg: AppSchema.ChatMessage }> = (props) => {
+export const MessageImages: Component<{ msg: AppSchema.ChatMessage; children?: JSX.Element }> = (props) => {
   const [images, setImages] = createSignal<MessageImage[]>([])
 
   const load = async () => {
@@ -100,15 +100,7 @@ export const MessageImages: Component<{ msg: AppSchema.ChatMessage }> = (props) 
           />
         )}
       </For>
-
-      <Show when={images().length}>
-        <div
-          class="icon-button mx-2 flex items-center"
-          onClick={() => msgStore.createImage(props.msg._id, true)}
-        >
-          <PlusCircle size={20} />
-        </div>
-      </Show>
+      {props.children}
     </div>
   )
 }
