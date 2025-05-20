@@ -84,7 +84,7 @@ const HomePage: Component = () => {
           aria-labelledby="homeTitle"
         >
           <span id="homeTitle" aria-hidden="true">
-            Agn<span class="text-[var(--hl-500)]">ai</span>
+            Porn<span class="text-[var(--hl-500)]">AI</span>
           </span>
         </div>
 
