@@ -780,7 +780,8 @@ export const msgStore = createStore<MsgState>(
     async *createImage(
       { msgs, activeChatId, activeCharId, waiting },
       sourceMessageId?: string,
-      append?: boolean
+      append?: boolean,
+      promptOverride?: string
     ) {
       if (waiting) return
 
@@ -801,7 +802,7 @@ export const msgStore = createStore<MsgState>(
       const res = await imageApi.generateImage(
         {
           messageId,
-          prompt: prev?.imagePrompt,
+          prompt: promptOverride || prev?.imagePrompt,
           append,
           source: 'summary',
         },

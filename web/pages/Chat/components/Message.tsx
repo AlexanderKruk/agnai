@@ -16,6 +16,7 @@ import {
   Split,
   MoreHorizontal,
   Braces,
+  ImagePlus,
 } from 'lucide-solid'
 import {
   Accessor,
@@ -167,6 +168,11 @@ const Message: Component<MessageProps> = (props) => {
     const next = ctx.waiting?.image ?? 1
     return next
   })
+
+  const createImage = () => {
+    msgStore.createImage(props.msg.msg)
+    showOpt[1](false)
+  }
 
   return (
     <div
@@ -538,6 +544,18 @@ const MessageOptions: Component<{
         show: !!props.msg.characterId && props.msg.adapter !== 'image',
         onClick: () => !props.partial && chatStore.computePrompt(props.msg, true),
         icon: Terminal,
+      },
+
+      image: {
+        key: 'image',
+        label: 'Generate Image',
+        class: 'image-btn',
+        outer: props.ui.msgOptsInline.image,
+        show: !props.msg.system && !props.msg.event && props.msg.adapter !== 'image' && !props.partial && !props.msg.json,
+        onClick: () => {
+          msgStore.createImage(props.msg._id, false, props.msg.msg)
+        },
+        icon: ImagePlus,
       },
 
       edit: {

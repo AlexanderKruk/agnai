@@ -686,22 +686,46 @@ export const userStore = createStore<UserState>(
       const current = update[update.mode]
       await updateTheme(update)
 
-      const keys = Object.keys(defaultUIsettings.msgOptsInline) as UI.MessageOption[]
+      // Ensure msgOptsInline exists on update, using a copy of defaults if not, or an empty object as a fallback.
+      if (!update.msgOptsInline) {
+        update.msgOptsInline = { ...defaultUIsettings.msgOptsInline };
+      } else {
+        // Ensure it's a fresh object for modification if it exists to avoid issues with frozen objects.
+        update.msgOptsInline = { ...update.msgOptsInline };
+      }
 
-      for (const key in defaultUIsettings) {
-        if (key in update === false) {
-          const prop = key as keyof UISettings
-          update[prop] = defaultUIsettings[prop] as never // ...?
+      const defaultMsgOpts = defaultUIsettings.msgOptsInline;
+      const userMsgOpts = update.msgOptsInline;
+
+      // Iterate over default options to add missing ones or update positions.
+      for (const key in defaultMsgOpts) {
+        const optKey = key as UI.MessageOption;
+        if (userMsgOpts[optKey]) {
+          // If user has the option, update its position to the default position.
+          // Keep user's 'outer' preference.
+          userMsgOpts[optKey] = {
+            outer: userMsgOpts[optKey].outer, // Preserve user's outer setting
+            pos: defaultMsgOpts[optKey].pos    // Enforce default position
+          };
+        } else {
+          // If user doesn't have the option, add it from defaults.
+          userMsgOpts[optKey] = { ...defaultMsgOpts[optKey] };
         }
       }
 
-      for (const key of keys) {
-        if (!update.msgOptsInline[key]) {
-          update.msgOptsInline[key] = { ...defaultUIsettings.msgOptsInline[key] }
+      // Iterate over user's options to remove any that are no longer in defaults.
+      for (const key in userMsgOpts) {
+        const optKey = key as UI.MessageOption;
+        if (!defaultMsgOpts[optKey]) {
+          delete userMsgOpts[optKey];
         }
+      }
 
-        if (!defaultUIsettings.msgOptsInline[key]) {
-          delete update.msgOptsInline[key]
+      // Fallback for ensuring all top-level UI settings from defaults are present.
+      for (const key in defaultUIsettings) {
+        if (key as keyof UISettings === 'msgOptsInline') continue; // Already handled
+        if (update[key as keyof UISettings] === undefined) {
+          update[key as keyof UISettings] = defaultUIsettings[key as keyof UISettings] as never;
         }
       }
 
