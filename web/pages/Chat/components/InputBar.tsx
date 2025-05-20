@@ -152,7 +152,10 @@ const InputBar: Component<{
     if (!ref) return
 
     const value = ref.value.trim() || text().trim()
-    if (!value) return
+    if (!value) {
+      respondAgain()
+      return
+    }
 
     if (props.swiped) {
       return toastStore.warn(`Confirm or cancel swiping before sending`)
@@ -285,19 +288,21 @@ const InputBar: Component<{
       </Button>
       <DropMenu show={menu()} close={() => setMenu(false)} vert="up" horz="right">
         <div class="flex w-48 flex-col gap-2 p-2">
-          <Button
-            schema="secondary"
-            class="w-full"
-            onClick={() => {
-              setMenu(false)
-              msgStore.selfGenerate()
-            }}
-            alignLeft
-            disabled={!ctx.impersonate}
-          >
-            <MessageCircle size={18} />
-            Respond as Me
-          </Button>
+          <Show when={false}>
+            <Button
+              schema="secondary"
+              class="w-full"
+              onClick={() => {
+                setMenu(false)
+                msgStore.selfGenerate()
+              }}
+              alignLeft
+              disabled={!ctx.impersonate}
+            >
+              <MessageCircle size={18} />
+              Respond as Me
+            </Button>
+          </Show>
           <Show when={ctx.activeBots.length > 1}>
             <div>Auto-reply</div>
             <Button
@@ -333,16 +338,22 @@ const InputBar: Component<{
               <Toggle fieldName="ooc" value={props.ooc} onChange={toggleOoc} />
             </Button>
           </Show>
-          <Button schema="secondary" class="w-full" onClick={createImage} alignLeft>
-            <ImagePlus size={18} /> Generate Image
-          </Button>
+          <Show when={false}>
+            <Button schema="secondary" class="w-full" onClick={createImage} alignLeft>
+              <ImagePlus size={18} /> Generate Image
+            </Button>
+          </Show>
           <Show when={!!state.lastMsg?.characterId && isOwner()}>
-            <Button schema="secondary" class="w-full" onClick={respondAgain} alignLeft>
-              <PlusCircle size={18} /> Respond Again
-            </Button>
-            <Button schema="secondary" class="w-full" onClick={more} alignLeft>
-              <PlusCircle size={18} /> Generate More
-            </Button>
+            <Show when={false}>
+              <Button schema="secondary" class="w-full" onClick={respondAgain} alignLeft>
+                <PlusCircle size={18} /> Respond Again
+              </Button>
+            </Show>
+            <Show when={false}>
+              <Button schema="secondary" class="w-full" onClick={more} alignLeft>
+                <PlusCircle size={18} /> Generate More
+              </Button>
+            </Show>
             <Show when={!!props.char?.voice?.service}>
               <Button schema="secondary" class="w-full" onClick={playVoice} alignLeft>
                 <Megaphone size={18} /> Play Voice
@@ -373,7 +384,9 @@ const InputBar: Component<{
               Attach Image
             </LabelButton>
           </Show>
-          <hr class="my-1 border-[var(--bg-600)]" />
+          <Show when={false}>
+            <hr class="my-1 border-[var(--bg-600)]" />
+          </Show>
           <Button
             schema="secondary"
             class="w-full"
