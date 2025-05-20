@@ -182,7 +182,7 @@ const Navigation: Component = () => {
                   class="flex h-8 w-full items-center justify-center rounded-lg font-bold"
                   aria-hidden="true"
                 >
-                  Porno<span class="text-[var(--hl-500)]">AI</span>
+                  Porn<span class="text-[var(--hl-500)]">AI</span>
                   {suffix()}
                 </div>
               </A>
