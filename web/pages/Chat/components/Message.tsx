@@ -418,7 +418,7 @@ const Message: Component<MessageProps> = (props) => {
                     </Show>
 
                     {/* "Add Image" button/placeholder */}
-                    <Show when={!content().generating && !!props.msg.characterId && !props.msg.system && !props.msg.event && props.msg.adapter !== 'image' && (!ctx.waiting?.image || ctx.waiting.messageId !== props.msg._id)}>
+                    <Show when={!content().generating && !!props.msg.characterId && !props.msg.system && !props.msg.event && props.msg.adapter !== 'image' && (props.msg.extras && props.msg.extras.length > 0) && (!ctx.waiting?.image || ctx.waiting.messageId !== props.msg._id)}>
                       <div
                         class="icon-button mt-2 flex h-32 w-32 items-center justify-center rounded-md border border-dashed border-neutral-600"
                         title="Add another image"
@@ -566,9 +566,9 @@ const MessageOptions: Component<{
         label: 'Generate Image',
         class: 'image-btn',
         outer: props.ui.msgOptsInline.image,
-        show: false,
+        show: !!props.msg.characterId && !props.msg.system && !props.msg.event && props.msg.adapter !== 'image' && !props.partial && !props.msg.json,
         onClick: () => {
-          // msgStore.createImage(props.msg._id, false, props.msg.msg)
+          msgStore.createImage(props.msg._id, false, props.msg.msg)
         },
         icon: ImagePlus,
       },
