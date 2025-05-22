@@ -124,7 +124,7 @@ const RegisterForm: Component<FormProps> = (props) => {
       return
     }
 
-    userStore.register({ handle, username, password }, () => navigate('/profile'))
+    userStore.register({ handle, username, password }, () => navigate('/'))
   }
 
   return (
