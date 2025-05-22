@@ -132,9 +132,9 @@ const InputBar: Component<{
   }
 
   const placeholder = createMemo(() => {
-    if (props.ooc) return 'Send a message... (OOC)'
-    if (chats.replyAs) return `Send a message to ${ctx.allBots[chats.replyAs]?.name}...`
-    return `Send a message...`
+    if (props.ooc) return `Example: *Winking* What's up?`
+    if (chats.replyAs) return `Example: *Winking* What's up?`
+    return `Example: *Winking* What's up?`
   })
 
   const [saveDraft, disposeSaveDraftDebounce] = createDebounce((text: string) => {
