@@ -338,6 +338,24 @@ const InputBar: Component<{
               <Toggle fieldName="ooc" value={props.ooc} onChange={toggleOoc} />
             </Button>
           </Show>
+          {/* <Show when={mob()}>
+            <Button
+              schema="secondary"
+              class="w-full"
+              onClick={() => {
+                setMenu(false)
+                settingStore.toggleImpersonate(true)
+              }}
+              alignLeft
+            >
+              <AvatarIcon
+                avatarUrl={chars.impersonating?.avatar || user.profile?.avatar}
+                format={{ corners: 'circle', size: 'sm' }}
+                class="mr-2"
+              />
+              Impersonate
+            </Button>
+          </Show> */}
           <Show when={false}>
             <Button schema="secondary" class="w-full" onClick={createImage} alignLeft>
               <ImagePlus size={18} /> Generate Image
@@ -423,21 +441,6 @@ const InputBar: Component<{
         </div>
       </DropMenu>
 
-      <div class="flex h-[40px] items-center sm:hidden">
-        <a
-          href="#"
-          role="button"
-          aria-label="Open impersonation menu"
-          class="icon-button"
-          onClick={() => settingStore.toggleImpersonate(true)}
-        >
-          <AvatarIcon
-            avatarUrl={chars.impersonating?.avatar || user.profile?.avatar}
-            format={{ corners: 'circle', size: 'sm' }}
-            class="ml-1 mr-2"
-          />
-        </a>
-      </div>
       <Show when={complete()}>
         <AutoComplete
           options={completeOpts()}
