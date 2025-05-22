@@ -130,7 +130,7 @@ export async function deleteCachedMessageImage(messageId: string, cacheId: strin
 
   await storage.setItem(`message-images-${messageId}`, JSON.stringify(filtered))
 
-  console.log(`[cache] image deleted: `, cacheId)
+  // console.log(`[cache] image deleted: `, cacheId)
 }
 
 async function addMessageImage(messageId: string, cacheId: string) {
@@ -896,7 +896,7 @@ async function handleImage(body: {
 
     await storage.setItem(cacheId, image)
     await addMessageImage(messageId, cacheId)
-    console.log(`[cache] image cached:`, cacheId)
+    // console.log(`[cache] image cached:`, cacheId)
   }
 
   const msg = msgs.find((m) => m._id === messageId)

@@ -98,24 +98,24 @@ function onMessage(msg: MessageEvent<any>) {
 
     if (!squelched.has(payload.type)) {
       if (payload.type === 'service-prompt' || payload.type === 'inference-prompt') {
-        console.log(
-          `Prompt\n${
-            typeof payload.prompt === 'string'
-              ? payload.prompt
-              : JSON.stringify(payload.prompt, null, 2)
-          }`
-        )
+        // console.log(
+        //   `Prompt\n${
+        //     typeof payload.prompt === 'string'
+        //       ? payload.prompt
+        //       : JSON.stringify(payload.prompt, null, 2)
+        //   }`
+        // )
       } else if (payload.type !== 'image-generated') {
-        console.log(`[${new Date().toLocaleTimeString()}]`, JSON.stringify(payload))
+        // console.log(`[${new Date().toLocaleTimeString()}]`, JSON.stringify(payload))
       } else {
         const image = payload.image || ''
-        console.log(
-          `[${new Date().toLocaleTimeString()}]`,
-          JSON.stringify({
-            ...payload,
-            image: image.startsWith('http') ? image : `${image.slice(0, 60)}'...'`,
-          })
-        )
+        // console.log(
+        //   `[${new Date().toLocaleTimeString()}]`,
+        //   JSON.stringify({
+        //     ...payload,
+        //     image: image.startsWith('http') ? image : `${image.slice(0, 60)}'...'`,
+        //   })
+        // )
       }
     } else {
       // console.log(payload.type, '...')
