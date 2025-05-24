@@ -92,13 +92,13 @@ export const ManualPaginate: Component<{
           <ChevronLast size={20} />
         </Button>
       </Show>
-      <TextInput
+      {/* <TextInput
         type="number"
         fieldName="paginationSize"
         value={props.pager.pageSize()}
         onChange={onPageSize}
         class="w-20 py-[2px]"
-      />
+      /> */}
     </div>
   )
 }
