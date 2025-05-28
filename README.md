@@ -181,7 +181,7 @@ This project is tested with BrowserStack.
 
 # Public Character Configuration
 
-The application supports a special mode where characters created by a specific user are accessible to all users. 
+The application supports a special mode where characters created by a specific user are accessible to all users, and optionally, all users can share the same UI settings.
 
 ## How to Use
 1. Set the `PUBLIC_CHARACTER_USER_ID` environment variable in your `.env` file
@@ -194,11 +194,32 @@ The application supports a special mode where characters created by a specific u
    ```
 4. Restart the application
 
-## How It Works
+## Public Characters
+
+When `PUBLIC_CHARACTER_USER_ID` is configured, characters created by that user become available to all other users as "public characters."
+
+**Key features:**
 - Characters created by the specified user will be visible to all other users
 - Users can create chats with these public characters
-- Your own characters remain private and only accessible to you 
-- The public characters are treated as read-only for other users (they can't edit or delete them)
+- Public characters are read-only for other users (they can't edit or delete them)
+- Your own characters remain private and only accessible to you
+
+## Shared UI Settings
+
+When `PUBLIC_CHARACTER_USER_ID` is configured, all users will automatically use the same UI settings as the public character user. This ensures a consistent user interface experience across all users.
+
+**How it works:**
+- All users will load the UI settings from the public character user instead of their own
+- When any user changes UI settings, those changes are applied to the public character user and synchronized to all connected users
+- If the public character user doesn't exist or doesn't have UI settings, users will fall back to their individual settings
+
+**Benefits:**
+- Consistent UI experience for all users
+- Centralized UI customization management
+- Automatic synchronization of UI changes across all users
+- Graceful fallback if the public user doesn't exist
+
+**Note:** This feature only affects UI settings (themes, colors, layout preferences, etc.). Other user settings like API keys, presets, and personal data remain private to each individual user.
 
 ## Security Considerations
 - Choose a dedicated account to be the public character creator

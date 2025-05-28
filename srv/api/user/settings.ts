@@ -154,9 +154,34 @@ export const deleteElevenLabsKey = handle(async ({ userId }) => {
 export const updateUI = handle(async ({ userId, body }) => {
   assertValid(UI.uiGuard, body, true)
 
-  await store.users.updateUserUI(userId, body)
+  // If PUBLIC_CHARACTER_USER_ID is configured, update their UI settings instead
+  // This ensures all users share the same UI settings
+  let targetUserId = userId
+  
+  if (config.publicCharacterUserId) {
+    try {
+      // Verify the public character user exists before using it
+      const publicUser = await store.users.getUser(config.publicCharacterUserId)
+      if (publicUser) {
+        targetUserId = config.publicCharacterUserId
+      } else {
+        console.warn(`PUBLIC_CHARACTER_USER_ID (${config.publicCharacterUserId}) does not exist, falling back to individual user UI settings`)
+      }
+    } catch (error) {
+      console.warn(`Failed to verify PUBLIC_CHARACTER_USER_ID (${config.publicCharacterUserId}):`, error)
+    }
+  }
 
-  sendOne(userId, { type: 'ui-update', ui: body })
+  await store.users.updateUserUI(targetUserId, body)
+
+  // Send UI update to all users if we're using a public character user
+  if (config.publicCharacterUserId && targetUserId === config.publicCharacterUserId) {
+    // Send to all connected users to sync the UI changes
+    sendAll({ type: 'ui-update', ui: body })
+  } else {
+    // Send only to the specific user if no public character user is configured
+    sendOne(userId, { type: 'ui-update', ui: body })
+  }
 
   return { success: true }
 })
@@ -273,10 +298,6 @@ export const updatePartialConfig = handle(async ({ userId, body }) => {
 
   if (body.elevenLabsApiKey) {
     update.elevenLabsApiKey = encryptText(body.elevenLabsApiKey)
-  }
-
-  if (body.thirdPartyPassword) {
-    update.thirdPartyPassword = encryptText(body.thirdPartyPassword)
   }
 
   if (body.images) {
@@ -512,6 +533,19 @@ export async function getSafeUserConfig(userId: string, seed?: string) {
   const next = sub ? { type: sub?.type, level: sub?.level, tierId: sub.tier._id } : undefined
   await store.users.updateUser(userId, { sub: next })
   user.sub = next
+
+  // If PUBLIC_CHARACTER_USER_ID is configured, use their UI settings for all users
+  if (config.publicCharacterUserId && userId !== config.publicCharacterUserId) {
+    try {
+      const publicUser = await store.users.getUser(config.publicCharacterUserId)
+      if (publicUser && publicUser.ui) {
+        user.ui = publicUser.ui
+      }
+    } catch (error) {
+      // Log the error but don't fail the request - just use the user's own UI settings
+      console.warn(`Failed to load UI settings from PUBLIC_CHARACTER_USER_ID (${config.publicCharacterUserId}):`, error)
+    }
+  }
 
   return toSafeUser(user, seed)
 }
