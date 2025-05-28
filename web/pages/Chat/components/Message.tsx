@@ -282,7 +282,7 @@ const Message: Component<MessageProps> = (props) => {
 
                 <span
                   classList={{ invisible: ctx.anonymize }}
-                  class={`message-date text-600 flex items-center text-xs leading-none`}
+                  class={`message-date text-600 flex items-center text-xs leading-none hidden`}
                   data-bot-time={isBot}
                   data-user-time={isUser}
                 >
