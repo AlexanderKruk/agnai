@@ -274,10 +274,7 @@ export async function getPublicCharacters(): Promise<AppSchema.Character[]> {
       voice: 1,
       voiceDisabled: 1,
       folder: 1,
-      persona: 1,
-      sampleChat: 1,
       greeting: 1,
-      scenario: 1,
       visualType: 1,
       sprite: 1,
     })

@@ -93,11 +93,11 @@ export async function generateResponse(
   const request: GenerateRequestV2 = {
     requestId: v4(),
     kind: opts.kind,
-    chat: entities.chat,
-    user: entities.user,
-    char: removeAvatar(entities.char),
-    sender: removeAvatar(entities.profile),
-    members: entities.members.map(removeAvatar),
+    chat: sanitizeChat(entities.chat),
+    user: sanitizeUser(entities.user),
+    char: removeSensitiveData(entities.char),
+    sender: removeSensitiveData(entities.profile),
+    members: entities.members.map(removeSensitiveData),
     parts: prompt.parts,
     text:
       opts.kind === 'chat-query' ||
@@ -109,21 +109,20 @@ export async function generateResponse(
         : undefined,
     lines: prompt.lines,
     linesCount: props.messages.length,
-    settings: entities.settings,
+    settings: sanitizeSettings(entities.settings),
     replacing: props.replacing,
     continuing: props.continuing,
-    replyAs: removeAvatar(
-      opts.kind === 'self' && props.impersonate ? props.impersonate : props.replyAs
-    ),
-    impersonate: removeAvatar(props.impersonate),
-    characters: removeAvatars(entities.characters),
+    replyAs: removeSensitiveData(props.replyAs),
+    impersonate: removeSensitiveData(props.impersonate),
+    characters: removeSensitiveDataFromChars(entities.characters),
     parent: props.parent?._id,
     lastMessage: entities.lastMessage?.date,
-    jsonSchema,
-    chatEmbeds,
-    userEmbeds,
+    chatEmbeds: chatEmbeds,
+    userEmbeds: userEmbeds,
     jsonValues: props.json,
-    reschemaPrompt: props.reschemaPrompt,
+    eventStream: !!(
+      (entities.user.adapterConfig?.[entities.settings.service!] as any)?.streamResponse ?? true
+    ),
   }
 
   if (
@@ -514,7 +513,8 @@ async function getGenerateProps(
 
   if (!props.replyAs) throw new Error(`Could not find character to reply as`)
 
-  // Remove avatar from generate requests
+  // Remove avatar from generate requests but keep sensitive data for internal frontend use
+  // The sensitive data will be stripped when sending the actual request
   entities.char = { ...entities.char, avatar: undefined }
   props.replyAs = { ...props.replyAs, avatar: undefined }
 
@@ -636,4 +636,126 @@ function removeAvatars(chars: Record<string, AppSchema.Character>) {
   }
 
   return next
+}
+
+// Remove sensitive character data from frontend requests to hide from browser network logs
+function removeSensitiveData<T extends AppSchema.Character | AppSchema.Profile | undefined>(char?: T): T {
+  if (!char) return undefined as T
+  const sanitized = { ...char, avatar: undefined }
+  
+  // Remove sensitive fields that shouldn't be visible in browser network logs
+  if ('scenario' in sanitized) {
+    delete (sanitized as any).scenario
+  }
+  if ('sampleChat' in sanitized) {
+    delete (sanitized as any).sampleChat
+  }
+  if ('persona' in sanitized) {
+    delete (sanitized as any).persona
+  }
+  
+  return sanitized
+}
+
+function removeSensitiveDataFromChars(chars: Record<string, AppSchema.Character>) {
+  const next: Record<string, AppSchema.Character> = {}
+
+  for (const id in chars) {
+    next[id] = removeSensitiveData(chars[id]) as AppSchema.Character
+  }
+
+  return next
+}
+
+// Remove sensitive data from settings object
+function sanitizeSettings(settings: any) {
+  if (!settings) return settings
+  
+  const sanitized = { ...settings }
+  
+  // Only hide fields that actually contain sensitive data (non-empty strings)
+  if (sanitized.systemPrompt && sanitized.systemPrompt.trim()) {
+    sanitized.systemPrompt = '[HIDDEN]'
+  }
+  
+  if (sanitized.ultimeJailbreak && sanitized.ultimeJailbreak.trim()) {
+    sanitized.ultimeJailbreak = '[HIDDEN]'
+  }
+  
+  if (sanitized.gaslight && sanitized.gaslight.trim()) {
+    sanitized.gaslight = '[HIDDEN]'
+  }
+  
+  if (sanitized.thirdPartyKey && sanitized.thirdPartyKey.trim()) {
+    sanitized.thirdPartyKey = '[HIDDEN]'
+  }
+  
+  if (sanitized.thirdPartyUrl && sanitized.thirdPartyUrl.trim()) {
+    sanitized.thirdPartyUrl = '[HIDDEN]'
+  }
+  
+  // Remove API keys from registered services only if they contain data
+  if (sanitized.registered) {
+    const cleanRegistered: any = {}
+    for (const [service, config] of Object.entries(sanitized.registered)) {
+      const configObj = config as any
+      cleanRegistered[service] = {
+        ...configObj,
+        thirdPartyKey: configObj.thirdPartyKey && configObj.thirdPartyKey.trim() ? '[HIDDEN]' : configObj.thirdPartyKey,
+        thirdPartyUrl: configObj.thirdPartyUrl && configObj.thirdPartyUrl.trim() ? '[HIDDEN]' : configObj.thirdPartyUrl
+      }
+    }
+    sanitized.registered = cleanRegistered
+  }
+  
+  return sanitized
+}
+
+// Remove sensitive data from chat object
+function sanitizeChat(chat: any) {
+  if (!chat) return chat
+  
+  return {
+    ...chat,
+    greeting: '[HIDDEN]',
+    // Keep other non-sensitive chat fields
+    _id: chat._id,
+    kind: chat.kind,
+    characterId: chat.characterId,
+    userId: chat.userId,
+    memberIds: chat.memberIds,
+    name: chat.name,
+    scenarioIds: chat.scenarioIds,
+    createdAt: chat.createdAt,
+    updatedAt: chat.updatedAt,
+    messageCount: chat.messageCount,
+    tempCharacters: chat.tempCharacters,
+    characters: chat.characters,
+    treeLeafId: chat.treeLeafId,
+    localSettings: chat.localSettings
+  }
+}
+
+// Remove sensitive data from user object
+function sanitizeUser(user: any) {
+  if (!user) return user
+  
+  return {
+    ...user,
+    // Only hide API keys that actually contain sensitive data (non-empty strings)
+    novelApiKey: user.novelApiKey && user.novelApiKey.trim() ? '[HIDDEN]' : user.novelApiKey,
+    hordeKey: user.hordeKey && user.hordeKey.trim() ? '[HIDDEN]' : user.hordeKey,
+    oaiKey: user.oaiKey && user.oaiKey.trim() ? '[HIDDEN]' : user.oaiKey,
+    thirdPartyPassword: user.thirdPartyPassword && user.thirdPartyPassword.trim() ? '[HIDDEN]' : user.thirdPartyPassword,
+    // Keep basic user info
+    _id: user._id,
+    kind: user.kind,
+    username: user.username,
+    admin: user.admin,
+    defaultAdapter: user.defaultAdapter,
+    defaultPresets: user.defaultPresets,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    ui: user.ui
+  }
 }
