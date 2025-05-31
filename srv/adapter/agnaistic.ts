@@ -28,6 +28,7 @@ import { obtainLock, releaseLock } from '../api/chat/lock'
 import { getServerConfiguration } from '../db/admin'
 import { handleGemini } from './gemini'
 import { handleA1111ForgeAdapter } from './a1111forge'
+import { handleAgnaiSubscriber } from './agnai-subscriber'
 
 export type SubscriptionPreset = Awaited<NonNullable<ReturnType<typeof getSubscriptionPreset>>>
 
@@ -393,6 +394,7 @@ export async function updateRegisteredSubs() {
 export const handlers: { [key in AIAdapter]: ModelAdapter } = {
   novel: handleNovel,
   kobold: handleThirdParty,
+  'agnai-subscriber': handleAgnaiSubscriber,
   'third-party': handleThirdParty,
   ooba: handleThirdParty,
   horde: handleHorde,
@@ -412,6 +414,7 @@ export const handlers: { [key in AIAdapter]: ModelAdapter } = {
 export function getHandlers(settings: Partial<AppSchema.GenSettings>) {
   switch (settings.service!) {
     case 'agnaistic':
+    case 'agnai-subscriber':
     case 'claude':
     case 'goose':
     case 'replicate':
