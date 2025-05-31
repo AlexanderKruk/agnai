@@ -282,7 +282,7 @@ const Message: Component<MessageProps> = (props) => {
 
                 <span
                   classList={{ invisible: ctx.anonymize }}
-                  class={`message-date text-600 flex items-center text-xs leading-none hidden`}
+                  class={`message-date text-600 flex items-center text-xs leading-none`}
                   data-bot-time={isBot}
                   data-user-time={isUser}
                 >
@@ -299,7 +299,7 @@ const Message: Component<MessageProps> = (props) => {
                   </Show>
                   <Show
                     when={
-                      ctx.flags.debug || canShowMeta(props.msg, ctx.promptHistory[props.msg._id])
+                      canShowMeta(props.msg, ctx.promptHistory[props.msg._id])
                     }
                   >
                     <span

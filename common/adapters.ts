@@ -137,6 +137,7 @@ export const THIRDPARTY_FORMATS = [
 
 export const AI_ADAPTERS = [
   'agnaistic',
+  'agnai-subscriber',
   'third-party',
   'kobold',
   'novel',
@@ -427,6 +428,7 @@ export type HordeWorker = {
 
 export const ADAPTER_LABELS: { [key in AIAdapter]: string } = {
   horde: 'Horde',
+  'agnai-subscriber': 'Agnaistic Subscriber API',
   'third-party': 'Third-Party / Self-Host',
   kobold: 'KoboldAI',
   novel: 'NovelAI',
@@ -451,6 +453,7 @@ export const INSTRUCT_SERVICES: { [key in AIAdapter]?: boolean } = {
   scale: true,
   novel: true,
   agnaistic: true,
+  'agnai-subscriber': true,
   mancer: true,
   kobold: true,
   ooba: true,

@@ -770,6 +770,7 @@ export function isUsableService(
     case 'horde':
     case 'kobold':
     case 'ooba':
+    case 'agnai-subscriber':
     case 'petals': {
       return true
     }
