@@ -199,6 +199,14 @@ const ChatDetail: Component = () => {
 
     const handle = msgs.waiting.mode !== 'self' ? char?.name : profile?.handle
 
+    // Don't show waiting message immediately if line-by-line is enabled for bot responses
+    const isWaitingForBot = msgs.waiting.mode !== 'self' && charId
+    const lineByLineEnabled = user.ui.lineByLineDisplay ?? true
+    if (isWaitingForBot && lineByLineEnabled) {
+      // Don't create waiting message - let line-by-line handle the delays
+      return undefined
+    }
+
     const waitingMsgs: AppSchema.ChatMessage[] = []
 
     if (msgs.waiting.input) {

@@ -28,6 +28,7 @@ const msgInlineLabels: Record<UI.MessageOption, string> = {
   fork: 'Fork',
   trash: 'Delete',
   'schema-regen': 'Retry Schema',
+  image: 'Generate Image',
 }
 
 const UISettings: Component<{}> = () => {
@@ -181,6 +182,27 @@ const UISettings: Component<{}> = () => {
         value={state.ui.trimSentences ?? false}
         onChange={(next) => userStore.saveUI({ trimSentences: next })}
       />
+
+      <Toggle
+        label="Line-by-Line Display"
+        fieldName="lineByLineDisplay"
+        helperText="Display new bot messages line by line with a delay for a typewriter effect (non-stream mode only)"
+        value={state.ui.lineByLineDisplay ?? true}
+        onChange={(next) => userStore.saveUI({ lineByLineDisplay: next })}
+      />
+
+      <Show when={state.ui.lineByLineDisplay ?? true}>
+        <RangeInput
+          fieldName="lineByLineDelay"
+          label="Line Display Delay (ms)"
+          helperText="Delay between displaying each line in non-stream mode"
+          min={100}
+          max={2000}
+          step={100}
+          value={state.ui.lineByLineDelay ?? 800}
+          onChange={(value) => userStore.saveUI({ lineByLineDelay: value })}
+        />
+      </Show>
 
       <Toggle
         value={settings.anonymize}

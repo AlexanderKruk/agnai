@@ -14,10 +14,8 @@ import {
   X,
   Zap,
   Split,
-  MoreHorizontal,
   Braces,
   ImagePlus,
-  PlusCircle,
 } from 'lucide-solid'
 import {
   Accessor,
@@ -32,6 +30,7 @@ import {
   Show,
   Signal,
   Switch,
+  createEffect,
 } from 'solid-js'
 import { BOT_REPLACE, SELF_REPLACE } from '../../../../common/prompt'
 import { AppSchema } from '../../../../common/types/schema'
@@ -56,6 +55,57 @@ import { RelativeSpinner } from '/web/shared/Loading'
 import { LogProbs } from './LogProbs'
 import { MessageImages } from './MessageImages'
 
+/**
+ * Advanced Universal Emoji Text Splitter
+ * Splits after each emoji, ellipsis, and punctuation while keeping consecutive emojis together
+ * Keeps punctuation + emoji combinations on the same line
+ * Also splits when encountering '[' for roleplay actions
+ */
+function splitTextOnEmojisAndEllipsis(text: string): string[] {
+  if (!text || !text.trim()) return []
+  
+  // More comprehensive emoji pattern that handles complex sequences
+  const emojiPattern = '(?:[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}][\uFE0E\uFE0F]?(?:\u{200D}[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}][\uFE0E\uFE0F]?)*)'
+  
+  // Replace various patterns with special markers, keeping related elements together
+  let marked = text
+  
+  // Handle complex combinations first (punctuation + emoji, ellipsis + emoji, etc.)
+  // Pattern: ellipsis + space(s) + consecutive emojis + space
+  marked = marked.replace(new RegExp(`\\.\\.\\. *(?:${emojiPattern})+\\s+`, 'gu'), (match) => {
+    const trimmed = match.trim()
+    return trimmed + '|||SPLIT|||'
+  })
+  
+  // Pattern: punctuation + space(s) + consecutive emojis + space  
+  marked = marked.replace(new RegExp(`([!?.]) *(?:${emojiPattern})+\\s+`, 'gu'), (match) => {
+    const trimmed = match.trim()
+    return trimmed + '|||SPLIT|||'
+  })
+  
+  // Pattern: emoji + space(s) + punctuation + space
+  marked = marked.replace(new RegExp(`(${emojiPattern}) *([!?.])\\s+`, 'gu'), '$1$2|||SPLIT|||')
+  
+  // Handle standalone ellipsis + space (not followed by emoji)
+  marked = marked.replace(new RegExp(`\\.\\.\\. +(?!${emojiPattern})`, 'gu'), '...|||SPLIT|||')
+  
+  // Handle standalone punctuation + space (not followed by emoji)
+  marked = marked.replace(new RegExp(`([!?.]) +(?!${emojiPattern})`, 'gu'), '$1|||SPLIT|||')
+  
+  // Handle standalone emojis + space (most important - this should catch 💁‍♀️)
+  marked = marked.replace(new RegExp(`(${emojiPattern})\\s+`, 'gu'), '$1|||SPLIT|||')
+  
+  // Handle opening brackets [ for roleplay actions/OOC text - split before the bracket
+  marked = marked.replace(/\s+(\[)/g, '|||SPLIT|||$1')
+  
+  // Split and clean up
+  const lines = marked.split('|||SPLIT|||')
+    .filter(line => line.trim().length > 0)
+    .map(line => line.trim())
+  
+  return lines
+}
+
 type MessageProps = {
   msg: SplitMessage
   last?: boolean
@@ -76,6 +126,9 @@ type MessageProps = {
   voice?: VoiceState
   firstInserted?: boolean
   index: number
+  onTypingStart?: () => void
+  onFirstLine?: () => void
+  onReadingStarted?: () => void
 }
 
 const anonNames = new Map<string, number>()
@@ -89,6 +142,194 @@ function getAnonName(entityId: string) {
 
   const id = anonNames.get(entityId)
   return `User ${id}`
+}
+
+// Line-by-line renderer component for non-stream mode
+const LineByLineRenderer: Component<{
+  content: string
+  isBot: boolean
+  isUser: boolean
+  delay: number
+  onComplete?: () => void
+  onFirstLine?: () => void
+  userMessage?: string
+}> = (props) => {
+  const [visibleLines, setVisibleLines] = createSignal(0)
+  const [isComplete, setIsComplete] = createSignal(false)
+  const [showLoading, setShowLoading] = createSignal(true) // Always start with loading
+  const [hasStarted, setHasStarted] = createSignal(false)
+
+  // More aggressive line splitting that treats each emoji as a break point
+  const lines = createMemo(() => {
+    const text = props.content.trim()
+    if (!text) return []
+    
+    // Use our advanced emoji splitter function
+    const processedLines = splitTextOnEmojisAndEllipsis(text)
+    
+    // Ensure we have at least something to display
+    return processedLines.length > 0 ? processedLines : [text]
+  })
+
+  // Calculate reading delay based on user's message length
+  const calculateReadingDelay = (userMsg: string) => {
+    if (!userMsg) return 1000 // Default 1 second if no user message
+    
+    const words = userMsg.split(/\s+/).length
+    // Assume reading speed of ~4 words per second
+    const readingTime = (words / 4) * 1000
+    
+    // Add some randomness and minimum time
+    const minReadingTime = 800
+    const maxReadingTime = 3000
+    const randomizedTime = readingTime * (0.8 + Math.random() * 0.6) // 0.8x to 1.4x
+    
+    return Math.max(minReadingTime, Math.min(maxReadingTime, randomizedTime))
+  }
+
+  // Calculate thinking delay - time to process and formulate response
+  const calculateThinkingDelay = () => {
+    // Thinking time varies based on response complexity
+    const baseThinking = 1200 // Base thinking time
+    const complexityFactor = Math.min(lines().length * 0.3, 1.5) // More lines = more thinking
+    const randomFactor = 0.7 + Math.random() * 0.8 // 0.7x to 1.5x variation
+    
+    return (baseThinking * complexityFactor * randomFactor)
+  }
+
+  // Calculate dynamic delay based on line length with randomness
+  const calculateLineDelay = (lineText: string, baseDelay: number) => {
+    // Base calculation: longer lines get longer delays
+    const textLength = lineText.length
+    const wordsCount = lineText.split(/\s+/).length
+    
+    // Base delay calculation based on reading speed
+    // Assume ~3-4 words per second reading speed, plus time for "typing"
+    const readingTime = (wordsCount / 3.5) * 1000 // milliseconds
+    const typingTime = textLength * 30 // ~30ms per character typing simulation
+    
+    // Combine reading and typing time, but use baseDelay as minimum
+    const calculatedDelay = Math.max(baseDelay * 0.5, readingTime + typingTime)
+    
+    // Add randomness on the bigger side (20% to 60% additional time)
+    const randomMultiplier = 1 + (Math.random() * 0.4 + 0.2) // 1.2x to 1.6x
+    const finalDelay = calculatedDelay * randomMultiplier
+    
+    // Cap the maximum delay to prevent extremely long waits
+    const maxDelay = baseDelay * 4
+    return Math.min(finalDelay, maxDelay)
+  }
+
+  const displayContent = createMemo(() => {
+    const linesToShow = lines().slice(0, visibleLines())
+    return linesToShow.join('\n\n')
+  })
+
+  const renderedContent = createMemo(() => {
+    const content = displayContent()
+    return Purify.sanitize(
+      wrapWithQuoteElement(
+        markdown.makeHtml(content).replace(/&amp;nbsp;/g, '&nbsp;')
+      )
+    )
+  })
+
+  // Auto-advance lines with dynamic delays (only after loading has started)
+  createEffect(() => {
+    if (hasStarted() && visibleLines() < lines().length && !isComplete()) {
+      const currentLineIndex = visibleLines()
+      const currentLine = lines()[currentLineIndex] || ''
+      const dynamicDelay = calculateLineDelay(currentLine, props.delay)
+      
+      // Split delay evenly between thinking and typing phases
+      const baseThinkingDelay = dynamicDelay * 0.5 // 50% for thinking
+      const baseTypingDelay = dynamicDelay * 0.5 // 50% for typing
+      
+      // Add randomness to thinking phase (±40% variation)
+      const thinkingRandomness = 0.6 + (Math.random() * 0.8) // 0.6x to 1.4x multiplier
+      const thinkingDelay = baseThinkingDelay * thinkingRandomness
+      
+      // Keep typing delay enhanced for realism
+      const typingDelay = baseTypingDelay * 2.5 // Increase typing delay by 2.5x to make it more realistic
+      
+      // Phase 1: Thinking delay (no indicator) - now with more randomness
+      const thinkingTimer = setTimeout(() => {
+        // Phase 2: Show loading indicator and "type"
+        setShowLoading(true)
+        
+        const typingTimer = setTimeout(() => {
+          setVisibleLines(prev => prev + 1)
+          setShowLoading(false)
+        }, typingDelay)
+        
+        onCleanup(() => clearTimeout(typingTimer))
+      }, thinkingDelay)
+
+      onCleanup(() => clearTimeout(thinkingTimer))
+    } else if (hasStarted() && visibleLines() >= lines().length && !isComplete()) {
+      setIsComplete(true)
+      setShowLoading(false)
+      props.onComplete?.()
+    }
+  })
+
+  // Start the response sequence on mount
+  onMount(() => {
+    if (lines().length > 0) {
+      const readingDelay = calculateReadingDelay(props.userMessage || '')
+      const thinkingDelay = calculateThinkingDelay()
+      
+      // Show initial loading
+      setShowLoading(true)
+      props.onFirstLine?.() // Notify parent that processing started
+      
+      // Phase 1: Reading + thinking delay, then start displaying
+      const startTimer = setTimeout(() => {
+        setHasStarted(true)
+        setVisibleLines(1)
+        setShowLoading(false)
+      }, readingDelay + thinkingDelay)
+      
+      onCleanup(() => clearTimeout(startTimer))
+    }
+  })
+
+  // Debug logging
+  createEffect(() => {
+    console.log('LineByLineRenderer Debug:', {
+      originalContent: props.content,
+      userMessage: props.userMessage,
+      splitLines: lines(),
+      visibleLines: visibleLines(),
+      isComplete: isComplete(),
+      showLoading: showLoading(),
+      hasStarted: hasStarted(),
+      readingDelay: calculateReadingDelay(props.userMessage || ''),
+      thinkingDelay: calculateThinkingDelay(),
+      lineDelays: lines().map(line => ({
+        line: line.substring(0, 30) + '...',
+        delay: calculateLineDelay(line, props.delay)
+      }))
+    })
+  })
+
+  return (
+    <>
+      <Show when={hasStarted()}>
+        <p
+          class="rendered-markdown pr-1 streaming-markdown"
+          data-bot-message={props.isBot}
+          data-user-message={props.isUser}
+          innerHTML={renderedContent()}
+        />
+      </Show>
+      <Show when={showLoading()}>
+        <span class="flex h-8 w-12 items-center justify-start pl-4">
+          <span class="dot-flashing bg-[var(--hl-700)]"></span>
+        </span>
+      </Show>
+    </>
+  )
 }
 
 const Message: Component<MessageProps> = (props) => {
@@ -107,6 +348,10 @@ const Message: Component<MessageProps> = (props) => {
 
   const showOpt = createSignal(false)
 
+  // State for line-by-line rendering
+  const [shouldUseLineByLine, setShouldUseLineByLine] = createSignal(false)
+  const [showCharacterInfo, setShowCharacterInfo] = createSignal(true) // Controls when to show char name/avatar
+
   const [obs] = createSignal(
     new ResizeObserver(() => {
       setImg(`calc(${Math.min(avatarRef?.clientHeight, 10000)}px + 1em)`)
@@ -120,6 +365,39 @@ const Message: Component<MessageProps> = (props) => {
   const content = createMemo(() => {
     const msgV2 = getMessageContent(ctx, props, state)
     return msgV2
+  })
+
+  // Check if we should use line-by-line for new bot messages
+  createEffect(() => {
+    const isNewBotMessage = props.msg.characterId && props.last && !props.partial && !props.retrying
+    const isNonStreamMode = !props.partial // Not currently streaming
+    const hasContent = props.msg.msg && props.msg.msg.trim()
+    const lineByLineEnabled = user.ui.lineByLineDisplay ?? true
+    
+    // More relaxed conditions - trigger for any bot message that has content
+    if (isNewBotMessage && isNonStreamMode && hasContent && lineByLineEnabled) {
+      // Hide character info initially for line-by-line mode
+      setShowCharacterInfo(false)
+      setShouldUseLineByLine(true)
+    } else {
+      // Show character info immediately for normal messages
+      setShowCharacterInfo(true)
+    }
+  })
+
+  // Get the previous user message for reading delay calculation
+  const getPreviousUserMessage = createMemo(() => {
+    const msgs = msgStore.getState().msgs
+    if (!msgs.length) return ''
+    
+    // Find the most recent user message (not bot message)
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      const msg = msgs[i]
+      if (msg.userId && !msg.characterId) {
+        return msg.msg || ''
+      }
+    }
+    return ''
   })
 
   const saveEdit = () => {
@@ -194,133 +472,137 @@ const Message: Component<MessageProps> = (props) => {
       <div class={`flex w-full`} classList={{ 'opacity-50': !!props.msg.ooc }}>
         <div class={`flex h-fit w-full select-text flex-col gap-1`}>
           <div class="break-words">
-            <span
-              class={`float-left pr-3`}
-              style={{ 'min-height': user.ui.imageWrap ? '' : img() }}
-              data-bot-avatar={isBot}
-              data-user-avatar={isUser}
-            >
-              <Switch>
-                <Match when={user.ui.avatarSize === 'hide'}>{null}</Match>
-                <Match when={props.msg.event === 'world' || props.msg.event === 'ooc'}>
-                  <div
-                    class={`avatar-${format().size} flex shrink-0 items-center justify-center pt-3`}
-                  >
-                    <Zap />
-                  </div>
-                </Match>
-
-                <Match when={props.voice === 'generating'}>
-                  <div class="animate-pulse cursor-pointer" onClick={msgStore.stopSpeech}>
-                    <AvatarIcon format={format()} Icon={DownloadCloud} />
-                  </div>
-                </Match>
-
-                <Match when={props.voice === 'playing'}>
-                  <div class="animate-pulse cursor-pointer" onClick={msgStore.stopSpeech}>
-                    <AvatarIcon format={format()} Icon={PauseCircle} bot />
-                  </div>
-                </Match>
-
-                <Match when={ctx.allBots[props.msg.characterId!]}>
-                  <CharacterAvatar
-                    char={ctx.allBots[props.msg.characterId!]}
-                    format={format()}
-                    openable
-                    bot
-                    zoom={1.75}
-                  />
-                </Match>
-
-                <Match when={!props.msg.characterId}>
-                  <AvatarIcon
-                    format={format()}
-                    Icon={DownloadCloud}
-                    avatarUrl={state.memberIds[props.msg.userId!]?.avatar}
-                    anonymize={ctx.anonymize}
-                  />
-                </Match>
-
-                <Match when>
-                  <AvatarIcon
-                    format={format()}
-                    Icon={DownloadCloud}
-                    avatarUrl={state.memberIds[props.msg.userId!]?.avatar}
-                    anonymize={ctx.anonymize}
-                  />
-                </Match>
-              </Switch>
-            </span>
-            <span class="flex flex-row justify-between pb-1">
+            <Show when={showCharacterInfo()}>
               <span
-                class={`flex min-w-0 shrink flex-col items-start gap-1 overflow-hidden`}
-                classList={{
-                  'sm:flex-col': props.isPaneOpen,
-                  'sm:gap-1': props.isPaneOpen,
-                  'sm:flex-row': !props.isPaneOpen,
-                  'sm:gap-0': !props.isPaneOpen,
-                  'sm:items-end': !props.isPaneOpen,
-                  italic: props.msg.ooc,
-                }}
+                class={`float-left pr-3`}
+                style={{ 'min-height': user.ui.imageWrap ? '' : img() }}
+                data-bot-avatar={isBot}
+                data-user-avatar={isUser}
               >
-                <b
-                  class={`chat-name text-900 mr-2 max-w-[160px] overflow-hidden  text-ellipsis whitespace-nowrap sm:max-w-[400px]`}
-                  // Necessary to override text-md and text-lg's line height, for proper alignment
-                  style="line-height: 1;"
-                  data-bot-name={isBot}
-                  data-user-name={isUser}
+                <Switch>
+                  <Match when={user.ui.avatarSize === 'hide'}>{null}</Match>
+                  <Match when={props.msg.event === 'world' || props.msg.event === 'ooc'}>
+                    <div
+                      class={`avatar-${format().size} flex shrink-0 items-center justify-center pt-3`}
+                    >
+                      <Zap />
+                    </div>
+                  </Match>
+
+                  <Match when={props.voice === 'generating'}>
+                    <div class="animate-pulse cursor-pointer" onClick={msgStore.stopSpeech}>
+                      <AvatarIcon format={format()} Icon={DownloadCloud} />
+                    </div>
+                  </Match>
+
+                  <Match when={props.voice === 'playing'}>
+                    <div class="animate-pulse cursor-pointer" onClick={msgStore.stopSpeech}>
+                      <AvatarIcon format={format()} Icon={PauseCircle} bot />
+                    </div>
+                  </Match>
+
+                  <Match when={ctx.allBots[props.msg.characterId!]}>
+                    <CharacterAvatar
+                      char={ctx.allBots[props.msg.characterId!]}
+                      format={format()}
+                      openable
+                      bot
+                      zoom={1.75}
+                    />
+                  </Match>
+
+                  <Match when={!props.msg.characterId}>
+                    <AvatarIcon
+                      format={format()}
+                      Icon={DownloadCloud}
+                      avatarUrl={state.memberIds[props.msg.userId!]?.avatar}
+                      anonymize={ctx.anonymize}
+                    />
+                  </Match>
+
+                  <Match when>
+                    <AvatarIcon
+                      format={format()}
+                      Icon={DownloadCloud}
+                      avatarUrl={state.memberIds[props.msg.userId!]?.avatar}
+                      anonymize={ctx.anonymize}
+                    />
+                  </Match>
+                </Switch>
+              </span>
+            </Show>
+            <span class="flex flex-row justify-between pb-1">
+              <Show when={showCharacterInfo()}>
+                <span
+                  class={`flex min-w-0 shrink flex-col items-start gap-1 overflow-hidden`}
                   classList={{
-                    hidden: !!props.msg.event,
-                    'sm:text-base': props.isPaneOpen,
-                    'sm:text-lg': !props.isPaneOpen,
+                    'sm:flex-col': props.isPaneOpen,
+                    'sm:gap-1': props.isPaneOpen,
+                    'sm:flex-row': !props.isPaneOpen,
+                    'sm:gap-0': !props.isPaneOpen,
+                    'sm:items-end': !props.isPaneOpen,
+                    italic: props.msg.ooc,
                   }}
                 >
-                  {ctx.anonymize && !props.msg.characterId
-                    ? getAnonName(props.msg.userId!)
-                    : props.msg.handle}
-                </b>
-
-                <span
-                  classList={{ invisible: ctx.anonymize }}
-                  class={`message-date text-600 flex items-center text-xs leading-none`}
-                  data-bot-time={isBot}
-                  data-user-time={isUser}
-                >
-                  {new Date(props.msg.createdAt).toLocaleString()}
-                  <Show when={ctx.flags.debug}>
-                    <tr>
-                      <td class="pr-2">
-                        <b>id</b>
-                      </td>
-                      <td>
-                        id:{props.msg._id.slice(0, 4)} up:{props.msg.parent?.slice(0, 4)}
-                      </td>
-                    </tr>
-                  </Show>
-                  <Show
-                    when={
-                      canShowMeta(props.msg, ctx.promptHistory[props.msg._id])
-                    }
+                  <b
+                    class={`chat-name text-900 mr-2 max-w-[160px] overflow-hidden  text-ellipsis whitespace-nowrap sm:max-w-[400px]`}
+                    // Necessary to override text-md and text-lg's line height, for proper alignment
+                    style="line-height: 1;"
+                    data-bot-name={isBot}
+                    data-user-name={isUser}
+                    classList={{
+                      hidden: !!props.msg.event,
+                      'sm:text-base': props.isPaneOpen,
+                      'sm:text-lg': !props.isPaneOpen,
+                    }}
                   >
-                    <span
-                      class="text-600 hover:text-900 ml-1 cursor-pointer"
-                      onClick={() =>
-                        rootModalStore.info(
-                          'Message Information',
-                          <Meta
-                            msg={props.msg}
-                            history={ctx.promptHistory[props.msg._id]}
-                            flags={ctx.flags}
-                            tree={ctx.chatTree}
-                          />
-                        )
+                    {ctx.anonymize && !props.msg.characterId
+                      ? getAnonName(props.msg.userId!)
+                      : props.msg.handle}
+                  </b>
+
+                  <span
+                    classList={{ invisible: ctx.anonymize }}
+                    class={`message-date text-600 flex items-center text-xs leading-none`}
+                    data-bot-time={isBot}
+                    data-user-time={isUser}
+                  >
+                    {new Date(props.msg.createdAt).toLocaleString()}
+                    <Show when={ctx.flags.debug}>
+                      <tr>
+                        <td class="pr-2">
+                          <b>id</b>
+                        </td>
+                        <td>
+                          id:{props.msg._id.slice(0, 4)} up:{props.msg.parent?.slice(0, 4)}
+                        </td>
+                      </tr>
+                    </Show>
+                    <Show
+                      when={
+                        canShowMeta(props.msg, ctx.promptHistory[props.msg._id])
                       }
                     >
-                      <Info size={14} />
-                    </span>
-                  </Show>
+                      <span
+                        class="text-600 hover:text-900 ml-1 cursor-pointer"
+                        onClick={() =>
+                          rootModalStore.info(
+                            'Message Information',
+                            <Meta
+                              msg={props.msg}
+                              history={ctx.promptHistory[props.msg._id]}
+                              flags={ctx.flags}
+                              tree={ctx.chatTree}
+                            />
+                          )
+                        }
+                      >
+                        <Info size={14} />
+                      </span>
+                    </Show>
+                  </span>
                 </span>
-              </span>
+              </Show>
               <Switch>
                 <Match
                   when={
@@ -330,77 +612,103 @@ const Message: Component<MessageProps> = (props) => {
                     ctx.chat?.mode !== 'companion'
                   }
                 >
-                  <MessageOptions
-                    index={props.index}
-                    ui={user.ui}
-                    msg={props.msg}
-                    edit={edit}
-                    startEdit={startEdit}
-                    onRemove={props.onRemove}
-                    last={props.last}
-                    tts={!!props.tts}
-                    partial={props.partial}
-                    show={opts}
-                    showMore={showOpt}
-                    textBeforeGenMore={props.textBeforeGenMore}
-                  />
+                  <Show when={showCharacterInfo()}>
+                    <MessageOptions
+                      index={props.index}
+                      ui={user.ui}
+                      msg={props.msg}
+                      edit={edit}
+                      startEdit={startEdit}
+                      onRemove={props.onRemove}
+                      last={props.last}
+                      tts={!!props.tts}
+                      partial={props.partial}
+                      show={opts}
+                      showMore={showOpt}
+                      textBeforeGenMore={props.textBeforeGenMore}
+                    />
+                  </Show>
                 </Match>
 
                 <Match when={edit()}>
-                  <div class="cancel-edit-btn mr-4 flex items-center gap-4 text-sm">
-                    <div class="icon-button text-red-500" onClick={cancelEdit}>
-                      <X size={22} />
+                  <Show when={showCharacterInfo()}>
+                    <div class="cancel-edit-btn mr-4 flex items-center gap-4 text-sm">
+                      <div class="icon-button text-red-500" onClick={cancelEdit}>
+                        <X size={22} />
+                      </div>
+                      <div class="confirm-edit-btn icon-button text-green-500" onClick={saveEdit}>
+                        <Check size={22} />
+                      </div>
                     </div>
-                    <div class="confirm-edit-btn icon-button text-green-500" onClick={saveEdit}>
-                      <Check size={22} />
-                    </div>
-                  </div>
+                  </Show>
                 </Match>
 
                 <Match when={props.last && props.swipe}>
-                  <div class="mr-4 flex items-center gap-4 text-sm">
-                    <div
-                      class="icon-button text-red-500"
-                      onClick={props.discardSwipe}
-                      title="Discard"
-                    >
-                      <Delete size={22} />
+                  <Show when={showCharacterInfo()}>
+                    <div class="mr-4 flex items-center gap-4 text-sm">
+                      <div
+                        class="icon-button text-red-500"
+                        onClick={props.discardSwipe}
+                        title="Discard"
+                      >
+                        <Delete size={22} />
+                      </div>
+                      <div
+                        class="icon-button text-red-500"
+                        onClick={props.cancelSwipe}
+                        title="Cancel"
+                      >
+                        <X size={22} />
+                      </div>
+                      <div
+                        class="icon-button text-green-500"
+                        onClick={props.confirmSwipe}
+                        title="Select"
+                      >
+                        <Check size={22} />
+                      </div>
                     </div>
-                    <div
-                      class="icon-button text-red-500"
-                      onClick={props.cancelSwipe}
-                      title="Cancel"
-                    >
-                      <X size={22} />
-                    </div>
-                    <div
-                      class="icon-button text-green-500"
-                      onClick={props.confirmSwipe}
-                      title="Select"
-                    >
-                      <Check size={22} />
-                    </div>
-                  </div>
+                  </Show>
                 </Match>
               </Switch>
             </span>
             <div ref={avatarRef} classList={{ 'overflow-hidden': !user.ui.imageWrap }}>
+              
               <Switch>
                 <Match when={props.msg.adapter === 'image'}>
                   <MessageImages msg={props.msg} />
                 </Match>
 
                 <Match when={!edit()}>
-                  <p
-                    class={`rendered-markdown pr-1 ${content().class}`}
-                    data-bot-message={!props.msg.userId}
-                    data-user-message={!!props.msg.userId}
-                    innerHTML={content().message}
-                  />
-                  <Show when={content().generating}>
-                    <span class="flex h-8 w-12 items-center justify-center">
-                      <span class="dot-flashing bg-[var(--hl-700)]"></span>
-                    </span>
+                  <Show 
+                    when={shouldUseLineByLine()}
+                    fallback={
+                      <>
+                        <p
+                          class={`rendered-markdown pr-1 ${content().class}`}
+                          data-bot-message={!props.msg.userId}
+                          data-user-message={!!props.msg.userId}
+                          innerHTML={content().message}
+                        />
+                        <Show when={content().generating}>
+                          <span class="flex h-8 w-12 items-center justify-center">
+                            <span class="dot-flashing bg-[var(--hl-700)]"></span>
+                          </span>
+                        </Show>
+                      </>
+                    }
+                  >
+                    <LineByLineRenderer
+                      content={parseMessage(props.msg.msg, ctx, !!props.msg.userId, props.msg.adapter)}
+                      isBot={!props.msg.userId}
+                      isUser={!!props.msg.userId}
+                      delay={user.ui.lineByLineDelay ?? 800}
+                      onComplete={() => {}}
+                      onFirstLine={() => {
+                        setShowCharacterInfo(true)
+                      }}
+                      userMessage={getPreviousUserMessage()}
+                    />
                   </Show>
 
                   {/* MessageImages now handles the flex layout for images, loader, and add button */}
@@ -750,7 +1058,6 @@ function wrapWithQuoteElement(str: string) {
   return str.replace(
     // we first match code blocks AND html tags
     // to ensure we do NOTHING to what's inside them
-    // then we match "regular quotes" and"pretty quotes" as capture group
     /<[\s\S]*?>|```[\s\S]*?```|``[\s\S]*?``|`[\s\S]*?`|(\".+?\")|(\u201C.+?\u201D)/gm,
     wrapCaptureGroups
   )
