@@ -153,14 +153,23 @@ const LineByLineRenderer: Component<{
   onComplete?: () => void
   onFirstLine?: () => void
   userMessage?: string
+  messageId: string
+  existingSplitLines?: string[]
 }> = (props) => {
   const [visibleLines, setVisibleLines] = createSignal(0)
   const [isComplete, setIsComplete] = createSignal(false)
   const [showLoading, setShowLoading] = createSignal(true) // Always start with loading
   const [hasStarted, setHasStarted] = createSignal(false)
+  
+  // Timer tracking signals
+  const [activeTimers, setActiveTimers] = createSignal<NodeJS.Timeout[]>([])
 
-  // More aggressive line splitting that treats each emoji as a break point
+  // Use existing split lines if available, otherwise split the content
   const lines = createMemo(() => {
+    if (props.existingSplitLines && props.existingSplitLines.length > 0) {
+      return props.existingSplitLines
+    }
+    
     const text = props.content.trim()
     if (!text) return []
     
@@ -170,6 +179,34 @@ const LineByLineRenderer: Component<{
     // Ensure we have at least something to display
     return processedLines.length > 0 ? processedLines : [text]
   })
+
+  // Save split lines to message meta when rendering is complete
+  const saveSplitLines = () => {
+    if (!props.existingSplitLines || props.existingSplitLines.length === 0) {
+      const splitLines = lines()
+      if (splitLines.length > 1) {
+        // Only save if we actually have multiple lines
+        msgStore.editMessageProp(props.messageId, {
+          meta: {
+            ...msgStore.getState().msgs.find(m => m._id === props.messageId)?.meta,
+            splitLines: splitLines
+          }
+        })
+      }
+    }
+  }
+
+  // Helper function to clear all active timers
+  const clearAllTimers = () => {
+    activeTimers().forEach(timer => clearTimeout(timer))
+    setActiveTimers([])
+  }
+
+  // Helper function to add a timer to tracking
+  const addTimer = (timer: NodeJS.Timeout) => {
+    setActiveTimers(prev => [...prev, timer])
+    return timer
+  }
 
   // Calculate reading delay based on user's message length
   const calculateReadingDelay = (userMsg: string) => {
@@ -253,22 +290,22 @@ const LineByLineRenderer: Component<{
       const typingDelay = baseTypingDelay * 2.5 // Increase typing delay by 2.5x to make it more realistic
       
       // Phase 1: Thinking delay (no indicator) - now with more randomness
-      const thinkingTimer = setTimeout(() => {
+      const thinkingTimer = addTimer(setTimeout(() => {
         // Phase 2: Show loading indicator and "type"
         setShowLoading(true)
         
-        const typingTimer = setTimeout(() => {
+        const typingTimer = addTimer(setTimeout(() => {
           setVisibleLines(prev => prev + 1)
           setShowLoading(false)
-        }, typingDelay)
-        
-        onCleanup(() => clearTimeout(typingTimer))
-      }, thinkingDelay)
+        }, typingDelay))
+      }, thinkingDelay))
 
-      onCleanup(() => clearTimeout(thinkingTimer))
+      // Cleanup function for this effect run
+      onCleanup(clearAllTimers)
     } else if (hasStarted() && visibleLines() >= lines().length && !isComplete()) {
       setIsComplete(true)
       setShowLoading(false)
+      saveSplitLines() // Save the split lines when complete
       props.onComplete?.()
     }
   })
@@ -276,6 +313,16 @@ const LineByLineRenderer: Component<{
   // Start the response sequence on mount
   onMount(() => {
     if (lines().length > 0) {
+      // If we have existing split lines, show immediately without delays
+      if (props.existingSplitLines && props.existingSplitLines.length > 0) {
+        setHasStarted(true)
+        setVisibleLines(props.existingSplitLines.length)
+        setIsComplete(true)
+        setShowLoading(false)
+        props.onComplete?.()
+        return
+      }
+
       const readingDelay = calculateReadingDelay(props.userMessage || '')
       const thinkingDelay = calculateThinkingDelay()
       
@@ -284,34 +331,16 @@ const LineByLineRenderer: Component<{
       props.onFirstLine?.() // Notify parent that processing started
       
       // Phase 1: Reading + thinking delay, then start displaying
-      const startTimer = setTimeout(() => {
+      const startTimer = addTimer(setTimeout(() => {
         setHasStarted(true)
         setVisibleLines(1)
         setShowLoading(false)
-      }, readingDelay + thinkingDelay)
-      
-      onCleanup(() => clearTimeout(startTimer))
+      }, readingDelay + thinkingDelay))
     }
   })
 
-  // Debug logging
-  createEffect(() => {
-    console.log('LineByLineRenderer Debug:', {
-      originalContent: props.content,
-      userMessage: props.userMessage,
-      splitLines: lines(),
-      visibleLines: visibleLines(),
-      isComplete: isComplete(),
-      showLoading: showLoading(),
-      hasStarted: hasStarted(),
-      readingDelay: calculateReadingDelay(props.userMessage || ''),
-      thinkingDelay: calculateThinkingDelay(),
-      lineDelays: lines().map(line => ({
-        line: line.substring(0, 30) + '...',
-        delay: calculateLineDelay(line, props.delay)
-      }))
-    })
-  })
+  // Cleanup all timers when component unmounts
+  onCleanup(clearAllTimers)
 
   return (
     <>
@@ -373,16 +402,32 @@ const Message: Component<MessageProps> = (props) => {
     const isNonStreamMode = !props.partial // Not currently streaming
     const hasContent = props.msg.msg && props.msg.msg.trim()
     const lineByLineEnabled = user.ui.lineByLineDisplay ?? true
+    const existingSplitLines = props.msg.meta?.splitLines as string[] | undefined
     
-    // More relaxed conditions - trigger for any bot message that has content
-    if (isNewBotMessage && isNonStreamMode && hasContent && lineByLineEnabled) {
-      // Hide character info initially for line-by-line mode
-      setShowCharacterInfo(false)
-      setShouldUseLineByLine(true)
+    // Alternative detection: any bot message without existing split lines that isn't currently streaming
+    const isBotMessageWithoutSplits = props.msg.characterId && !props.partial && !props.retrying && 
+                                      (!existingSplitLines || existingSplitLines.length === 0)
+    
+    // More relaxed conditions - trigger for any bot message that has content and no existing splits, OR new bot messages
+    if ((isNewBotMessage || isBotMessageWithoutSplits) && isNonStreamMode && hasContent && lineByLineEnabled) {
+      // If we have existing split lines, show character info immediately
+      if (existingSplitLines && existingSplitLines.length > 0) {
+        setShowCharacterInfo(true)
+        setShouldUseLineByLine(true)
+      } else {
+        // Hide character info initially for new line-by-line mode
+        setShowCharacterInfo(false)
+        setShouldUseLineByLine(true)
+      }
     } else {
       // Show character info immediately for normal messages
       setShowCharacterInfo(true)
     }
+  })
+
+  // Get existing split lines from message meta
+  const getExistingSplitLines = createMemo(() => {
+    return props.msg.meta?.splitLines as string[] | undefined
   })
 
   // Get the previous user message for reading delay calculation
@@ -708,6 +753,8 @@ const Message: Component<MessageProps> = (props) => {
                         setShowCharacterInfo(true)
                       }}
                       userMessage={getPreviousUserMessage()}
+                      messageId={props.msg._id}
+                      existingSplitLines={getExistingSplitLines()}
                     />
                   </Show>
 
