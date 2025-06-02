@@ -257,7 +257,7 @@ const InputBar: Component<{
 
   return (
     <div class="relative flex items-start justify-center rounded-md bg-[var(--bg-800)]">
-      <Show when={ctx.waiting?.signal}>
+      {/* <Show when={ctx.waiting?.signal}>
         <button
           class="animate-pulse cursor-pointer p-2"
           onClick={() => {
@@ -267,7 +267,7 @@ const InputBar: Component<{
         >
           <StopCircle />
         </button>
-      </Show>
+      </Show> */}
       <Show when={props.showOocToggle}>
         <div class="flex h-[40px] cursor-pointer items-center p-2" onClick={toggleOoc}>
           <Show when={!props.ooc}>
