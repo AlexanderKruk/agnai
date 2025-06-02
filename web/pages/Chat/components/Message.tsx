@@ -2,6 +2,7 @@ import './Message.css'
 import Purify from 'dompurify'
 import {
   Check,
+  CheckCheck,
   DownloadCloud,
   Info,
   PauseCircle,
@@ -381,13 +382,64 @@ const Message: Component<MessageProps> = (props) => {
   const [shouldUseLineByLine, setShouldUseLineByLine] = createSignal(false)
   const [showCharacterInfo, setShowCharacterInfo] = createSignal(true) // Controls when to show char name/avatar
 
+  // State for message read/sent indicators (only for user messages)
+  const [messageSent, setMessageSent] = createSignal(false)
+  const [messageRead, setMessageRead] = createSignal(false)
+
   const [obs] = createSignal(
     new ResizeObserver(() => {
       setImg(`calc(${Math.min(avatarRef?.clientHeight, 10000)}px + 1em)`)
     })
   )
 
-  onMount(() => obs().observe(avatarRef))
+  onMount(() => {
+    obs().observe(avatarRef)
+    
+    // Initialize read/sent status for user messages
+    if (isUser && !props.msg.ooc) {
+      const messageAge = Date.now() - new Date(props.msg.createdAt).getTime()
+      const isNewMessage = messageAge < 5000 || props.last // Less than 5 seconds old or is the last message
+      
+      if (isNewMessage) {
+        // For new messages, show the progression: none → check → checkcheck
+        // Simulate server request verification with a small delay
+        setTimeout(() => {
+          setMessageSent(true)
+        }, 100 + Math.random() * 200) // 100-300ms delay to simulate server response
+        
+        // Calculate when message should be marked as "read" using existing delay logic
+        const calculateReadingDelay = (userMsg: string) => {
+          if (!userMsg) return 1000
+          const words = userMsg.split(/\s+/).length
+          const readingTime = (words / 4) * 1000
+          const minReadingTime = 800
+          const maxReadingTime = 3000
+          const randomizedTime = readingTime * (0.8 + Math.random() * 0.6)
+          return Math.max(minReadingTime, Math.min(maxReadingTime, randomizedTime))
+        }
+        
+        const calculateThinkingDelay = () => {
+          const baseThinking = 1200
+          const complexityFactor = Math.min((props.msg.msg?.split('\n').length || 1) * 0.3, 1.5)
+          const randomFactor = 0.7 + Math.random() * 0.8
+          return (baseThinking * complexityFactor * randomFactor)
+        }
+        
+        // Simulate read status after a delay (only after message is sent)
+        const readDelay = calculateReadingDelay(props.msg.msg || '') + calculateThinkingDelay()
+        setTimeout(() => {
+          if (messageSent()) {
+            setMessageRead(true)
+          }
+        }, readDelay + 300) // Add small buffer to ensure sent status is shown first
+      } else {
+        // For old messages, immediately show as read
+        setMessageSent(true)
+        setMessageRead(true)
+      }
+    }
+  })
+  
   onCleanup(() => obs().disconnect())
 
   const format = createMemo(() => ({ size: user.ui.avatarSize, corners: user.ui.avatarCorners }))
@@ -579,18 +631,13 @@ const Message: Component<MessageProps> = (props) => {
             <span class="flex flex-row justify-between pb-1">
               <Show when={showCharacterInfo()}>
                 <span
-                  class={`flex min-w-0 shrink flex-col items-start gap-1 overflow-hidden`}
+                  class={`flex min-w-0 shrink flex-row items-baseline gap-1 overflow-hidden`}
                   classList={{
-                    'sm:flex-col': props.isPaneOpen,
-                    'sm:gap-1': props.isPaneOpen,
-                    'sm:flex-row': !props.isPaneOpen,
-                    'sm:gap-0': !props.isPaneOpen,
-                    'sm:items-end': !props.isPaneOpen,
                     italic: props.msg.ooc,
                   }}
                 >
                   <b
-                    class={`chat-name text-900 mr-2 max-w-[160px] overflow-hidden  text-ellipsis whitespace-nowrap sm:max-w-[400px]`}
+                    class={`chat-name text-900 max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap sm:max-w-[400px]`}
                     // Necessary to override text-md and text-lg's line height, for proper alignment
                     style="line-height: 1;"
                     data-bot-name={isBot}
@@ -612,7 +659,31 @@ const Message: Component<MessageProps> = (props) => {
                     data-bot-time={isBot}
                     data-user-time={isUser}
                   >
-                    {new Date(props.msg.createdAt).toLocaleString()}
+                    {new Date(props.msg.createdAt).toLocaleTimeString('en-US', { 
+                      hour12: false, 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                    <Show when={isUser && !props.msg.ooc}>
+                      <span class="ml-1 flex items-center">
+                        <Show 
+                          when={messageRead()}
+                          fallback={
+                            <Show when={messageSent()}>
+                              <Check 
+                                size={12} 
+                                class="text-gray-400" 
+                              />
+                            </Show>
+                          }
+                        >
+                          <CheckCheck 
+                            size={12} 
+                            class="text-blue-500" 
+                          />
+                        </Show>
+                      </span>
+                    </Show>
                     <Show when={ctx.flags.debug}>
                       <tr>
                         <td class="pr-2">
@@ -622,28 +693,6 @@ const Message: Component<MessageProps> = (props) => {
                           id:{props.msg._id.slice(0, 4)} up:{props.msg.parent?.slice(0, 4)}
                         </td>
                       </tr>
-                    </Show>
-                    <Show
-                      when={
-                        canShowMeta(props.msg, ctx.promptHistory[props.msg._id])
-                      }
-                    >
-                      <span
-                        class="text-600 hover:text-900 ml-1 cursor-pointer"
-                        onClick={() =>
-                          rootModalStore.info(
-                            'Message Information',
-                            <Meta
-                              msg={props.msg}
-                              history={ctx.promptHistory[props.msg._id]}
-                              flags={ctx.flags}
-                              tree={ctx.chatTree}
-                            />
-                          )
-                        }
-                      >
-                        <Info size={14} />
-                      </span>
                     </Show>
                   </span>
                 </span>
