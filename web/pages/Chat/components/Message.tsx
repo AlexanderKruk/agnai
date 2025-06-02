@@ -4,7 +4,6 @@ import {
   Check,
   CheckCheck,
   DownloadCloud,
-  Info,
   PauseCircle,
   Pencil,
   RefreshCw,
@@ -39,14 +38,12 @@ import AvatarIcon, { CharacterAvatar } from '../../../shared/AvatarIcon'
 import { chatStore, userStore, msgStore, toastStore, ChatState, VoiceState } from '../../../store'
 import { markdown } from '../../../shared/markdown'
 import Button, { ButtonSchema } from '/web/shared/Button'
-import { rootModalStore } from '/web/store/root-modal'
 import { ContextState, useAppContext } from '/web/store/context'
 import { hydrateTemplate, trimSentence } from '/common/util'
 import { EVENTS, events } from '/web/emitter'
 import TextInput from '/web/shared/TextInput'
 import { Card, Pill } from '/web/shared/Card'
 import { FeatureFlags } from '/web/store/flags'
-import { DropMenu } from '/web/shared/DropMenu'
 import { ChatTree } from '/common/chat'
 import { Portal } from 'solid-js/web'
 import { UI } from '/common/types'
@@ -156,10 +153,10 @@ const LineByLineRenderer: Component<{
   userMessage?: string
   messageId: string
   existingSplitLines?: string[]
+  characterId?: string
 }> = (props) => {
   const [visibleLines, setVisibleLines] = createSignal(0)
   const [isComplete, setIsComplete] = createSignal(false)
-  const [showLoading, setShowLoading] = createSignal(true) // Always start with loading
   const [hasStarted, setHasStarted] = createSignal(false)
   
   // Timer tracking signals
@@ -290,14 +287,23 @@ const LineByLineRenderer: Component<{
       // Keep typing delay enhanced for realism
       const typingDelay = baseTypingDelay * 2.5 // Increase typing delay by 2.5x to make it more realistic
       
-      // Phase 1: Thinking delay (no indicator) - now with more randomness
+      // Phase 1: Thinking delay - show thinking indicator
+      if (props.characterId) {
+        msgStore.setTyping(props.characterId, props.messageId, 'thinking')
+      }
+      
       const thinkingTimer = addTimer(setTimeout(() => {
-        // Phase 2: Show loading indicator and "type"
-        setShowLoading(true)
+        // Phase 2: Show typing indicator and "type"
+        if (props.characterId) {
+          msgStore.setTyping(props.characterId, props.messageId, 'typing')
+        }
         
         const typingTimer = addTimer(setTimeout(() => {
           setVisibleLines(prev => prev + 1)
-          setShowLoading(false)
+          // Clear typing indicator when line is displayed
+          if (props.characterId) {
+            msgStore.clearTyping()
+          }
         }, typingDelay))
       }, thinkingDelay))
 
@@ -305,7 +311,10 @@ const LineByLineRenderer: Component<{
       onCleanup(clearAllTimers)
     } else if (hasStarted() && visibleLines() >= lines().length && !isComplete()) {
       setIsComplete(true)
-      setShowLoading(false)
+      // Clear typing indicator when complete
+      if (props.characterId) {
+        msgStore.clearTyping()
+      }
       saveSplitLines() // Save the split lines when complete
       props.onComplete?.()
     }
@@ -319,7 +328,6 @@ const LineByLineRenderer: Component<{
         setHasStarted(true)
         setVisibleLines(props.existingSplitLines.length)
         setIsComplete(true)
-        setShowLoading(false)
         props.onComplete?.()
         return
       }
@@ -327,38 +335,42 @@ const LineByLineRenderer: Component<{
       const readingDelay = calculateReadingDelay(props.userMessage || '')
       const thinkingDelay = calculateThinkingDelay()
       
-      // Show initial loading
-      setShowLoading(true)
+      // Show initial thinking indicator
+      if (props.characterId) {
+        msgStore.setTyping(props.characterId, props.messageId, 'thinking')
+      }
       props.onFirstLine?.() // Notify parent that processing started
       
       // Phase 1: Reading + thinking delay, then start displaying
       const startTimer = addTimer(setTimeout(() => {
         setHasStarted(true)
         setVisibleLines(1)
-        setShowLoading(false)
+        // Clear typing after showing first line
+        if (props.characterId) {
+          msgStore.clearTyping()
+        }
       }, readingDelay + thinkingDelay))
     }
   })
 
   // Cleanup all timers when component unmounts
-  onCleanup(clearAllTimers)
+  onCleanup(() => {
+    clearAllTimers()
+    // Clear typing indicator when component unmounts
+    if (props.characterId) {
+      msgStore.clearTyping()
+    }
+  })
 
   return (
-    <>
-      <Show when={hasStarted()}>
-        <p
-          class="rendered-markdown pr-1 streaming-markdown"
-          data-bot-message={props.isBot}
-          data-user-message={props.isUser}
-          innerHTML={renderedContent()}
-        />
-      </Show>
-      <Show when={showLoading()}>
-        <span class="flex h-8 w-12 items-center justify-start pl-4">
-          <span class="dot-flashing bg-[var(--hl-700)]"></span>
-        </span>
-      </Show>
-    </>
+    <Show when={hasStarted()}>
+      <p
+        class="rendered-markdown pr-1 streaming-markdown"
+        data-bot-message={props.isBot}
+        data-user-message={props.isUser}
+        innerHTML={renderedContent()}
+      />
+    </Show>
   )
 }
 
@@ -804,6 +816,7 @@ const Message: Component<MessageProps> = (props) => {
                       userMessage={getPreviousUserMessage()}
                       messageId={props.msg._id}
                       existingSplitLines={getExistingSplitLines()}
+                      characterId={props.msg.characterId}
                     />
                   </Show>
 

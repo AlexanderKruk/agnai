@@ -459,7 +459,7 @@ const ChatDetail: Component = () => {
           class={`chat-messages flex w-full flex-col-reverse gap-4 overflow-y-auto`}
           ref={sticky.monitor}
         >
-          <div id="chat-messages" class="flex w-full flex-col gap-2">
+          <div id="chat-messages" class="flex w-full flex-col">
             <Show when={chats.loaded && chatMsgs().length < 2 && chats.char?.description}>
               <div class="mb-4 flex flex-col items-center text-[var(--text-500)]">
                 <div class="font-bold">Notes from the creator of {chats.char?.name}</div>

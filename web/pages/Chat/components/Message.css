@@ -24,7 +24,7 @@ em {
 }
 
 .rendered-markdown p:not(:last-child) {
-  margin-bottom: 0.4em; /* ensure <p> els are visually separated by empty line */
+  margin-bottom: 0em; /* ensure <p> els are visually separated by empty line */
 }
 
 .rendered-markdown pre {
