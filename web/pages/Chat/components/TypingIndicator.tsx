@@ -12,7 +12,7 @@ export const TypingIndicator: Component = () => {
   })
 
   return (
-    <div class="w-full flex justify-left ml-[24px] md:ml-[32px] h-[10px] mb-1">
+    <div class="w-full flex justify-left ml-[32px] h-[10px] mb-1">
       <Show when={msgs.typing && typingCharacter()}>
         <span class="dot-flashing bg-blue-500"></span>
       </Show>

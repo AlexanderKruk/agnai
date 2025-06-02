@@ -132,9 +132,9 @@ const InputBar: Component<{
   }
 
   const placeholder = createMemo(() => {
-    if (props.ooc) return `Example: *Winking* What's up?`
-    if (chats.replyAs) return `Example: *Winking* What's up?`
-    return `Example: *Winking* What's up?`
+    if (props.ooc) return `Write a message...`
+    if (chats.replyAs) return `Write a message...`
+    return `Write a message...`
   })
 
   const [saveDraft, disposeSaveDraftDebounce] = createDebounce((text: string) => {
@@ -460,7 +460,7 @@ const InputBar: Component<{
         placeholder={placeholder()}
         parentClass="flex w-full"
         classList={{ 'blur-md': dragging() }}
-        class="input-bar max-h-[120px] min-h-[40px] rounded-r-none hover:bg-[var(--bg-800)] active:bg-[var(--bg-800)]"
+        class="input-bar max-h-[120px] min-h-[40px] rounded-r-none hover:bg-[var(--bg-800)] active:bg-[var(--bg-800)] text-lg sm:text-base"
         onKeyDown={(ev) => {
           if (ev.key === '@') {
             setComplete(true)

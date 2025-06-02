@@ -328,6 +328,7 @@ const LineByLineRenderer: Component<{
         setHasStarted(true)
         setVisibleLines(props.existingSplitLines.length)
         setIsComplete(true)
+        props.onFirstLine?.() // Show character info immediately for existing splits
         props.onComplete?.()
         return
       }
@@ -339,12 +340,13 @@ const LineByLineRenderer: Component<{
       if (props.characterId) {
         msgStore.setTyping(props.characterId, props.messageId, 'thinking')
       }
-      props.onFirstLine?.() // Notify parent that processing started
       
       // Phase 1: Reading + thinking delay, then start displaying
       const startTimer = addTimer(setTimeout(() => {
         setHasStarted(true)
         setVisibleLines(1)
+        // Show character info when first line is displayed
+        props.onFirstLine?.()
         // Clear typing after showing first line
         if (props.characterId) {
           msgStore.clearTyping()
@@ -365,7 +367,7 @@ const LineByLineRenderer: Component<{
   return (
     <Show when={hasStarted()}>
       <p
-        class="rendered-markdown pr-1 streaming-markdown"
+        class="rendered-markdown pr-1 streaming-markdown text-lg sm:text-base"
         data-bot-message={props.isBot}
         data-user-message={props.isUser}
         innerHTML={renderedContent()}
@@ -564,7 +566,7 @@ const Message: Component<MessageProps> = (props) => {
 
   return (
     <div
-      class={'flex w-full rounded-md px-2 py-2 pr-2 sm:px-4'}
+      class={'flex w-full rounded-md px-4'}
       data-sender={props.msg.characterId ? 'bot' : 'user'}
       data-bot={props.msg.characterId ? ctx.char?.name : ''}
       data-user={props.msg.userId ? state.memberIds[props.msg.userId]?.handle : props.msg.name}
@@ -640,7 +642,7 @@ const Message: Component<MessageProps> = (props) => {
                 </Switch>
               </span>
             </Show>
-            <span class="flex flex-row justify-between pb-1">
+            <span class="flex flex-row justify-between">
               <Show when={showCharacterInfo()}>
                 <span
                   class={`flex min-w-0 shrink flex-row items-baseline gap-1 overflow-hidden`}
@@ -649,7 +651,7 @@ const Message: Component<MessageProps> = (props) => {
                   }}
                 >
                   <b
-                    class={`chat-name text-900 max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap sm:max-w-[400px]`}
+                    class={`chat-name text-900 max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap sm:max-w-[400px] pt-4 pb-1 text-xl`}
                     // Necessary to override text-md and text-lg's line height, for proper alignment
                     style="line-height: 1;"
                     data-bot-name={isBot}
@@ -667,7 +669,7 @@ const Message: Component<MessageProps> = (props) => {
 
                   <span
                     classList={{ invisible: ctx.anonymize }}
-                    class={`message-date text-600 flex items-center text-xs leading-none`}
+                    class={`message-date text-600 flex items-center text-sm leading-none`}
                     data-bot-time={isBot}
                     data-user-time={isUser}
                   >
@@ -683,15 +685,15 @@ const Message: Component<MessageProps> = (props) => {
                           fallback={
                             <Show when={messageSent()}>
                               <Check 
-                                size={12} 
-                                class="text-gray-400" 
+                                size={20} 
+                                class="text-gray-400 sm:w-3 sm:h-3" 
                               />
                             </Show>
                           }
                         >
                           <CheckCheck 
-                            size={12} 
-                            class="text-blue-500" 
+                            size={20} 
+                            class="text-blue-500 sm:w-3 sm:h-3" 
                           />
                         </Show>
                       </span>
@@ -791,7 +793,7 @@ const Message: Component<MessageProps> = (props) => {
                     fallback={
                       <>
                         <p
-                          class={`rendered-markdown pr-1 ${content().class}`}
+                          class={`rendered-markdown pr-1 text-lg sm:text-base ${content().class}`}
                           data-bot-message={!props.msg.userId}
                           data-user-message={!!props.msg.userId}
                           innerHTML={content().message}
