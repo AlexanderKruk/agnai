@@ -211,12 +211,12 @@ const LineByLineRenderer: Component<{
     if (!userMsg) return 1000 // Default 1 second if no user message
     
     const words = userMsg.split(/\s+/).length
-    // Assume reading speed of ~4 words per second
-    const readingTime = (words / 4) * 1000
+    // Assume reading speed of ~2 words per second (more realistic)
+    const readingTime = (words / 2) * 1000
     
     // Add some randomness and minimum time
     const minReadingTime = 800
-    const maxReadingTime = 3000
+    const maxReadingTime = 6000 // Increased for slower reading
     const randomizedTime = readingTime * (0.8 + Math.random() * 0.6) // 0.8x to 1.4x
     
     return Math.max(minReadingTime, Math.min(maxReadingTime, randomizedTime))
@@ -224,12 +224,13 @@ const LineByLineRenderer: Component<{
 
   // Calculate thinking delay - time to process and formulate response
   const calculateThinkingDelay = () => {
-    // Thinking time varies based on response complexity
-    const baseThinking = 1200 // Base thinking time
-    const complexityFactor = Math.min(lines().length * 0.3, 1.5) // More lines = more thinking
-    const randomFactor = 0.7 + Math.random() * 0.8 // 0.7x to 1.5x variation
+    // Thinking time varies between 2000-4000ms
+    const baseThinking = 2000 // Base thinking time
+    const variationRange = 2000 // Additional 0-2000ms
+    const complexityFactor = Math.min(lines().length * 0.2, 1.0) // Slight complexity factor
+    const randomFactor = Math.random() // 0 to 1 variation
     
-    return (baseThinking * complexityFactor * randomFactor)
+    return baseThinking + (variationRange * randomFactor) + (complexityFactor * 500)
   }
 
   // Calculate dynamic delay based on line length with randomness
@@ -239,9 +240,9 @@ const LineByLineRenderer: Component<{
     const wordsCount = lineText.split(/\s+/).length
     
     // Base delay calculation based on reading speed
-    // Assume ~3-4 words per second reading speed, plus time for "typing"
-    const readingTime = (wordsCount / 3.5) * 1000 // milliseconds
-    const typingTime = textLength * 30 // ~30ms per character typing simulation
+    // Assume ~2 words per second reading speed, plus time for "typing"
+    const readingTime = (wordsCount / 2) * 1000 // milliseconds
+    const typingTime = textLength * 80 // ~80ms per character typing simulation
     
     // Combine reading and typing time, but use baseDelay as minimum
     const calculatedDelay = Math.max(baseDelay * 0.5, readingTime + typingTime)
@@ -250,9 +251,8 @@ const LineByLineRenderer: Component<{
     const randomMultiplier = 1 + (Math.random() * 0.4 + 0.2) // 1.2x to 1.6x
     const finalDelay = calculatedDelay * randomMultiplier
     
-    // Cap the maximum delay to prevent extremely long waits
-    const maxDelay = baseDelay * 4
-    return Math.min(finalDelay, maxDelay)
+    // No cap - let realistic typing times work as intended
+    return finalDelay
   }
 
   const displayContent = createMemo(() => {
@@ -277,15 +277,15 @@ const LineByLineRenderer: Component<{
       const dynamicDelay = calculateLineDelay(currentLine, props.delay)
       
       // Split delay evenly between thinking and typing phases
-      const baseThinkingDelay = dynamicDelay * 0.5 // 50% for thinking
-      const baseTypingDelay = dynamicDelay * 0.5 // 50% for typing
+      const baseThinkingDelay = dynamicDelay * 0.3 // 30% for thinking
+      const baseTypingDelay = dynamicDelay * 0.7 // 70% for typing (since typing is now slower)
       
       // Add randomness to thinking phase (±40% variation)
       const thinkingRandomness = 0.6 + (Math.random() * 0.8) // 0.6x to 1.4x multiplier
       const thinkingDelay = baseThinkingDelay * thinkingRandomness
       
-      // Keep typing delay enhanced for realism
-      const typingDelay = baseTypingDelay * 2.5 // Increase typing delay by 2.5x to make it more realistic
+      // Use typing delay directly (already includes 100ms per character calculation)
+      const typingDelay = baseTypingDelay
       
       // Phase 1: Thinking delay - show thinking indicator
       if (props.characterId) {
@@ -421,31 +421,13 @@ const Message: Component<MessageProps> = (props) => {
           setMessageSent(true)
         }, 100 + Math.random() * 200) // 100-300ms delay to simulate server response
         
-        // Calculate when message should be marked as "read" using existing delay logic
-        const calculateReadingDelay = (userMsg: string) => {
-          if (!userMsg) return 1000
-          const words = userMsg.split(/\s+/).length
-          const readingTime = (words / 4) * 1000
-          const minReadingTime = 800
-          const maxReadingTime = 3000
-          const randomizedTime = readingTime * (0.8 + Math.random() * 0.6)
-          return Math.max(minReadingTime, Math.min(maxReadingTime, randomizedTime))
-        }
-        
-        const calculateThinkingDelay = () => {
-          const baseThinking = 1200
-          const complexityFactor = Math.min((props.msg.msg?.split('\n').length || 1) * 0.3, 1.5)
-          const randomFactor = 0.7 + Math.random() * 0.8
-          return (baseThinking * complexityFactor * randomFactor)
-        }
-        
-        // Simulate read status after a delay (only after message is sent)
-        const readDelay = calculateReadingDelay(props.msg.msg || '') + calculateThinkingDelay()
+        // Double check appears when character "sees" the message (much sooner)
+        const seenDelay = 500 + Math.random() * 4500 // 500-5000ms random delay
         setTimeout(() => {
           if (messageSent()) {
-            setMessageRead(true)
+            setMessageRead(true) // Double check = "seen", not "read and processed"
           }
-        }, readDelay + 300) // Add small buffer to ensure sent status is shown first
+        }, seenDelay)
       } else {
         // For old messages, immediately show as read
         setMessageSent(true)
