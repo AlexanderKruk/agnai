@@ -216,7 +216,7 @@ const LineByLineRenderer: Component<{
     
     // Add some randomness and minimum time
     const minReadingTime = 800
-    const maxReadingTime = 6000 // Increased for slower reading
+    const maxReadingTime = 4000 // Increased for slower reading
     const randomizedTime = readingTime * (0.8 + Math.random() * 0.6) // 0.8x to 1.4x
     
     return Math.max(minReadingTime, Math.min(maxReadingTime, randomizedTime))
@@ -225,7 +225,7 @@ const LineByLineRenderer: Component<{
   // Calculate thinking delay - time to process and formulate response
   const calculateThinkingDelay = () => {
     // Thinking time varies between 2000-4000ms
-    const baseThinking = 2000 // Base thinking time
+    const baseThinking = 1500 // Base thinking time
     const variationRange = 2000 // Additional 0-2000ms
     const complexityFactor = Math.min(lines().length * 0.2, 1.0) // Slight complexity factor
     const randomFactor = Math.random() // 0 to 1 variation
@@ -242,7 +242,7 @@ const LineByLineRenderer: Component<{
     // Base delay calculation based on reading speed
     // Assume ~2 words per second reading speed, plus time for "typing"
     const readingTime = (wordsCount / 2) * 1000 // milliseconds
-    const typingTime = textLength * 80 // ~80ms per character typing simulation
+    const typingTime = textLength * 40 // ~40ms per character typing simulation
     
     // Combine reading and typing time, but use baseDelay as minimum
     const calculatedDelay = Math.max(baseDelay * 0.5, readingTime + typingTime)
