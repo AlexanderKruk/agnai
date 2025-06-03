@@ -16,6 +16,7 @@ export const ChatFooter: Component<{
   swipe: number
   requestMessage: (chatId: string) => void
   sendMessage: (message: string, ooc: boolean, onSucces?: () => void) => void
+  onTypingStart?: () => void
 }> = (props) => {
   const user = userStore()
   const msgs = msgStore((s) => ({ waiting: s.waiting, attachments: s.attachments }))
@@ -110,6 +111,7 @@ export const ChatFooter: Component<{
           request={props.requestMessage}
           bots={props.ctx.activeBots}
           botMap={chars.botMap}
+          onTypingStart={props.onTypingStart}
         />
       </Show>
     </div>

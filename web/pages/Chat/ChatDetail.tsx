@@ -184,6 +184,13 @@ const ChatDetail: Component = () => {
   const isOwner = createMemo(() => chats.chat?.userId === user.user?._id)
   const tts = createMemo(() => (user.user?.texttospeech?.enabled ?? true) && !!chats.char?.voice)
 
+  // Create a handler for typing start to interrupt line-by-line rendering
+  const handleTypingStart = () => {
+    // This will be connected to the onTypingStart prop of Message components
+    // via the event system to allow for interrupting line-by-line rendering
+    events.emit(EVENTS.userTypingStarted)
+  }
+
   const waitingMsg = createMemo(() => {
     if (!msgs.waiting) return
     if (msgs.retrying) return
@@ -446,6 +453,7 @@ const ChatDetail: Component = () => {
             requestMessage={requestMessage}
             sendMessage={sendMessage}
             swipe={swipe()}
+            onTypingStart={handleTypingStart}
           />
         }
         loading={!chats.loaded && !chats.chat}

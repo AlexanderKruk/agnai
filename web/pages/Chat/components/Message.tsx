@@ -154,10 +154,12 @@ const LineByLineRenderer: Component<{
   messageId: string
   existingSplitLines?: string[]
   characterId?: string
+  onInterruptReady?: (interruptFn: () => void) => void
 }> = (props) => {
   const [visibleLines, setVisibleLines] = createSignal(0)
   const [isComplete, setIsComplete] = createSignal(false)
   const [hasStarted, setHasStarted] = createSignal(false)
+  const [hasBeenInterrupted, setHasBeenInterrupted] = createSignal(false)
   
   // Timer tracking signals
   const [activeTimers, setActiveTimers] = createSignal<NodeJS.Timeout[]>([])
@@ -176,6 +178,55 @@ const LineByLineRenderer: Component<{
     
     // Ensure we have at least something to display
     return processedLines.length > 0 ? processedLines : [text]
+  })
+
+  // Add interrupt function to handle user typing during line-by-line display
+  const interruptRendering = () => {
+    if (hasBeenInterrupted() || isComplete()) return;
+
+    // Clear all timers to stop the animation
+    clearAllTimers()
+    
+    const currentLines = lines().slice(0, visibleLines())
+    if (currentLines.length === 0) {
+      setIsComplete(true)
+      setHasBeenInterrupted(true)
+      if (props.characterId) {
+        msgStore.clearTyping()
+      }
+      return
+    }
+    
+    // Only save if we've shown at least one line
+    const partialMessage = currentLines.join('\n\n')
+    
+    // Save the partial message to the backend
+    msgStore.editMessageProp(props.messageId, {
+      msg: partialMessage,
+      meta: {
+        ...msgStore.getState().msgs.find(m => m._id === props.messageId)?.meta,
+        interrupted: true,
+        splitLines: currentLines
+      }
+    })
+    
+    // Set state to complete to prevent further rendering
+    setIsComplete(true)
+    setHasBeenInterrupted(true)
+    // Ensure hasStarted remains true so current content is visible
+    // setHasStarted(false) // <--- This line was correctly commented out previously
+    
+    // Clear typing indicator
+    if (props.characterId) {
+      msgStore.clearTyping()
+    }
+  }
+  
+  // Expose interrupt function to parent component
+  createEffect(() => {
+    if (props.onInterruptReady) {
+      props.onInterruptReady(interruptRendering)
+    }
   })
 
   // Save split lines to message meta when rendering is complete
@@ -389,6 +440,7 @@ const Message: Component<MessageProps> = (props) => {
   const [img, setImg] = createSignal('h-full')
   const opts = createSignal(false)
   const [jsonValues, setJsonValues] = createSignal(props.msg.json?.values || {})
+  const [interruptFn, setInterruptFn] = createSignal<(() => void) | undefined>()
 
   const showOpt = createSignal(false)
 
@@ -434,6 +486,36 @@ const Message: Component<MessageProps> = (props) => {
         setMessageRead(true)
       }
     }
+
+    // Set up typing interrupt handler
+    if (props.onTypingStart) {
+      const originalTypingStart = props.onTypingStart;
+      props.onTypingStart = () => {
+        // Call the original handler if it exists
+        originalTypingStart();
+        
+        // Interrupt line-by-line rendering if needed
+        const interrupt = interruptFn();
+        if (shouldUseLineByLine() && interrupt) {
+          interrupt();
+        }
+      };
+    }
+    
+    // Set up global typing interrupt handler
+    const interruptHandler = () => {
+      const interrupt = interruptFn();
+      if (shouldUseLineByLine() && interrupt) {
+        interrupt();
+      }
+    };
+    
+    // Listen for global typing start events
+    events.on(EVENTS.userTypingStarted, interruptHandler);
+    
+    onCleanup(() => {
+      events.removeListener(EVENTS.userTypingStarted, interruptHandler);
+    });
   })
   
   onCleanup(() => obs().disconnect())
@@ -801,6 +883,9 @@ const Message: Component<MessageProps> = (props) => {
                       messageId={props.msg._id}
                       existingSplitLines={getExistingSplitLines()}
                       characterId={props.msg.characterId}
+                      onInterruptReady={(interruptFn) => {
+                        setInterruptFn(() => interruptFn)
+                      }}
                     />
                   </Show>
 

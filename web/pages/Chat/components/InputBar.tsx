@@ -65,6 +65,7 @@ const InputBar: Component<{
   send: (msg: string, ooc: boolean, onSuccess?: () => void) => void
   more: (msg: string) => void
   request: (charId: string) => void
+  onTypingStart?: () => void
 }> = (props) => {
   let ref: HTMLTextAreaElement | undefined
 
@@ -290,6 +291,12 @@ const InputBar: Component<{
     setMediaDescription('')
   }
 
+  const handleTypingStart = () => {
+    if (props.onTypingStart) {
+      props.onTypingStart()
+    }
+  }
+
   return (
     <div class="relative flex items-start justify-center rounded-md bg-[var(--bg-800)]">
       {/* <Show when={ctx.waiting?.signal}>
@@ -496,7 +503,10 @@ const InputBar: Component<{
         parentClass="flex w-full"
         classList={{ 'blur-md': dragging() }}
         class="input-bar max-h-[120px] min-h-[40px] rounded-r-none hover:bg-[var(--bg-800)] active:bg-[var(--bg-800)] text-lg sm:text-base"
+        onFocus={handleTypingStart}
         onKeyDown={(ev) => {
+          handleTypingStart();
+
           if (ev.key === '@') {
             setComplete(true)
           }
