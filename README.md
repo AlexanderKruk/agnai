@@ -114,17 +114,19 @@ Add these environment variables to your deployment:
 ```
 AGNAI_SUBSCRIBER_API_URL=https://api.agnai.chat/v1
 AGNAI_SUBSCRIBER_API_KEY=your_default_api_key_here
+AGNAI_SUBSCRIBER_DEFAULT_PRESET_ID=your_default_preset_id_here # Optional
 ```
 
 ### Setup via Docker Compose
 
-If using Docker Compose, add to your environment section:
+If using Docker Compose, add to your environment section for the relevant service (e.g., `app`):
 
 ```yaml
 environment:
   # ... other variables ...
   - AGNAI_SUBSCRIBER_API_URL=https://api.agnai.chat/v1
   - AGNAI_SUBSCRIBER_API_KEY=your_default_api_key_here
+  - AGNAI_SUBSCRIBER_DEFAULT_PRESET_ID=your_default_preset_id_here # Optional
 ```
 
 For more detailed instructions, see `instructions/default-api-config.md`.

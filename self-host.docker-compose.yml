@@ -26,6 +26,10 @@ services:
       - INITIAL_USER=admin
       - INITIAL_PASSWORD=password
       - JWT_SECRET=self-hosting
+      # Optional: Default Agnaistic Subscriber API credentials
+      # - AGNAI_SUBSCRIBER_API_URL=https://api.agnai.chat/v1
+      # - AGNAI_SUBSCRIBER_API_KEY=your_default_api_key_here
+      # - AGNAI_SUBSCRIBER_DEFAULT_PRESET_ID=your_default_preset_id_here
     volumes:
       - appdb:/app/db
       - assets:/app/assets

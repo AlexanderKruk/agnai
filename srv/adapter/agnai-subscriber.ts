@@ -15,11 +15,12 @@ export const handleAgnaiSubscriber: ModelAdapter = async function* (opts) {
   const adapterConfig = gen.registered?.['agnai-subscriber']
   const userApiUrl = adapterConfig?.thirdPartyUrl
   const userRawApiKey = adapterConfig?.thirdPartyKey
-  let model = adapterConfig?.thirdPartyModel || ''
+  const userModel = adapterConfig?.thirdPartyModel
   
   // Use environment variables as fallbacks if user settings are empty
   const apiUrl = userApiUrl || process.env.AGNAI_SUBSCRIBER_API_URL
   const rawApiKey = userRawApiKey || process.env.AGNAI_SUBSCRIBER_API_KEY
+  let model = userModel || process.env.AGNAI_SUBSCRIBER_DEFAULT_PRESET_ID || ''
   
   if (!apiUrl || !rawApiKey) {
     yield { error: `Agnaistic Subscriber API request failed: URL and API key are required. Check your settings or ask administrator to set default credentials.` }
@@ -134,8 +135,9 @@ export const handleAgnaiSubscriber: ModelAdapter = async function* (opts) {
   yield { prompt: body.messages }
 
   // Handle API key - decrypt if not guest and if it's actually encrypted
+  // Only decrypt if the key was provided by the user, not from env vars
   let apiKey = rawApiKey
-  if (!guest && apiKey && userRawApiKey) {
+  if (!guest && apiKey && userRawApiKey) { // Check userRawApiKey to ensure it's not the env var
     try {
       // Only try to decrypt if the key appears to be encrypted (contains the encryption prefix)
       if (apiKey.includes('::')) {
@@ -301,7 +303,7 @@ registerAdapter('agnai-subscriber', handleAgnaiSubscriber, {
     {
       field: 'thirdPartyModel',
       label: 'Model/Preset ID (Optional)',
-      helperText: 'Optional: Specific model or preset ID. Leave empty to use API default.',
+      helperText: 'Optional: Specific model or preset ID. Leave empty to use API default or environment variable default.',
       secret: false,
       setting: { type: 'text', placeholder: 'Leave empty for default' },
       preset: true,
