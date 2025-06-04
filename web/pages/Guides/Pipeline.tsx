@@ -8,7 +8,7 @@ const PipelineGuide: Component = () => {
     <Page>
       <PageHeader
         title="Pipeline Guide"
-        subtitle="How to install and use the Agnai Pipeline API"
+        subtitle="How to install and use the PornAI Pipeline API"
       ></PageHeader>
       <div class="markdown" innerHTML={markdown.makeHtml(text)}></div>
     </Page>
@@ -18,7 +18,7 @@ const PipelineGuide: Component = () => {
 const text = `
 ### What is the Pipeline API?
 The Pipeline API allows you to run additional features to enhance your conversations. 
-Agnai.chat and local hosted conversations are both supported.
+PornAI and local hosted conversations are both supported.
 At the moment, only Embedding support using ChromaDB is currently available.
 
 ### What are embeddings?
@@ -30,7 +30,7 @@ This means we can do things like:
 
 ### How do I install and run the Pipeline?
 - You'll need [Node.JS v16+](https://nodejs.org/en/download) and [Python 3.10+](https://www.python.org/downloads/) installed.  
-- Install Agnaistic using the NPM Package. From your terminal: \`npm install agnai -g \`
+- Install PornAI using the NPM Package. From your terminal: \`npm install agnai -g \`
 - Run \`agnai --pipeline\` from your terminal
 
 ### How do I now use the Pipeline?

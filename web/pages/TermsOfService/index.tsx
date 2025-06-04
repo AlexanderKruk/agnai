@@ -6,9 +6,9 @@ import { Page } from '/web/Layout'
 const text = `
 **Dated September 27, 2023**
 
-## Thank you for using Agnaistic!
+## Thank you for using PornAI!
 
-Agnaistic (hereafter known as the Stakeholders) provide Services to you subject to these terms.
+PornAI (hereafter known as the Stakeholders) provide Services to you subject to these terms.
 
 These Terms of Use apply when you use the Services of the Stakeholders, or our affiliates, including our application programming interface (if any), software, tools, developer services, data, documentation, and websites ("Services"). The Terms include our Service Terms, Sharing & Publication Policy, Usage Policies, and other documentation, guidelines, or policies we may provide in writing. By using our Services, you agree to these Terms. Our Privacy Policy explains how we collect and use personal information.
 
@@ -96,7 +96,7 @@ You agree not to use the Model or Derivatives of the Model:
 const TermsOfServicePage: Component = () => {
   return (
     <Page>
-      <PageHeader title={<>Agnaistic Terms of Service</>} />
+      <PageHeader title={<>PornAI Terms of Service</>} />
       <div class="markdown flex flex-col gap-4" innerHTML={markdown.makeHtml(text)}></div>
     </Page>
   )

@@ -497,15 +497,15 @@ export function sort<T>(prop: keyof T, dir?: 'asc' | 'desc') {
 
 export const setComponentPageTitle = (newTitle: string) => {
   createEffect(() => {
-    document.title = `${newTitle} - Agnaistic`
+    document.title = `${newTitle} - PornAI`
 
     onCleanup(() => {
-      document.title = 'Agnaistic'
+      document.title = 'PornAI'
     })
   })
 
   const updateTitle = (newTitle: string) => {
-    document.title = `${newTitle} - Agnaistic`
+    document.title = `${newTitle} - PornAI`
   }
 
   // setComponentPageTitle must be called in order for consumers to

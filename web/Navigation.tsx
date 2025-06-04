@@ -176,7 +176,7 @@ const Navigation: Component = () => {
                 class="w-8/12 max-w-[calc(100%-64px)]"
                 href="/"
                 role="link"
-                aria-label="Agnaistic main page"
+                aria-label="PornAI main page"
               >
                 <div
                   class="flex h-8 w-full items-center justify-center rounded-lg font-bold"

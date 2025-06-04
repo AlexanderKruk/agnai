@@ -63,7 +63,7 @@ export async function getSubscriptionPreset(
     if (fallback && !fallback.subDisabled && fallback.subLevel <= level) {
       preset = fallback
       warning =
-        'Your configured Agnaistic model is no longer available. Using a fallback. Please update your preset.'
+        'Your configured PornAI model is no longer available. Using a fallback. Please update your preset.'
     } else {
       error = 'Model selected is invalid or disabled. Try another.'
     }

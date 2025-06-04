@@ -3,7 +3,7 @@ import { Component } from 'solid-js'
 const AgnaisticSettings: Component = () => {
   return (
     <>
-      <div class="text-xl">Agnaistic Text To Speech</div>
+      <div class="text-xl">PornAI Text To Speech</div>
     </>
   )
 }

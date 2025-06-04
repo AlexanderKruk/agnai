@@ -1,4 +1,4 @@
-# AI Guide - Agnaistic
+# AI Guide - PornAI
 
 ## Project Overview
 - Purpose: AI Roleplay Chat platform enabling conversations with personalized AI characters

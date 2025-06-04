@@ -51,8 +51,8 @@ homeTour.addSteps([
   {
     id: 'tour-welcome',
     text: `${title(
-      'Welcome to Agnai'
-    )} Agnai allows you to chat with fictional characters using AI.<br />You can chat completely for free with no limits or restrictions. <br />You can subscribe to access for smarter models, image generation, and other features.`,
+      'Welcome to PornAI'
+    )} PornAI allows you to chat with fictional characters using AI.<br />You can chat completely for free with no limits or restrictions. <br />You can subscribe to access for smarter models, image generation, and other features.`,
     buttons: [next],
   },
 ])
@@ -85,7 +85,7 @@ homeTour.addSteps([
     id: 'tour-character',
     text: `${title(
       'Creating Characters'
-    )} Agnai does not yet provide a library of characters. You can create your own with the asssistance of AI and import character cards from other sites.`,
+    )} PornAI does not yet provide a library of characters. You can create your own with the asssistance of AI and import character cards from other sites.`,
     attachTo: {
       element: '.tour-character',
       on: menuSide,
