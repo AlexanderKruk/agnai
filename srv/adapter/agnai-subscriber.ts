@@ -13,12 +13,16 @@ export const handleAgnaiSubscriber: ModelAdapter = async function* (opts) {
 
   // Get settings from registered adapter config
   const adapterConfig = gen.registered?.['agnai-subscriber']
-  const apiUrl = adapterConfig?.thirdPartyUrl
-  const rawApiKey = adapterConfig?.thirdPartyKey
+  const userApiUrl = adapterConfig?.thirdPartyUrl
+  const userRawApiKey = adapterConfig?.thirdPartyKey
   let model = adapterConfig?.thirdPartyModel || ''
   
+  // Use environment variables as fallbacks if user settings are empty
+  const apiUrl = userApiUrl || process.env.AGNAI_SUBSCRIBER_API_URL
+  const rawApiKey = userRawApiKey || process.env.AGNAI_SUBSCRIBER_API_KEY
+  
   if (!apiUrl || !rawApiKey) {
-    yield { error: `Agnaistic Subscriber API request failed: URL and API key are required. Check your settings.` }
+    yield { error: `Agnaistic Subscriber API request failed: URL and API key are required. Check your settings or ask administrator to set default credentials.` }
     return
   }
 
@@ -131,7 +135,7 @@ export const handleAgnaiSubscriber: ModelAdapter = async function* (opts) {
 
   // Handle API key - decrypt if not guest and if it's actually encrypted
   let apiKey = rawApiKey
-  if (!guest && apiKey) {
+  if (!guest && apiKey && userRawApiKey) {
     try {
       // Only try to decrypt if the key appears to be encrypted (contains the encryption prefix)
       if (apiKey.includes('::')) {

@@ -103,6 +103,32 @@ Currently supported custom settings:
 
 - `baseEndTokens`: Add extra response end tokens to the base set.
 
+## Default Agnaistic Subscriber API
+
+You can set up default Agnaistic Subscriber API credentials that will be used when users don't provide their own. This prevents the "URL and API key are required" error for users who haven't configured their own API settings.
+
+### Setup via Environment Variables
+
+Add these environment variables to your deployment:
+
+```
+AGNAI_SUBSCRIBER_API_URL=https://api.agnai.chat/v1
+AGNAI_SUBSCRIBER_API_KEY=your_default_api_key_here
+```
+
+### Setup via Docker Compose
+
+If using Docker Compose, add to your environment section:
+
+```yaml
+environment:
+  # ... other variables ...
+  - AGNAI_SUBSCRIBER_API_URL=https://api.agnai.chat/v1
+  - AGNAI_SUBSCRIBER_API_KEY=your_default_api_key_here
+```
+
+For more detailed instructions, see `instructions/default-api-config.md`.
+
 ## For Developers
 
 ### Recommended Development Tooling
