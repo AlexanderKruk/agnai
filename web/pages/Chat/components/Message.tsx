@@ -496,7 +496,8 @@ const Message: Component<MessageProps> = (props) => {
         
         // Interrupt line-by-line rendering if needed
         const interrupt = interruptFn();
-        if (shouldUseLineByLine() && interrupt) {
+        // Only interrupt if it's NOT the first message (index !== 0)
+        if (props.index !== 0 && shouldUseLineByLine() && interrupt) {
           interrupt();
         }
       };
@@ -505,7 +506,8 @@ const Message: Component<MessageProps> = (props) => {
     // Set up global typing interrupt handler
     const interruptHandler = () => {
       const interrupt = interruptFn();
-      if (shouldUseLineByLine() && interrupt) {
+      // Only interrupt if it's NOT the first message (index !== 0)
+      if (props.index !== 0 && shouldUseLineByLine() && interrupt) {
         interrupt();
       }
     };
