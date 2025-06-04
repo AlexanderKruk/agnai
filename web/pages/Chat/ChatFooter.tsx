@@ -5,6 +5,7 @@ import { CharacterPill } from '../../shared/CharacterPill'
 import { characterStore, chatStore, settingStore, userStore } from '../../store'
 import { msgStore } from '../../store'
 import InputBar from './components/InputBar'
+import { TypingIndicator } from './components/TypingIndicator'
 import { ContextState } from '/web/store/context'
 import { AppSchema } from '/common/types'
 
@@ -15,6 +16,7 @@ export const ChatFooter: Component<{
   swipe: number
   requestMessage: (chatId: string) => void
   sendMessage: (message: string, ooc: boolean, onSucces?: () => void) => void
+  onTypingStart?: () => void
 }> = (props) => {
   const user = userStore()
   const msgs = msgStore((s) => ({ waiting: s.waiting, attachments: s.attachments }))
@@ -96,6 +98,7 @@ export const ChatFooter: Component<{
             </div>
           </div>
         </Show>
+        <TypingIndicator />
         <InputBar
           chat={chats.chat!}
           swiped={props.swipe !== 0}
@@ -108,6 +111,7 @@ export const ChatFooter: Component<{
           request={props.requestMessage}
           bots={props.ctx.activeBots}
           botMap={chars.botMap}
+          onTypingStart={props.onTypingStart}
         />
       </Show>
     </div>

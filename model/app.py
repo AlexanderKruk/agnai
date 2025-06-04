@@ -35,6 +35,6 @@ import summary
 
 
 print(
-    'Pipeline API started: Remember to enable "USE LOCAL PIPELINE" in your Agnaistic account settings'
+    'Pipeline API started: Remember to enable "USE LOCAL PIPELINE" in your PornAI account settings'
 )
 app.run(host="localhost", port=5001)

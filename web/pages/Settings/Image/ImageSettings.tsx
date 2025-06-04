@@ -266,7 +266,7 @@ export const ImageSettingsModal = () => {
         <Toggle
           fieldName="summariseChat"
           label="Summarise Chat"
-          helperText="When available use your AI service to summarise the chat into an image prompt. Only available with services with Instruct capabilities (Agnai, NovelAI, OpenAI, Claude, etc)"
+          helperText="When available use your AI service to summarise the chat into an image prompt. Only available with services with Instruct capabilities (NovelAI, OpenAI, Claude, etc)"
           value={store.summariseChat}
           onChange={(ev) => setStore('summariseChat', ev)}
         />
@@ -358,7 +358,7 @@ export const ImageSettingsModal = () => {
 
         <Show when={store.type === 'agnai'}>
           <SolidCard bg="rose-600">
-            Refer to the recommended settings when using Agnaistic image models
+            Refer to the recommended settings when using PornAI image models
           </SolidCard>
         </Show>
 

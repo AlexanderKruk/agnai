@@ -60,6 +60,10 @@ type Props = {
   onChange?: (
     ev: Event & { target: Element; currentTarget: HTMLInputElement | HTMLTextAreaElement }
   ) => void
+  
+  onFocus?: (
+    ev: FocusEvent & { target: Element; currentTarget: HTMLInputElement | HTMLTextAreaElement }
+  ) => void
 }
 
 export const ButtonInput: Component<Props & { children: any }> = (props) => {
@@ -238,6 +242,7 @@ const TextInput: Component<Props> = (props) => {
             onKeyDown={(ev) => props.onKeyDown?.(ev)}
             onchange={handleInput}
             onInput={handleInput}
+            onFocus={(ev) => props.onFocus?.(ev)}
             {...props.textarea}
           />
         </Match>
@@ -271,6 +276,7 @@ const TextInput: Component<Props> = (props) => {
             onKeyDown={(ev) => props.onKeyDown?.(ev)}
             onChange={handleInput}
             onInput={handleInput}
+            onFocus={(ev) => props.onFocus?.(ev)}
             disabled={props.disabled}
             pattern={props.pattern}
             spellcheck={props.spellcheck}
@@ -304,6 +310,7 @@ const TextInput: Component<Props> = (props) => {
               onKeyDown={(ev) => props.onKeyDown?.(ev)}
               onChange={handleInput}
               onInput={handleInput}
+              onFocus={(ev) => props.onFocus?.(ev)}
               disabled={props.disabled}
               pattern={props.pattern}
               spellcheck={props.spellcheck}

@@ -17,7 +17,7 @@ export default FAQ
 const faq = `
 
 ### Are my responses filtered?
-No, Agnaistic does not make any attempt to filter your responses.
+No, PornAI does not make any attempt to filter your responses.
 
 ### The response from the character keeps getting cut off mid-sentence. What can I do?
 There are a few things you can try:
@@ -44,16 +44,16 @@ When you specify the Web URL, make sure it is *publicly accessible* using a serv
 Yes, In your **Settings -> Voice Settings** we support a variety of text-to-speech services.
 
 ### Can I customise the UI?
-Yes, you can change some elements of Agnaistic in your **Settings -> UI Settings**.
+Yes, you can change some elements of PornAI in your **Settings -> UI Settings**.
 
 ### I came from "some other site", how can I get my bot to talk like it was on that site?
 All frontends behave a little differently. You can tweak how your character behaves by modifying your **Prompt Template** in your **Preset**.
 
 ### I forgot my password!
-Recovering your account is not guaranteed. You can try to contact Sceik on [Discord](https://discord.agnai.chat) to try to recover your account.
+Recovering your account is not guaranteed. You can try to contact Sceik on [Discord](https://discord.chat) to try to recover your account.
 
 ### My question isn't answered here, where should I ask?
-The best place to get a quick answer is on [Discord](https://discord.agnai.chat).
+The best place to get a quick answer is on [Discord](https://discord.chat).
 
 ### Glossory / Terminology:
 - **Input Options**: Accessed from the Right hand side (three-dot menu) of your chat text input.

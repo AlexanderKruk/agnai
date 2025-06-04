@@ -184,6 +184,13 @@ const ChatDetail: Component = () => {
   const isOwner = createMemo(() => chats.chat?.userId === user.user?._id)
   const tts = createMemo(() => (user.user?.texttospeech?.enabled ?? true) && !!chats.char?.voice)
 
+  // Create a handler for typing start to interrupt line-by-line rendering
+  const handleTypingStart = () => {
+    // This will be connected to the onTypingStart prop of Message components
+    // via the event system to allow for interrupting line-by-line rendering
+    events.emit(EVENTS.userTypingStarted)
+  }
+
   const waitingMsg = createMemo(() => {
     if (!msgs.waiting) return
     if (msgs.retrying) return
@@ -198,6 +205,14 @@ const ChatDetail: Component = () => {
     const char = charId ? ctx.allBots[charId] : undefined
 
     const handle = msgs.waiting.mode !== 'self' ? char?.name : profile?.handle
+
+    // Don't show waiting message immediately if line-by-line is enabled for bot responses
+    const isWaitingForBot = msgs.waiting.mode !== 'self' && charId
+    const lineByLineEnabled = user.ui.lineByLineDisplay ?? true
+    if (isWaitingForBot && lineByLineEnabled) {
+      // Don't create waiting message - let line-by-line handle the delays
+      return undefined
+    }
 
     const waitingMsgs: AppSchema.ChatMessage[] = []
 
@@ -438,6 +453,7 @@ const ChatDetail: Component = () => {
             requestMessage={requestMessage}
             sendMessage={sendMessage}
             swipe={swipe()}
+            onTypingStart={handleTypingStart}
           />
         }
         loading={!chats.loaded && !chats.chat}
@@ -451,7 +467,7 @@ const ChatDetail: Component = () => {
           class={`chat-messages flex w-full flex-col-reverse gap-4 overflow-y-auto`}
           ref={sticky.monitor}
         >
-          <div id="chat-messages" class="flex w-full flex-col gap-2">
+          <div id="chat-messages" class="flex w-full flex-col">
             <Show when={chats.loaded && chatMsgs().length < 2 && chats.char?.description}>
               <div class="mb-4 flex flex-col items-center text-[var(--text-500)]">
                 <div class="font-bold">Notes from the creator of {chats.char?.name}</div>

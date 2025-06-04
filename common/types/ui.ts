@@ -71,6 +71,8 @@ export type UISettings = {
   trimSentences?: boolean
   logPromptsToBrowserConsole: boolean
   contextWindowLine: boolean
+  lineByLineDisplay?: boolean
+  lineByLineDelay?: number
 
   dark: CustomUI
   light: CustomUI
@@ -101,6 +103,8 @@ export const uiGuard = {
 
   chatWidth: CHAT_WIDTHS,
   logPromptsToBrowserConsole: 'boolean',
+  lineByLineDisplay: 'boolean?',
+  lineByLineDelay: 'number?',
 
   light: customUiGuard,
   dark: customUiGuard,
@@ -124,6 +128,8 @@ export const defaultUIsettings: UISettings = {
   logPromptsToBrowserConsole: false,
   contextWindowLine: false,
   imageWrap: false,
+  lineByLineDisplay: true,
+  lineByLineDelay: 800,
 
   light: {
     msgBackground: '--bg-800',

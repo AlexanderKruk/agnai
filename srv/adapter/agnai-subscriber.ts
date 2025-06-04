@@ -17,14 +17,6 @@ export const handleAgnaiSubscriber: ModelAdapter = async function* (opts) {
   const rawApiKey = adapterConfig?.thirdPartyKey
   let model = adapterConfig?.thirdPartyModel || ''
   
-  log.debug({ 
-    adapterConfig, 
-    apiUrl, 
-    rawApiKey: rawApiKey ? '[REDACTED]' : 'null',
-    model,
-    registeredKeys: gen.registered ? Object.keys(gen.registered) : 'null'
-  }, 'Agnaistic Subscriber adapter config debug')
-
   if (!apiUrl || !rawApiKey) {
     yield { error: `Agnaistic Subscriber API request failed: URL and API key are required. Check your settings.` }
     return
@@ -172,15 +164,6 @@ export const handleAgnaiSubscriber: ModelAdapter = async function* (opts) {
     // Base URL doesn't include /v1, add the full path
     url = `${url}/v1/chat/completions`
   }
-
-  log.debug(body, 'Agnaistic Subscriber API payload')
-  log.debug({ 
-    url, 
-    hasApiKey: !!apiKey, 
-    apiKeyLength: apiKey?.length,
-    model: body.model,
-    hasModelParam: 'model' in body 
-  }, 'Agnaistic Subscriber API request details')
 
   const iter = body.stream
     ? streamGenerator({

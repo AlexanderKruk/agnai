@@ -130,7 +130,7 @@ export const GeneralSettings: Component<PresetTabProps> = (props) => {
         <Toggle
           fieldName="localRequests"
           label="Use Local Requests"
-          helperMarkdown={`When enabled your browser will make requests instead of Agnaistic.\n**NOTE**: Your chat will not support multiplayer.`}
+          helperMarkdown={`When enabled your browser will make requests instead of PornAI.\n**NOTE**: Your chat will not support multiplayer.`}
           service={props.state.service}
           format={props.state.thirdPartyFormat}
           hide={props.hides.localRequests}

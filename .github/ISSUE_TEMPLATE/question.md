@@ -1,6 +1,6 @@
 ---
 name: Question
-about: I have a question about Agnaistic
+about: I have a question about PornAI
 title: ''
 labels: ''
 assignees: ''

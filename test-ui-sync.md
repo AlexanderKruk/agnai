@@ -4,7 +4,7 @@
 This document outlines how to test the new UI settings synchronization feature that ensures all users share the same UI settings as the `PUBLIC_CHARACTER_USER_ID`.
 
 ## Prerequisites
-1. A running Agnaistic instance
+1. A running PornAI instance
 2. MongoDB database with at least two user accounts
 3. The `PUBLIC_CHARACTER_USER_ID` environment variable configured
 

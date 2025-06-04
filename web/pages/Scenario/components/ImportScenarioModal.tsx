@@ -109,7 +109,7 @@ const ImportScenarioModal: Component<{
             label="Scenario JSON File"
             fieldName="json"
             accept="application/json,text/json"
-            helperText="Supported formats: Agnaistic"
+            helperText="Supported formats: PornAI"
             required
             onUpdate={onFileSelect}
           />

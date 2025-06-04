@@ -44,7 +44,7 @@
 
 //         <Match when>
 //           <TitleCard type="orange" class="w-full">
-//             An application is requesting to access your Agnaistic account on your behalf
+//             An application is requesting to access your PornAI account on your behalf
 //           </TitleCard>
 
 //           <TitleCard class="markdown w-full">

@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Trash,
   MoreVertical,
+  Image,
 } from 'lucide-solid'
 import {
   Component,
@@ -64,6 +65,7 @@ const InputBar: Component<{
   send: (msg: string, ooc: boolean, onSuccess?: () => void) => void
   more: (msg: string) => void
   request: (charId: string) => void
+  onTypingStart?: () => void
 }> = (props) => {
   let ref: HTMLTextAreaElement | undefined
 
@@ -108,6 +110,9 @@ const InputBar: Component<{
   const [complete, setComplete] = createSignal(false)
   const [listening, setListening] = createSignal(false)
   const [dragging, setDragging] = createSignal(false)
+  const [showMediaModal, setShowMediaModal] = createSignal(false)
+  const [mediaDescription, setMediaDescription] = createSignal('')
+  const [mediaType, setMediaType] = createSignal<'photo' | 'video'>('photo')
   const mob = useMobileDetect()
 
   const completeOpts = createMemo(() => {
@@ -132,9 +137,9 @@ const InputBar: Component<{
   }
 
   const placeholder = createMemo(() => {
-    if (props.ooc) return `Example: *Winking* What's up?`
-    if (chats.replyAs) return `Example: *Winking* What's up?`
-    return `Example: *Winking* What's up?`
+    if (props.ooc) return `Write a message...`
+    if (chats.replyAs) return `Write a message...`
+    return `Write a message...`
   })
 
   const [saveDraft, disposeSaveDraftDebounce] = createDebounce((text: string) => {
@@ -255,9 +260,46 @@ const InputBar: Component<{
     setMenu(false)
   }
 
+  const insertMediaTag = () => {
+    if (!ref) return
+    if (!mediaDescription()) return
+
+    const value = ref.value || ''
+    const cursorPos = ref.selectionStart
+    const description = mediaDescription()
+    const extension = mediaType() === 'photo' ? '.jpg' : '.mp4'
+    const tag = `[${description}]${extension}`
+    
+    const newValue = value.substring(0, cursorPos) + tag + value.substring(cursorPos)
+    ref.value = newValue
+    setText(newValue)
+    saveDraft(newValue)
+    
+    // Set cursor position after inserted tag
+    setTimeout(() => {
+      ref!.focus()
+      ref!.setSelectionRange(cursorPos + tag.length, cursorPos + tag.length)
+    }, 0)
+    
+    setShowMediaModal(false)
+    setMediaDescription('')
+  }
+  
+  const openMediaModal = () => {
+    setShowMediaModal(true)
+    setMediaType('photo')
+    setMediaDescription('')
+  }
+
+  const handleTypingStart = () => {
+    if (props.onTypingStart) {
+      props.onTypingStart()
+    }
+  }
+
   return (
     <div class="relative flex items-start justify-center rounded-md bg-[var(--bg-800)]">
-      <Show when={ctx.waiting?.signal}>
+      {/* <Show when={ctx.waiting?.signal}>
         <button
           class="animate-pulse cursor-pointer p-2"
           onClick={() => {
@@ -267,7 +309,7 @@ const InputBar: Component<{
         >
           <StopCircle />
         </button>
-      </Show>
+      </Show> */}
       <Show when={props.showOocToggle}>
         <div class="flex h-[40px] cursor-pointer items-center p-2" onClick={toggleOoc}>
           <Show when={!props.ooc}>
@@ -460,8 +502,11 @@ const InputBar: Component<{
         placeholder={placeholder()}
         parentClass="flex w-full"
         classList={{ 'blur-md': dragging() }}
-        class="input-bar max-h-[120px] min-h-[40px] rounded-r-none hover:bg-[var(--bg-800)] active:bg-[var(--bg-800)]"
+        class="input-bar max-h-[120px] min-h-[40px] rounded-r-none hover:bg-[var(--bg-800)] active:bg-[var(--bg-800)] text-lg sm:text-base"
+        onFocus={handleTypingStart}
         onKeyDown={(ev) => {
+          handleTypingStart();
+
           if (ev.key === '@') {
             setComplete(true)
           }
@@ -502,6 +547,10 @@ const InputBar: Component<{
         }}
       />
 
+      <Button schema="clear" onClick={openMediaModal} class="mt-1">
+        <Image class="icon-button" size={18} />
+      </Button>
+
       <Switch>
         <Match when={user.user?.speechtotext && (text() === '' || listening())}>
           <div class="flex h-full items-center">
@@ -522,6 +571,54 @@ const InputBar: Component<{
           </Button>
         </Match>
       </Switch>
+      
+      <Show when={showMediaModal()}>
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div class="w-96 rounded-md bg-[var(--bg-800)] p-4 shadow-lg">
+            <h3 class="mb-3 text-lg font-semibold">Insert Media</h3>
+            
+            <div class="mb-4 flex justify-center">
+              <div class="flex rounded bg-[var(--bg-700)] p-1">
+                <button
+                  class={`px-4 py-1 rounded ${mediaType() === 'photo' ? 'bg-[var(--bg-500)]' : ''}`}
+                  onClick={() => setMediaType('photo')}
+                >
+                  Photo
+                </button>
+                <button
+                  class={`px-4 py-1 rounded ${mediaType() === 'video' ? 'bg-[var(--bg-500)]' : ''}`}
+                  onClick={() => setMediaType('video')}
+                >
+                  Video
+                </button>
+              </div>
+            </div>
+            
+            <div class="mb-4">
+              <TextInput
+                fieldName="mediaDescription"
+                placeholder="Enter description..."
+                value={mediaDescription()}
+                onChange={(ev) => setMediaDescription((ev.target as HTMLInputElement).value)}
+                input={{
+                  autofocus: true
+                }}
+                isMultiline
+                class="bg-[var(--bg-700)] focus:bg-[var(--bg-600)] hover:bg-[var(--bg-600)] max-h-[120px] min-h-[40px]"
+              />
+            </div>
+            
+            <div class="flex justify-end space-x-2">
+              <Button schema="secondary" onClick={() => setShowMediaModal(false)}>
+                Cancel
+              </Button>
+              <Button schema="primary" onClick={insertMediaTag} disabled={!mediaDescription()}>
+                Insert
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Show>
     </div>
   )
 }

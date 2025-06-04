@@ -1,4 +1,4 @@
-# Agnaistic
+# PornAI
 
 > AI Roleplay Chat with Personalized Characters using your favorite AI services.
 
@@ -12,9 +12,9 @@ Based on the early work of [Galatea-UI by PygmalionAI](https://github.com/Pygmal
 
 ## Quick Start
 
-**Important!** _MongoDB and Redis are optional! Agnaistic will run in "Guest Only" mode if MongoDB is not available._
+**Important!** _MongoDB and Redis are optional! PornAI will run in "Guest Only" mode if MongoDB is not available._
 
-Agnaistic is published as an NPM package and can be installed globally:
+PornAI is published as an NPM package and can be installed globally:
 
 ```sh
 # Install or update:
@@ -57,7 +57,7 @@ Windows: `C:\Users\sceuick\.agnai`.
 
 3. Install [Node.js](https://nodejs.org/en/download/)
 4. Install [MongoDB](https://www.mongodb.com/docs/manual/installation/) **Optional**
-   - The database is optional. Agnaistic will run in `anonymous-only` mode if there is no database available.
+   - The database is optional. PornAI will run in `anonymous-only` mode if there is no database available.
    - `Anonymous` users have their data saved to the browser's local storage. Your data will "persist", but not be shareable between devices or other browsers. Clearing your browser's application data/cookies will delete this data.
 5. Download the project: `git clone https://github.com/agnaistic/agnai` or [download it](https://github.com/agnaistic/agnai/archive/refs/heads/dev.zip)
 6. From inside the cloned/unpacked folder in your terminal/console:

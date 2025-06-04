@@ -93,7 +93,7 @@ const LoginPage: Component = () => {
           <p class="flex justify-center text-xl text-[var(--hl-400)]">Why register?</p>
           <div class="flex flex-col items-center">
             <p>
-              You don't need to register to use Agnaistic. You can use it anonymously and no data will
+              You don't need to register to use PornAI. You can use it anonymously and no data will
               be stored on any servers.
             </p>
             <p>

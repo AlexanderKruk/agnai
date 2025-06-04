@@ -284,7 +284,7 @@ export const AgnaiSettings: Component<{
 
   return (
     <>
-      <div class="text-xl">Agnaistic</div>
+      <div class="text-xl">PornAI</div>
       <Show when={settings.models.length === 0}>
         <i>No additional options available</i>
       </Show>

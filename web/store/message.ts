@@ -64,6 +64,11 @@ export type MsgState = {
     messageId?: string
     image?: number
   }
+  typing?: {
+    characterId: string
+    messageId: string
+    phase: 'thinking' | 'typing'
+  }
   nextLoading: boolean
   imagesSaved: boolean
   speaking: { messageId: string; status: VoiceState } | undefined
@@ -728,6 +733,12 @@ export const msgStore = createStore<MsgState>(
     stopSpeech() {
       stopSpeech()
       return { speaking: undefined }
+    },
+    setTyping(state: MsgState, characterId: string, messageId: string, phase: 'thinking' | 'typing') {
+      return { typing: { characterId, messageId, phase } }
+    },
+    clearTyping(state: MsgState) {
+      return { typing: undefined }
     },
     async *textToSpeech(
       { activeChatId, msgs },
