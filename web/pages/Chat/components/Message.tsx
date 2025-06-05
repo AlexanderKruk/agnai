@@ -277,8 +277,8 @@ const LineByLineRenderer: Component<{
   const calculateThinkingDelay = () => {
     // Thinking time varies between 2000-4000ms
     const baseThinking = 1500 // Base thinking time
-    const variationRange = 2000 // Additional 0-2000ms
-    const complexityFactor = Math.min(lines().length * 0.2, 1.0) // Slight complexity factor
+    const variationRange = 1000 // Additional 0-2000ms
+    const complexityFactor = Math.min(lines().length * 0.1, 1.0) // Slight complexity factor
     const randomFactor = Math.random() // 0 to 1 variation
     
     return baseThinking + (variationRange * randomFactor) + (complexityFactor * 500)
@@ -474,7 +474,7 @@ const Message: Component<MessageProps> = (props) => {
         }, 100 + Math.random() * 200) // 100-300ms delay to simulate server response
         
         // Double check appears when character "sees" the message (much sooner)
-        const seenDelay = 500 + Math.random() * 4500 // 500-5000ms random delay
+        const seenDelay = 500 + Math.random() * 2500 // 500-5000ms random delay
         setTimeout(() => {
           if (messageSent()) {
             setMessageRead(true) // Double check = "seen", not "read and processed"
