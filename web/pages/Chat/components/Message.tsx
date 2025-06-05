@@ -236,6 +236,7 @@ const LineByLineRenderer: Component<{
       if (splitLines.length > 1) {
         // Only save if we actually have multiple lines
         msgStore.editMessageProp(props.messageId, {
+          msg: splitLines.join('\n\n'),
           meta: {
             ...msgStore.getState().msgs.find(m => m._id === props.messageId)?.meta,
             splitLines: splitLines
