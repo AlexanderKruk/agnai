@@ -787,20 +787,22 @@ const Message: Component<MessageProps> = (props) => {
                   }
                 >
                   <Show when={showCharacterInfo()}>
-                    <MessageOptions
-                      index={props.index}
-                      ui={user.ui}
-                      msg={props.msg}
-                      edit={edit}
-                      startEdit={startEdit}
-                      onRemove={props.onRemove}
-                      last={props.last}
-                      tts={!!props.tts}
-                      partial={props.partial}
-                      show={opts}
-                      showMore={showOpt}
-                      textBeforeGenMore={props.textBeforeGenMore}
-                    />
+                    <Show when={user.user?.admin}>
+                      <MessageOptions
+                        index={props.index}
+                        ui={user.ui}
+                        msg={props.msg}
+                        edit={edit}
+                        startEdit={startEdit}
+                        onRemove={props.onRemove}
+                        last={props.last}
+                        tts={!!props.tts}
+                        partial={props.partial}
+                        show={opts}
+                        showMore={showOpt}
+                        textBeforeGenMore={props.textBeforeGenMore}
+                      />
+                    </Show>
                   </Show>
                 </Match>
 
