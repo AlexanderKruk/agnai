@@ -59,11 +59,11 @@ const HomePage: Component = () => {
   onMount(() => {
     announceStore.getAll()
 
-    emitter.on('loaded', () => {
-      if (!canStartTour('home')) return
-      settingStore.menu(true)
-      startTour('home')
-    })
+    // emitter.on('loaded', () => {
+    //   if (!canStartTour('home')) return
+    //   settingStore.menu(true)
+    //   startTour('home')
+    // })
   })
 
   return (
