@@ -76,6 +76,8 @@ export type UISettings = {
 
   dark: CustomUI
   light: CustomUI
+
+  language?: string
 }
 
 const customUiGuard = {
@@ -108,6 +110,7 @@ export const uiGuard = {
 
   light: customUiGuard,
   dark: customUiGuard,
+  language: 'string?',
 } as const
 
 export const defaultUIsettings: UISettings = {
@@ -156,4 +159,5 @@ export const defaultUIsettings: UISettings = {
     trash: { outer: false, pos: 5 },
     'schema-regen': { outer: false, pos: 6 },
   },
+  language: 'en',
 }

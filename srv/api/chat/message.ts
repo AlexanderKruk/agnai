@@ -12,6 +12,7 @@ import { getAdapter, resolveScenario } from '/common/prompt'
 import { mapPresetsToAdapter } from '/common/presets'
 import { isDefaultTemplate, templates } from '/common/presets/templates'
 import { Response } from 'express'
+import { translateToEnglishIfNeeded } from '../../utils/translate'
 
 type GenRequest = UnwrapBody<typeof genValidator>
 type MsgEntities = Awaited<ReturnType<typeof getMessageEntities>>
@@ -254,9 +255,17 @@ export const createMessage = handle(async (req) => {
 
   const impersonate: AppSchema.Character | undefined = body.impersonate
 
+  // Get user language from UI settings (default to 'en')
+  const userLang = req.authed?.ui?.language || 'en'
+  let text = body.text
+  // Only translate if not English
+  if (userLang !== 'en') {
+    text = await translateToEnglishIfNeeded(text, userLang)
+  }
+
   if (!userId) {
     const guest = req.socketId
-    const newMsg = newMessage(v4(), chatId, body.text, {
+    const newMsg = newMessage(v4(), chatId, text, {
       userId: body.bot || impersonate ? undefined : 'anon',
       characterId: impersonate?._id,
       ooc: body.kind === 'ooc' || body.kind === 'send-event:ooc',
@@ -273,7 +282,7 @@ export const createMessage = handle(async (req) => {
 
     const userMsg = await store.msgs.createChatMessage({
       chatId,
-      message: body.text,
+      message: text,
       characterId: impersonate?._id,
       senderId: body.bot ? undefined : userId,
       ooc: body.kind === 'ooc' || body.kind === 'send-event:ooc',
@@ -305,6 +314,14 @@ export const generateMessageV2 = handle(async (req, res) => {
   // Restore sensitive character data that was stripped from frontend request
   const restoredBody = await restoreSensitiveCharacterData(body, chat)
   req.body = restoredBody
+
+  // TRANSLATION LOGIC FOR generateMessageV2
+  const userLang = req.authed?.ui?.language || 'en'
+  if (restoredBody.text && typeof restoredBody.text === 'string') {
+    if (userLang !== 'en') {
+      restoredBody.text = await translateToEnglishIfNeeded(restoredBody.text, userLang)
+    }
+  }
 
   // if (isGuest(req)) {
   //   return handleGuestGenerate(body, req, res)

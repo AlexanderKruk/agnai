@@ -67,6 +67,7 @@ import { getRgbaFromVar } from './shared/colors'
 import { CallToAction } from './shared/CallToAction'
 // import Button from './shared/Button'
 // import { clearTours } from './tours'
+import Select from './shared/Select'
 
 const Navigation: Component = () => {
   let parent: any
@@ -244,6 +245,7 @@ const Navigation: Component = () => {
           <div class="text-500 mb-1 text-[0.6rem] italic" role="contentinfo" aria-label="Version">
             ver. {sha()}
           </div>
+          <LanguageSelector />
         </div>
       </div>
     </>
@@ -872,5 +874,29 @@ export const SubCTA: Component<{
         </div>
       </CallToAction>
     </Show>
+  )
+}
+
+const LanguageSelector = () => {
+  const user = userStore()
+  const options = [
+    { value: 'en', label: 'English' },
+    { value: 'ru', label: 'Русский' },
+  ]
+  const value = createMemo(() => user.ui?.language || 'en')
+  const onChange = (ev: { value: string }) => {
+    userStore.saveUI({ language: ev.value })
+  }
+  return (
+    <div class="flex w-full justify-center py-2">
+      <Select
+        fieldName="language"
+        label=""
+        items={options}
+        value={value()}
+        onChange={onChange}
+        hide={false}
+      />
+    </div>
   )
 }
