@@ -18,6 +18,7 @@ export const msgsApi = {
   getMessages,
   deleteMessages,
   getActiveTemplateParts,
+  translateMessage,
 }
 
 export type StreamCallback = (res: string, state: InferenceState) => any
@@ -66,6 +67,18 @@ export async function getMessages(chatId: string, before: string) {
 
   const res = await api.get<{ messages: AppSchema.ChatMessage[] }>(`/chat/${chatId}/messages`, {
     before,
+  })
+  return res
+}
+
+export async function translateMessage(chatId: string, messageId: string, targetLanguage: string) {
+  if (!isLoggedIn()) {
+    return localApi.error('Authentication required')
+  }
+
+  const res = await api.post<{ translated: string }>(`/chat/${chatId}/translate`, {
+    messageId,
+    targetLanguage,
   })
   return res
 }

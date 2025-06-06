@@ -1143,3 +1143,48 @@ function setTextStreamHeaders(res: Response, ents: MsgEntities, body: GenRequest
   res.flushHeaders()
   res.write(`data: ${JSON.stringify(success)}`)
 }
+
+export const translateMessage = handle(async (req) => {
+  const { userId, body, params } = req
+  const chatId = params.id
+  
+  assertValid({
+    messageId: 'string',
+    targetLanguage: 'string',
+  }, body)
+
+  if (!userId) {
+    throw new StatusError('Authentication required', 401)
+  }
+
+  const chat = await store.chats.getChatOnly(chatId)
+  if (!chat) throw errors.NotFound
+
+  if (chat.userId !== userId) {
+    const isAllowed = await store.chats.canViewChat(userId, chat)
+    if (!isAllowed) throw errors.Forbidden
+  }
+
+  const message = await store.msgs.getMessage(body.messageId)
+  if (!message || message.chatId !== chatId) {
+    throw new StatusError('Message not found', 404)
+  }
+
+  // Only translate character messages
+  if (!message.characterId) {
+    throw new StatusError('Can only translate character messages', 400)
+  }
+
+  // If target language is English, no translation needed
+  if (body.targetLanguage === 'en') {
+    return { translated: message.msg }
+  }
+
+  // Translate the message
+  const translated = await translateText(message.msg, 'en', body.targetLanguage)
+
+  // Update the message with translation
+  await store.msgs.editMessage(message._id, { translated })
+
+  return { translated }
+})

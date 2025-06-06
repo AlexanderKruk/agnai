@@ -812,6 +812,7 @@ export const msgStore = createStore<MsgState>(
 
       const res = await imageApi.generateImage(
         {
+          chatId: activeChatId,
           messageId,
           prompt: promptOverride || prev?.imagePrompt,
           append,
@@ -826,6 +827,26 @@ export const msgStore = createStore<MsgState>(
       if (res.error) {
         yield { waiting: undefined }
         toastStore.error(`Failed to request image: ${res.error}`)
+      }
+    },
+    async *translateMessage({ msgs, activeChatId }, messageId: string, targetLanguage: string) {
+      const msg = msgs.find(m => m._id === messageId)
+      if (!msg || !msg.characterId) {
+        toastStore.error('Can only translate character messages')
+        return
+      }
+
+      const result = await msgsApi.translateMessage(activeChatId, messageId, targetLanguage)
+      
+      if (result.error) {
+        toastStore.error(`Failed to translate message: ${result.error}`)
+        return
+      }
+
+      if (result.result?.translated) {
+        const updatedMsg = { ...msg, translated: result.result.translated }
+        const nextMsgs = replace(messageId, msgs, updatedMsg)
+        yield { msgs: nextMsgs }
       }
     },
   }

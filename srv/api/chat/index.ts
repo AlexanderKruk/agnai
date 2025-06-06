@@ -13,7 +13,7 @@ import { getAllChats, getCharacterChats, getChatDetail } from './get'
 import { guestGenerateMsg } from './guest-msg'
 import { createImage } from './image'
 import { createInvite, acceptInvite, rejectInvite, getInvites, uninviteMember } from './invite'
-import { generateMessageV2, getMessages, createMessage } from './message'
+import { generateMessageV2, getMessages, createMessage, translateMessage } from './message'
 import { deleteChat, deleteMessages } from './remove'
 import { textToSpeech } from './texttospeech'
 import { addCharacter, upsertTempCharacter, removeCharacter } from './characters'
@@ -28,6 +28,7 @@ router.post('/guidance', guidance)
 router.post('/reguidance', guidance)
 router.post('/:id/send', createMessage)
 router.post('/:id/generate', generateMessageV2)
+router.post('/:id/translate', translateMessage)
 router.post('/:id/guest-message', guestGenerateMsg)
 router.post('/:id/image', createImage)
 router.post('/:id/voice', textToSpeech)

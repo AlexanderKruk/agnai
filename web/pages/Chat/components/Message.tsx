@@ -558,6 +558,18 @@ const Message: Component<MessageProps> = (props) => {
     }
   })
 
+  // Check if greeting message needs translation
+  createEffect(() => {
+    const userLang = user.ui?.language || 'en'
+    const isGreetingMessage = props.index === 0 && props.msg.characterId && !props.msg.userId
+    const needsTranslation = userLang !== 'en' && isGreetingMessage && !props.msg.translated
+    
+    if (needsTranslation && props.msg.msg && props.msg.msg.trim()) {
+      // Request translation for the greeting message
+      msgStore.translateMessage(props.msg._id, userLang)
+    }
+  })
+
   // Get existing split lines from message meta
   const getExistingSplitLines = createMemo(() => {
     return props.msg.meta?.splitLines as string[] | undefined
