@@ -876,7 +876,12 @@ const Message: Component<MessageProps> = (props) => {
                     }
                   >
                     <LineByLineRenderer
-                      content={parseMessage(props.msg.msg, ctx, !!props.msg.userId, props.msg.adapter)}
+                      content={parseMessage(
+                        props.msg.translated && props.msg.translated.trim() !== '' ? props.msg.translated : props.msg.msg,
+                        ctx, 
+                        !!props.msg.userId, 
+                        props.msg.adapter
+                      )}
                       isBot={!props.msg.userId}
                       isUser={!!props.msg.userId}
                       delay={user.ui.lineByLineDelay ?? 800}
@@ -966,7 +971,7 @@ const Message: Component<MessageProps> = (props) => {
 
 export default Message
 
-export type SplitMessage = AppSchema.ChatMessage & { split?: boolean; handle?: string }
+export type SplitMessage = AppSchema.ChatMessage & { split?: boolean; handle?: string; translated?: string }
 
 function anonymizeText(text: string, profile: AppSchema.Profile, i: number) {
   return text.replace(new RegExp(profile.handle.trim(), 'gi'), 'User ' + (i + 1))
@@ -1409,7 +1414,8 @@ function getMessageContent(ctx: ContextState, props: MessageProps, state: ChatSt
     return { type: 'waiting', message: '', class: 'not-streaming', generating: true }
   }
 
-  let message = props.msg.msg
+  // Use translated if present and non-empty, otherwise fallback to msg
+  let message = props.msg.translated && props.msg.translated.trim() !== '' ? props.msg.translated : props.msg.msg
 
   if (props.last && props.swipe) message = props.swipe
   if (props.msg.event && !props.showHiddenEvents) {

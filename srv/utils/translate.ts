@@ -5,18 +5,10 @@ const DEEPL_API_KEY = process.env.DEEPL_API_KEY
 const DEEPL_API_URL = 'https://api-free.deepl.com/v2/translate'
 
 /**
- * Translate text to English using DeepL if sourceLang is Russian. Otherwise, return the text as is.
- * @param text The text to translate
- * @param sourceLang The source language code (e.g., 'ru', 'en')
- * @returns The translated text (or original if no translation needed)
+ * General DeepL translation utility for any source/target language.
  */
-export async function translateToEnglishIfNeeded(text: string, sourceLang: string): Promise<string> {
-  if (sourceLang === 'en') {
-    return text
-  }
-  if (sourceLang !== 'ru') {
-    return text // Only support Russian for now
-  }
+export async function translateText(text: string, sourceLang: string, targetLang: string): Promise<string> {
+  if (sourceLang === targetLang) return text
   if (!DEEPL_API_KEY) {
     console.error('DEEPL_API_KEY is not set')
     return text
@@ -24,8 +16,8 @@ export async function translateToEnglishIfNeeded(text: string, sourceLang: strin
   try {
     const response = await needle('post', DEEPL_API_URL, {
       text: [text],
-      source_lang: 'RU',
-      target_lang: 'EN',
+      source_lang: sourceLang.toUpperCase(),
+      target_lang: targetLang.toUpperCase(),
     }, {
       headers: {
         'Authorization': `DeepL-Auth-Key ${DEEPL_API_KEY}`,
@@ -45,4 +37,20 @@ export async function translateToEnglishIfNeeded(text: string, sourceLang: strin
     console.error('DeepL translation error:', err)
     return text
   }
+}
+
+/**
+ * Translate text to English using DeepL if sourceLang is Russian. Otherwise, return the text as is.
+ * @param text The text to translate
+ * @param sourceLang The source language code (e.g., 'ru', 'en')
+ * @returns The translated text (or original if no translation needed)
+ */
+export async function translateToEnglishIfNeeded(text: string, sourceLang: string): Promise<string> {
+  if (sourceLang === 'en') {
+    return text
+  }
+  if (sourceLang !== 'ru') {
+    return text // Only support Russian for now
+  }
+  return translateText(text, 'ru', 'en')
 } 

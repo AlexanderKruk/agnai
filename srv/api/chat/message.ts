@@ -12,7 +12,7 @@ import { getAdapter, resolveScenario } from '/common/prompt'
 import { mapPresetsToAdapter } from '/common/presets'
 import { isDefaultTemplate, templates } from '/common/presets/templates'
 import { Response } from 'express'
-import { translateToEnglishIfNeeded } from '../../utils/translate'
+import { translateText } from '../../utils/translate'
 
 type GenRequest = UnwrapBody<typeof genValidator>
 type MsgEntities = Awaited<ReturnType<typeof getMessageEntities>>
@@ -260,7 +260,7 @@ export const createMessage = handle(async (req) => {
   let text = body.text
   // Only translate if not English
   if (userLang !== 'en') {
-    text = await translateToEnglishIfNeeded(text, userLang)
+    text = await translateText(text, 'en', userLang)
   }
 
   if (!userId) {
@@ -305,7 +305,7 @@ export const generateMessageV2 = handle(async (req, res) => {
   assertValid(genValidator, body)
 
   // Log sanitized request data instead of full body
-  log.debug({ sanitizedBody: sanitizeRequestForLogging(body) }, 'Generate message request')
+  // log.debug({ sanitizedBody: sanitizeRequestForLogging(body) }, 'Generate message request')
 
   // Get chat first to restore sensitive character data
   const chat = await store.chats.getChatOnly(chatId)
@@ -319,7 +319,7 @@ export const generateMessageV2 = handle(async (req, res) => {
   const userLang = req.authed?.ui?.language || 'en'
   if (restoredBody.text && typeof restoredBody.text === 'string') {
     if (userLang !== 'en') {
-      restoredBody.text = await translateToEnglishIfNeeded(restoredBody.text, userLang)
+      restoredBody.text = await translateText(restoredBody.text, 'en', userLang)
     }
   }
 
@@ -598,6 +598,8 @@ export const generateMessageV2 = handle(async (req, res) => {
   } else {
     await handleAuthedResponse(payload)
   }
+
+  // Don't return JSON response here as it conflicts with Server-Sent Events
 })
 
 function newMessage(
@@ -708,12 +710,18 @@ async function handleAuthedResponse(opts: {
   const updatedAt = new Date().toISOString()
   let treeLeafId = ''
 
+  // Character-side translation logic
+  const userLang = req.authed?.ui?.language || 'en'
+  let translated: string | undefined = undefined
+  if (userLang !== 'en' && responseText && typeof responseText === 'string') {
+    translated = await translateText(responseText, 'en', userLang)
+  }
+
   switch (body.kind) {
     case 'summary': {
       sendMsgOne(req, { type: 'chat-summary', chatId: ents.chatId, summary: responseText })
       break
     }
-
     case 'chat-query': {
       sendMsgOne(req, {
         type: 'chat-query',
@@ -723,7 +731,6 @@ async function handleAuthedResponse(opts: {
       })
       break
     }
-
     case 'self':
     case 'request':
     case 'send-event:world':
@@ -744,10 +751,10 @@ async function handleAuthedResponse(opts: {
         parent,
         json: hydration,
         name: replyAs.name,
+        translated,
       })
-
       msg.meta.probs = probs
-
+      treeLeafId = requestId
       sendMsg(ents, {
         type: 'message-created',
         requestId,
@@ -757,16 +764,13 @@ async function handleAuthedResponse(opts: {
         generate: true,
         json: hydration,
       })
-      treeLeafId = requestId
       break
     }
-
     case 'retry': {
       if (body.replacing) {
         const nextRetries = [body.replacing.msg]
           .concat(retries)
           .concat(body.replacing.retries || [])
-
         const next = await store.msgs.editMessage(body.replacing._id, {
           msg: responseText,
           adapter,
@@ -775,6 +779,7 @@ async function handleAuthedResponse(opts: {
           retries: nextRetries,
           parent: body.parent,
           json: hydration ? hydration : (null as any),
+          translated,
         })
         treeLeafId = body.replacing._id
         meta.probs = probs
@@ -805,6 +810,7 @@ async function handleAuthedResponse(opts: {
           parent,
           json: hydration,
           name: replyAs.name,
+          translated,
         })
         msg.meta.probs = probs
         treeLeafId = requestId
@@ -820,13 +826,13 @@ async function handleAuthedResponse(opts: {
       }
       break
     }
-
     case 'continue': {
       const next = await store.msgs.editMessage(body.continuing._id, {
         msg: responseText,
         adapter,
         meta,
         state: 'continued',
+        translated,
       })
       treeLeafId = body.continuing._id
       meta.probs = probs

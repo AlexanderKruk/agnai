@@ -28,6 +28,7 @@ export type NewMessage = {
   json?: AppSchema.ChatMessage['json']
   values?: any
   name: string | undefined
+  translated?: string
 }
 
 export type ImportedMessage = NewMessage & { createdAt: string }
@@ -54,6 +55,10 @@ export async function createChatMessage(creating: NewMessage, ephemeral?: boolea
 
   if (creating.imagePrompt) {
     doc.imagePrompt = creating.imagePrompt
+  }
+
+  if (creating.translated) {
+    doc.translated = creating.translated
   }
 
   if (!ephemeral) await db('chat-message').insertOne(doc)
@@ -129,7 +134,7 @@ export async function editChatMessage(
   update: Partial<
     Pick<
       AppSchema.ChatMessage,
-      'msg' | 'actions' | 'adapter' | 'meta' | 'state' | 'extras' | 'retries' | 'parent' | 'json'
+      'msg' | 'actions' | 'adapter' | 'meta' | 'state' | 'extras' | 'retries' | 'parent' | 'json' | 'translated'
     >
   >
 ) {
@@ -156,6 +161,7 @@ export async function editMessage(
       | 'parent'
       | 'json'
       | 'imagePrompt'
+      | 'translated'
     >
   >
 ) {

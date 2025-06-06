@@ -333,6 +333,7 @@ export namespace AppSchema {
       history: string
       values: any
     }
+    translated?: string
   }
 
   export type ScenarioEventType = 'world' | 'character' | 'hidden' | 'ooc'
