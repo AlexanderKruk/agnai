@@ -27,3 +27,4 @@ settings.json
 *.key
 *.pub
 custom.docker-compose.yml
+.claude/settings.local.json
