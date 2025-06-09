@@ -86,7 +86,9 @@ export async function getImagePromptEntities(entities: PromptEntities) {
 }
 
 export async function getPromptEntities(): Promise<PromptEntities> {
-  if (isLoggedIn()) {
+  const loggedIn = isLoggedIn()
+  
+  if (loggedIn) {
     const entities = getAuthedPromptEntities()
     if (!entities) throw new Error(`Could not collate data for prompting`)
     return {
@@ -118,7 +120,7 @@ async function getGuestEntities() {
   const { active } = getStore('chat').getState()
   if (!active) return
   const { msgs, messageHistory } = getStore('messages').getState()
-  const { attachments } = getStore('attachmentStore').getState()
+  const { attachments } = getStore('attachments').getState()
 
   const chat = active.chat
   const char = active.char
@@ -161,14 +163,25 @@ async function getGuestEntities() {
 
 function getAuthedPromptEntities() {
   const { active, chatProfiles: members } = getStore('chat').getState()
-  if (!active) return
+  if (!active) {
+    return
+  }
 
-  // Get user data directly from userConfigStore to avoid synchronization issues
+  // Try userConfigStore first, then fallback to combined userStore
   const userConfigState = userConfigStore.getState()
+  let profile = userConfigState.profile
+  let user = userConfigState.user
   
-  if (!userConfigState.profile || !userConfigState.user) return
+  // Fallback to userStore if userConfigStore doesn't have the data yet
+  if (!profile || !user) {
+    const userState = getStore('user').getState()
+    profile = profile || userState.profile
+    user = user || userState.user
+  }
   
-  const { profile, user } = userConfigState
+  if (!profile || !user) {
+    return
+  }
 
   const chat = active.chat
   const char = active.char
@@ -178,7 +191,7 @@ function getAuthedPromptEntities() {
     .books.list.find((book) => book._id === chat.memoryId)
 
   const messagesStore = getStore('messages')
-  const attachmentStoreInstance = getStore('attachmentStore')
+  const attachmentStoreInstance = getStore('attachments')
   
   // If stores aren't available, return undefined and let the caller handle it
   if (!messagesStore || !attachmentStoreInstance) {
@@ -187,7 +200,9 @@ function getAuthedPromptEntities() {
   
   const { msgs, messageHistory } = messagesStore.getState()
   const { attachments } = attachmentStoreInstance.getState()
+  
   const settings = getActivePreset(chat, user)!
+  
   const scenarios = getStore('scenario')
     .getState()
     .scenarios.filter((s) => chat.scenarioIds && chat.scenarioIds.includes(s._id))

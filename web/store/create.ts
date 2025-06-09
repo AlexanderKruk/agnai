@@ -32,7 +32,7 @@ type StoreMap = {
   presets: typeof presetStore
   scenario: typeof scenarioStore
   audio: typeof audioStore
-  attachmentStore: typeof attachmentStore
+  attachments: typeof attachmentStore
   authStore: typeof authStore
   subscriptionStore: typeof subscriptionStore
   uiStore: typeof uiStore

@@ -12,44 +12,48 @@ import { createStore } from './create'
 // Combined state type for backwards compatibility
 export type UserState = AuthState & SubscriptionState & UIState & UserConfigState
 
-// Create initial state - start with empty state
+// Create initial state by immediately combining from focused stores
 function initCombinedState(): UserState {
-  return {} as UserState
+  try {
+    return {
+      ...authStore.getState(),
+      ...subscriptionStore.getState(),
+      ...uiStore.getState(),
+      ...userConfigStore.getState(),
+    }
+  } catch (error) {
+    console.warn('Failed to initialize combined state:', error)
+    return {} as UserState
+  }
 }
 
 export const userStore = createStore<UserState>(
   'user',
   initCombinedState()
 )((get, set) => {
-  // Initialize immediately without setTimeout to avoid timing issues
-  try {
-    const combinedState = {
-      ...authStore.getState(),
-      ...subscriptionStore.getState(),
-      ...uiStore.getState(),
-      ...userConfigStore.getState(),
+  // Force an immediate re-sync to ensure latest state
+  const resync = () => {
+    try {
+      const combinedState = {
+        ...authStore.getState(),
+        ...subscriptionStore.getState(),
+        ...uiStore.getState(),
+        ...userConfigStore.getState(),
+      }
+      set(combinedState)
+    } catch (error) {
+      console.warn('Failed to resync user store:', error)
     }
-    set(combinedState)
-    
-    // Subscribe to all individual stores for ongoing synchronization
-    authStore.subscribe((authState) => {
-      set({ ...get(), ...authState })
-    })
-    
-    subscriptionStore.subscribe((subState) => {
-      set({ ...get(), ...subState })
-    })
-    
-    uiStore.subscribe((uiState) => {
-      set({ ...get(), ...uiState })
-    })
-    
-    userConfigStore.subscribe((configState) => {
-      set({ ...get(), ...configState })
-    })
-  } catch (error) {
-    console.warn('Failed to initialize user store:', error)
   }
+  
+  // Initial resync
+  resync()
+  
+  // Subscribe to all individual stores for ongoing synchronization
+  authStore.subscribe(() => resync())
+  subscriptionStore.subscribe(() => resync())
+  uiStore.subscribe(() => resync())
+  userConfigStore.subscribe(() => resync())
 
   return {
     // Legacy methods for critical backwards compatibility  
