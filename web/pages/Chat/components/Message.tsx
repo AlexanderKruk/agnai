@@ -53,6 +53,8 @@ import { createStore } from 'solid-js/store'
 import { RelativeSpinner } from '/web/shared/Loading'
 import { LogProbs } from './LogProbs'
 import { MessageImages } from './MessageImages'
+import { MessageEditor } from './MessageEditor'
+import { MessageActions } from './MessageActions'
 
 /**
  * Advanced Universal Emoji Text Splitter
@@ -790,7 +792,7 @@ const Message: Component<MessageProps> = (props) => {
                 >
                   <Show when={showCharacterInfo()}>
                     <Show when={user.user?.admin}>
-                      <MessageOptions
+                      <MessageActions
                         index={props.index}
                         ui={user.ui}
                         msg={props.msg}
@@ -939,7 +941,7 @@ const Message: Component<MessageProps> = (props) => {
                 </Match>
 
                 <Match when={edit() && props.msg.json}>
-                  <JsonEdit msg={props.msg} update={(next) => setJsonValues(next)} />
+                  <MessageEditor msg={props.msg} update={(next) => setJsonValues(next)} />
                 </Match>
                 <Match when={edit()}>
                   <div
@@ -973,224 +975,9 @@ function anonymizeText(text: string, profile: AppSchema.Profile, i: number) {
   return text.replace(new RegExp(profile.handle.trim(), 'gi'), 'User ' + (i + 1))
 }
 
-const JsonEdit: Component<{
-  msg: SplitMessage
-  update: (next: any) => void
-}> = (props) => {
-  const entries = createMemo(() => Object.keys(props.msg.json?.values || {}))
-  const [editing, setEditing] = createStore<Record<string, string>>(props.msg.json?.values || {})
+// JsonEdit component moved to MessageEditor.tsx
 
-  onMount(() => {
-    props.update(props.msg.json?.values || {})
-  })
-
-  return (
-    <div class="flex flex-col gap-2">
-      <For each={entries()}>
-        {(key) => (
-          <div class="flex flex-col">
-            <Pill type="bg" small opacity={0.5} class="rounded-b-none rounded-t-md">
-              {key}
-            </Pill>
-            <div
-              ref={(r) => (r.innerText = editing[key])}
-              class="msg-edit-text-box rounded-md rounded-tl-none border border-[var(--bg-500)] p-1"
-              contentEditable={true}
-              onKeyUp={(ev: any) => {
-                setEditing(key, ev.target.innerText)
-                props.update(editing)
-              }}
-            ></div>
-          </div>
-        )}
-      </For>
-    </div>
-  )
-}
-
-const MessageOptions: Component<{
-  index: number
-  msg: SplitMessage
-  ui: UI.UISettings
-  tts: boolean
-  edit: Accessor<boolean>
-  startEdit: () => void
-  last?: boolean
-  partial?: string
-  show: Signal<boolean>
-  textBeforeGenMore?: string
-  onRemove: () => void
-  showMore: Signal<boolean>
-}> = (props) => {
-  const closer = (action: () => void) => {
-    return () => {
-      action()
-      props.showMore[1](false)
-    }
-  }
-
-  const logic = createMemo(() => {
-    const items: Record<
-      UI.MessageOption,
-      {
-        key: UI.MessageOption
-        outer: { outer: boolean; pos: number }
-        label: string
-        class: string
-        onClick: () => void
-        show: boolean
-        schema?: ButtonSchema
-        icon: (props: LucideProps) => JSX.Element
-      }
-    > = {
-      prompt: {
-        key: 'prompt',
-        label: 'Prompt',
-        class: 'prompt-btn',
-        outer: props.ui.msgOptsInline.prompt,
-        show: !!props.msg.characterId && props.msg.adapter !== 'image',
-        onClick: () => !props.partial && chatStore.computePrompt(props.msg, true),
-        icon: Terminal,
-      },
-
-      image: {
-        key: 'image',
-        label: 'Generate Image',
-        class: 'image-btn',
-        outer: props.ui.msgOptsInline.image,
-        show: !!props.msg.characterId && !props.msg.system && !props.msg.event && props.msg.adapter !== 'image' && !props.partial && !props.msg.json,
-        onClick: () => {
-          msgStore.createImage(props.msg._id, false, props.msg.msg)
-        },
-        icon: ImagePlus,
-      },
-
-      edit: {
-        key: 'edit',
-        label: 'Edit',
-        class: 'edit-btn',
-        outer: props.ui.msgOptsInline.edit,
-        show: !props.msg.characterId && props.msg.adapter !== 'image' && !props.partial,
-        onClick: props.startEdit,
-        icon: Pencil,
-      },
-
-      fork: {
-        key: 'fork',
-        label: 'Fork',
-        class: 'fork-btn',
-        show: !props.last,
-        outer: props.ui.msgOptsInline.fork,
-        onClick: () => !props.partial && msgStore.fork(props.msg._id),
-        icon: Split,
-      },
-
-      regen: {
-        key: 'regen',
-        class: 'refresh-btn',
-        label: 'Regenerate',
-        outer: props.ui.msgOptsInline.regen,
-        show:
-          (props.last || (props.msg.adapter === 'image' && !!props.msg.imagePrompt)) &&
-          !!props.msg.characterId,
-        onClick: () => !props.partial && retryMessage(props.msg, props.msg),
-        icon: RefreshCw,
-      },
-
-      'schema-regen': {
-        key: 'schema-regen',
-        class: 'refresh-btn',
-        label: 'Schema Regen',
-        outer: props.ui.msgOptsInline['schema-regen'],
-        show:
-          window.flags.reschema &&
-          ((props.msg.json && props.last) ||
-            (props.msg.adapter === 'image' && !!props.msg.imagePrompt)) &&
-          !!props.msg.characterId,
-        onClick: () => !props.partial && retryJsonSchema(props.msg, props.msg),
-        icon: Braces,
-      },
-
-      trash: {
-        key: 'trash',
-        label: 'Delete',
-        show: true,
-        outer: props.ui.msgOptsInline.trash,
-        onClick: props.onRemove,
-        class: 'delete-btn',
-        schema: 'red',
-        icon: Trash,
-      },
-    }
-
-    return items
-  })
-
-  const order = createMemo(() => {
-    logic()
-
-    return Object.entries(props.ui.msgOptsInline)
-      .sort((l, r) => l[1].pos - r[1].pos)
-      .map(([key, item]) => ({ key: key as UI.MessageOption, ...item }))
-  })
-
-  return (
-    <div class="mr-3 flex items-center gap-4 text-sm">
-      <div class="contents" id={`outer-${props.msg._id}`}></div>
-
-      <For each={order()}>
-        {(item) => {
-          const def = logic()[item.key]
-
-          return (
-            <Show when={def.outer.outer && def.show}>
-              <MessageOption
-                id={props.msg._id}
-                onClick={closer(def.onClick)}
-                class={def.class}
-                label={def.label}
-              >
-                {def.icon({ size: 18 })}
-              </MessageOption>
-            </Show>
-          )
-        }}
-      </For>
-
-      <Show
-        when={
-          (props.last || (props.msg.adapter === 'image' && props.msg.imagePrompt)) &&
-          props.msg.characterId &&
-          !!props.textBeforeGenMore
-        }
-      >
-        <div
-          class="icon-button"
-          onClick={() => !props.partial && msgStore.continuation(props.msg.chatId, undefined, true)}
-        >
-          <Repeat1 size={18} />
-        </div>
-      </Show>
-
-      <Show when={props.last && !props.msg.characterId}>
-        <div
-          class="icon-button"
-          onClick={() => !props.partial && msgStore.resend(props.msg.chatId, props.msg._id)}
-        >
-          <RefreshCw size={18} />
-        </div>
-      </Show>
-
-      <div
-        class="icon-button"
-        onClick={props.onRemove}
-        title="Delete"
-      >
-        <Trash size={18} />
-      </div>
-    </div>
-  )
-}
+// MessageOptions component moved to MessageActions.tsx
 
 const MessageOption: Component<{
   class?: string;
