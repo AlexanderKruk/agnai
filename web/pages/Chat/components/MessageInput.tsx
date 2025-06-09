@@ -48,9 +48,10 @@ const MessageInput: Component<MessageInputProps> = (props) => {
       setComplete(true)
     }
 
-    const canMobileSend = props.canMobileSend ?? true
-    if (ev.key === 'Enter' && !ev.shiftKey && canMobileSend) {
-      if (complete()) return
+    const canSend = props.canMobileSend ?? true
+    const isCompleteShowing = complete() || props.showComplete
+    if (ev.key === 'Enter' && !ev.shiftKey && canSend) {
+      if (isCompleteShowing) return
       props.onSubmit()
       ev.preventDefault()
     }
@@ -91,7 +92,7 @@ const MessageInput: Component<MessageInputProps> = (props) => {
         class="input-bar max-h-[120px] min-h-[40px] rounded-r-none hover:bg-[var(--bg-800)] active:bg-[var(--bg-800)] text-lg sm:text-base"
         onFocus={props.onTypingStart}
         onKeyDown={handleKeyDown}
-        onChange={props.onTextChange}
+        onChange={(ev) => props.onTextChange((ev.target as HTMLTextAreaElement).value)}
         textarea={dragHandlers}
       />
       

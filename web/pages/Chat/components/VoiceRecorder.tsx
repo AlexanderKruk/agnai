@@ -1,4 +1,4 @@
-import { Component, Show, Switch, Match } from 'solid-js'
+import { Component, Switch, Match } from 'solid-js'
 import { Send } from 'lucide-solid'
 import Button from '../../../shared/Button'
 import { SpeechRecognitionRecorder } from './SpeechRecognitionRecorder'
@@ -11,7 +11,7 @@ export interface VoiceRecorderProps {
   onText: (value: string) => void
   onSubmit: () => void
   onListeningChange: (listening: boolean) => void
-  cleared: number
+  cleared: () => number
 }
 
 const VoiceRecorder: Component<VoiceRecorderProps> = (props) => {

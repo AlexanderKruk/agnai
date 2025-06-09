@@ -1,19 +1,18 @@
 import { Component, createMemo, createSignal, onCleanup, Show } from 'solid-js'
 import { AppSchema } from '../../../../common/types/schema'
-import { NoCharacterIcon, WizardIcon } from '../../../asset/sprite'
+import NoCharacterIcon from '../../../icons/NoCharacterIcon'
+import WizardIcon from '../../../icons/WizardIcon'
 import { AutoCompleteOption } from '../../../shared/AutoComplete'
 import { chatStore, msgStore, toastStore, userStore } from '../../../store'
 import { useDraft } from '../../../shared/hooks'
-import { getFileAsDataURL } from '/web/shared/FileInput'
-import { attachmentStore } from '/web/store/attachmentStore'
+import { getFileAsDataURL } from '../../../shared/FileInput'
+import { attachmentStore } from '../../../store/attachmentStore'
 
 // Import our extracted components
 import MessageInput from './MessageInput'
 import VoiceRecorder from './VoiceRecorder'
 import FileUploadHandler from './FileUploadHandler'
 import ChatActions from './ChatActions'
-
-type ChatMessageExt = AppSchema.ChatMessage & { handle: string }
 
 const InputBar: Component<{
   chat: AppSchema.Chat
@@ -25,17 +24,11 @@ const InputBar: Component<{
   more: (msg: string) => void
   send: (msg: string, ooc: boolean) => void
   botMap: Record<string, AppSchema.Character>
+  activeBots?: AppSchema.Character[]
 }> = (props) => {
   const state = chatStore((s) => ({
     chatId: s.active?.chat._id,
-    canCaption: s.canImageCaption,
-    lastMsg: s.msgs.reduceRight<ChatMessageExt>((prev, curr, i) => {
-      if (prev?.handle) return prev
-      return { ...curr, handle: s.memberIds[curr.userId!] || curr.handle || 'You' }
-    }, {} as any),
-    msgs: s.msgs,
     memberIds: s.memberIds,
-    mode: s.mode,
   }))
 
   const chats = chatStore((s) => ({
@@ -44,36 +37,29 @@ const InputBar: Component<{
 
   const user = userStore()
   const ctx = msgStore((s) => ({
-    retries: s.retries,
     waiting: s.waiting,
-    lastInference: s.lastInference,
-    activeBots: s.activeBots,
-    allBots: s.allBots,
-    impersonate: s.impersonating,
-    chat: s.activeChat,
-    preset: s.inference.preset,
+    canCaption: s.canImageCaption,
+    msgs: s.msgs,
   }))
 
   const [text, setText] = createSignal('')
-  const [menu, setMenu] = createSignal(false)
   const [complete, setComplete] = createSignal(false)
   const [cleared, setCleared] = createSignal(0)
   const [listening, setListening] = createSignal(false)
   const [dragging, setDragging] = createSignal(false)
 
-  let ref: HTMLTextAreaElement
+  let ref: HTMLTextAreaElement | undefined
 
   const draft = useDraft(props.chat._id)
   const isOwner = createMemo(() => props.chat.userId === user.user?._id)
 
   const placeholder = createMemo(() => {
     if (props.ooc) return `Message (OOC)`
-    if (state.mode === 'adventure') return 'Enter your action or dialogue'
     return `Message ${props.char?.name || '...'}`
   })
 
   const completeOpts = createMemo(() => {
-    const characters = Object.values(ctx.allBots)
+    const characters = Object.values(props.botMap)
     const options: AutoCompleteOption[] = []
 
     for (const char of characters) {
@@ -85,7 +71,7 @@ const InputBar: Component<{
   })
 
   // Initialize text from draft
-  const draftText = draft.load()
+  const draftText = draft.restore()
   if (draftText && !text()) {
     setText(draftText)
   }
@@ -112,7 +98,8 @@ const InputBar: Component<{
   }, 100)
 
   const handleTypingStart = debounce(() => {
-    msgStore.type(props.chat._id)
+    // TODO: Implement typing indicator
+    // msgStore.getState().typing(props.chat._id)
   }, 1000)
 
   const onFile = async (files: any[]) => {
@@ -122,12 +109,12 @@ const InputBar: Component<{
   }
 
   const attach = async (file: File) => {
-    if (!state.canCaption) {
+    if (!ctx.canCaption) {
       return toastStore.warn(`Cannot upload files: Image captioning is not available`)
     }
 
-    const buffer = await getFileAsDataURL(file)
-    attachmentStore.setAttachment(state.chatId!, buffer)
+    const result = await getFileAsDataURL(file)
+    attachmentStore.setAttachment(state.chatId!, result.content)
   }
 
   const onCompleteSelect = (option: AutoCompleteOption) => {
@@ -148,7 +135,6 @@ const InputBar: Component<{
 
   const setAutoReplyAs = (charId: string) => {
     chatStore.setAutoReplyAs(charId)
-    setMenu(false)
   }
 
   // Listen for media tag insertion events
@@ -178,14 +164,12 @@ const InputBar: Component<{
       <ChatActions
         chat={props.chat}
         char={props.char}
-        lastMsg={state.lastMsg}
-        activeBots={ctx.activeBots}
+        activeBots={props.activeBots || []}
         replyAs={chats.replyAs}
         showOocToggle={props.showOocToggle}
         ooc={props.ooc}
         isOwner={isOwner()}
-        canImageCaption={state.canCaption}
-        preset={ctx.preset}
+        canImageCaption={ctx.canCaption}
         onAutoReplyAs={setAutoReplyAs}
         onToggleOoc={toggleOoc}
         onFile={onFile}
@@ -195,7 +179,7 @@ const InputBar: Component<{
         text={text()}
         placeholder={placeholder()}
         culture={props.char?.culture}
-        canMobileSend={user.ui.mobileSendOnEnter}
+        canMobileSend={window.innerWidth <= 768 ? user.ui.mobileSendOnEnter : true}
         dragging={dragging()}
         completeOptions={completeOpts()}
         showComplete={complete()}
@@ -211,19 +195,18 @@ const InputBar: Component<{
 
       <FileUploadHandler
         chatId={state.chatId!}
-        canImageCaption={state.canCaption}
-        preset={ctx.preset}
+        canImageCaption={ctx.canCaption}
       />
 
       <VoiceRecorder
         hasText={!!text()}
         listening={listening()}
         culture={props.char?.culture}
-        speechToTextEnabled={user.user?.speechtotext}
+        speechToTextEnabled={!!user.user?.speechtotext}
         onText={updateText}
         onSubmit={send}
         onListeningChange={setListening}
-        cleared={cleared()}
+        cleared={cleared}
       />
     </div>
   )

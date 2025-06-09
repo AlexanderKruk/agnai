@@ -506,22 +506,44 @@ const Message: Component<MessageProps> = (props) => {
         }
       };
     }
-    
-    // Set up global typing interrupt handler
-    const interruptHandler = () => {
-      const interrupt = interruptFn();
-      // Only interrupt if it's NOT the first message (index !== 0)
-      if (props.index !== 0 && shouldUseLineByLine() && interrupt) {
-        interrupt();
-      }
-    };
-    
-    // Listen for global typing start events
-    events.on(EVENTS.userTypingStarted, interruptHandler);
-    
-    onCleanup(() => {
-      events.removeListener(EVENTS.userTypingStarted, interruptHandler);
-    });
+  })
+
+  // Set up global typing interrupt handler
+  // Only add for the last message to avoid memory leaks
+  createEffect(() => {
+    // Only the last message should listen for typing interrupts to avoid multiple listeners
+    if (props.last && props.index !== 0 && shouldUseLineByLine()) {
+      const interruptHandler = () => {
+        // When typing starts, interrupt ALL line-by-line rendering, not just this message
+        // We emit a custom event that all messages can listen for
+        const event = new CustomEvent('interrupt-line-by-line');
+        document.dispatchEvent(event);
+      };
+      
+      events.on(EVENTS.userTypingStarted, interruptHandler);
+      
+      onCleanup(() => {
+        events.removeListener(EVENTS.userTypingStarted, interruptHandler);
+      });
+    }
+  })
+
+  // Each message listens for the custom interrupt event
+  createEffect(() => {
+    if (props.index !== 0 && shouldUseLineByLine()) {
+      const handleInterrupt = () => {
+        const interrupt = interruptFn();
+        if (interrupt) {
+          interrupt();
+        }
+      };
+      
+      document.addEventListener('interrupt-line-by-line', handleInterrupt);
+      
+      onCleanup(() => {
+        document.removeEventListener('interrupt-line-by-line', handleInterrupt);
+      });
+    }
   })
   
   onCleanup(() => obs().disconnect())

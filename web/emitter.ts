@@ -27,6 +27,7 @@ export const EVENTS = {
 type EventType = (typeof EVENTS)[keyof typeof EVENTS]
 
 const emitter = new EventEmitter()
+emitter.setMaxListeners(50) // Increase limit to prevent warnings during chat rendering
 
 export const events = {
   emit: (event: EventType, ...args: any[]) => emitter.emit(event, ...args),

@@ -31,7 +31,7 @@ export const ChatFooter: Component<{
     members: s.chatProfiles,
   }))
 
-  const [ooc, setOoc] = createSignal<boolean>()
+  const [ooc] = createSignal<boolean>()
   const attachment = createMemo(() => {
     if (!props.ctx.chat) return
     const attachment = attachments[props.ctx.chat._id]
@@ -102,17 +102,15 @@ export const ChatFooter: Component<{
         <TypingIndicator />
         <InputBar
           chat={chats.chat!}
-          swiped={props.swipe !== 0}
           send={props.sendMessage}
           more={moreMessage}
           char={chats.char}
           ooc={ooc() ?? isGroupChat()}
-          setOoc={setOoc}
           showOocToggle={isGroupChat()}
-          request={props.requestMessage}
-          bots={props.ctx.activeBots}
+          senderName={user.profile?.handle || 'You'}
+          chatEditing={false}
           botMap={chars.botMap}
-          onTypingStart={props.onTypingStart}
+          activeBots={props.ctx.activeBots}
         />
       </Show>
     </div>

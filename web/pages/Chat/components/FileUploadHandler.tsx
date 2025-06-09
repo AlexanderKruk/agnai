@@ -2,9 +2,9 @@ import { Component, createSignal, Show } from 'solid-js'
 import { ImageUp, Image } from 'lucide-solid'
 import Button, { LabelButton } from '../../../shared/Button'
 import TextInput from '../../../shared/TextInput'
-import FileInput, { FileInputResult, getFileAsDataURL } from '/web/shared/FileInput'
-import { attachmentStore } from '/web/store/attachmentStore'
-import { toastStore } from '/web/store/toasts'
+import FileInput, { FileInputResult, getFileAsDataURL } from '../../../shared/FileInput'
+import { attachmentStore } from '../../../store/attachmentStore'
+import { toastStore } from '../../../store/toasts'
 
 export interface FileUploadHandlerProps {
   chatId: string
@@ -18,7 +18,6 @@ const FileUploadHandler: Component<FileUploadHandlerProps> = (props) => {
   const [showMediaModal, setShowMediaModal] = createSignal(false)
   const [mediaType, setMediaType] = createSignal<'photo' | 'video'>('photo')
   const [mediaDescription, setMediaDescription] = createSignal('')
-  const [dragging, setDragging] = createSignal(false)
 
   const onFile = async (files: FileInputResult[]) => {
     if (!files.length) return
@@ -32,8 +31,8 @@ const FileUploadHandler: Component<FileUploadHandlerProps> = (props) => {
       return toastStore.warn(`Cannot upload files: Image captioning is not available`)
     }
 
-    const buffer = await getFileAsDataURL(file)
-    attachmentStore.setAttachment(props.chatId, buffer)
+    const result = await getFileAsDataURL(file)
+    attachmentStore.setAttachment(props.chatId, result.content)
   }
 
   const openMediaModal = () => {
@@ -138,12 +137,6 @@ const FileUploadHandler: Component<FileUploadHandlerProps> = (props) => {
         </div>
       </Show>
 
-      {/* Drag overlay indicator */}
-      <Show when={dragging()}>
-        <div class="absolute inset-0 flex items-center justify-center bg-blue-500 bg-opacity-20 border-2 border-dashed border-blue-400 rounded-md">
-          <div class="text-blue-600 font-semibold">Drop file to attach</div>
-        </div>
-      </Show>
     </>
   )
 }
