@@ -105,8 +105,8 @@ export const ModeDetail: Component<{
                 class="mode-content flex w-full flex-col-reverse overflow-y-auto"
                 classList={{
                   // Chat Width
-                  'w-full max-w-full': props.showPane || user.ui.chatWidth === 'full',
-                  'w-full max-w-3xl': !props.showPane && user.ui.chatWidth === 'narrow',
+                  'w-full max-w-full': props.showPane || user.ui?.chatWidth === 'full',
+                  'w-full max-w-3xl': !props.showPane && user.ui?.chatWidth === 'narrow',
                   // Chat Margin
                   'xs:mr-auto mx-auto': props.showPane,
                   // 'mx-auto': !props.showPane,

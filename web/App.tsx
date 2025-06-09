@@ -134,7 +134,7 @@ const Layout: Component<{ children?: any }> = (props) => {
   const maxW = createMemo((): string => {
     if (pane.showing()) return 'max-w-full'
 
-    return getMaxChatWidth(state.ui.chatWidth)
+    return getMaxChatWidth(state.ui?.chatWidth || 'fill')
   })
   const rootModals = rootModalStore()
 

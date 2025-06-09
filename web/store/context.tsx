@@ -95,17 +95,17 @@ export function ContextProvider(props: { children: any }) {
 
   const visuals = createMemo(() => {
     const botBackground = getRgbaFromVar(
-      users.current.botBackground || 'bg-800',
-      users.ui.msgOpacity,
+      users.current?.botBackground || 'bg-800',
+      users.ui?.msgOpacity,
       'chat-bot'
     )
     const userBackground = getRgbaFromVar(
-      users.current.msgBackground || 'bg-800',
-      users.ui.msgOpacity,
+      users.current?.msgBackground || 'bg-800',
+      users.ui?.msgOpacity,
       'chat-user'
     )
 
-    const oocBackground = getRgbaFromVar('bg-1000', users.ui.msgOpacity, 'chat-ooc')
+    const oocBackground = getRgbaFromVar('bg-1000', users.ui?.msgOpacity, 'chat-ooc')
 
     return {
       bot: botBackground,
@@ -168,7 +168,7 @@ export function ContextProvider(props: { children: any }) {
       user: users.user,
       profile: users.profile,
       handle: handle(),
-      trimSentences: users.ui.trimSentences ?? false,
+      trimSentences: users.ui?.trimSentences ?? false,
       promptHistory: chats.promptHistory,
       chatTree: chatGraphStore.getState().graph.tree,
       waiting: msgs.waiting,

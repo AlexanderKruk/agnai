@@ -86,7 +86,7 @@ export const generateImageApi = wrap(async ({ authed, userId, log, body }) => {
   assertValid(validImage, body)
 
   if (body.use_recommended && authed) {
-    authed.useRecommendedImages = body.use_recommended
+    authed.useRecommendedImages = body.use_recommended as import('/common/types/user/media').ImageRecommendation
   }
 
   const result = await generateImageSync(

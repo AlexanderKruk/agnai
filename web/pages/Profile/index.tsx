@@ -29,7 +29,7 @@ import { createStore } from 'solid-js/store'
 
 export const ProfileModal: Component = () => {
   const state = userStore()
-  const config = userStore((s) => ({ tiers: s.tiers.filter((t) => t.enabled) }))
+  const config = userStore((s) => ({ tiers: s.tiers?.filter((t) => t.enabled) || [] }))
   const tabs = useTabs(['Profile', 'Subscription'], 0)
   const [search, setSearch] = useSearchParams()
 

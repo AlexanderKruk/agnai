@@ -24,7 +24,6 @@ import {
   SAMPLE_CHAT_PREAMBLE,
   BOT_REPLACE,
   SELF_REPLACE,
-  START_REPLACE,
   placeholderReplace,
   removeEmpty,
 } from './promptUtils'

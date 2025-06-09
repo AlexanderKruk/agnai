@@ -1,13 +1,18 @@
-import type { AIAdapter, ChatAdapter, ThirdPartyFormat } from '../adapters'
+import type { ChatAdapter } from '../adapters'
 import * as Memory from './memory'
 import type { GenerationPreset } from '../presets'
 import type { ImageSettings } from './image-schema'
-import type { TTSSettings } from './texttospeech-schema'
-import type { UISettings } from './ui'
 import * as Saga from './saga'
 import * as Library from './library'
 import * as Preset from './presets'
 import * as Admin from './admin'
+import type { 
+  UserAuthentication, 
+  UserAIServices, 
+  UserSubscription, 
+  UserMedia, 
+  UserPreferences 
+} from './user'
 
 export type AllDoc =
   | AppSchema.Announcement
@@ -76,150 +81,12 @@ export namespace AppSchema {
     avatar?: string
   }
 
-  export interface User {
-    _id: string
-
-    updatedAt?: string
-
-    /** Date ISO string of last seen announcement */
-    announcement?: string
-
-    kind: 'user'
-    username: string
-    hash: string
-    apiKey?: string
-
-    admin: boolean
-    role?: 'moderator' | 'admin'
-
-    disableLTM?: boolean
-
-    novelApiKey: string
-    novelModel: string
-    novelVerified?: boolean
-    useLocalPipeline: boolean
-
-    koboldUrl: string
-    thirdPartyFormat: ThirdPartyFormat
-    thirdPartyPassword: string
-    thirdPartyPasswordSet?: boolean
-    oobaUrl: string
-
-    mistralKey?: string
-    mistralKeySet?: boolean
-
-    oaiKey: string
-    oaiKeySet?: boolean
-
-    userHordeKey?: string
-    hordeKey: string
-    hordeModel: string | string[]
-    hordeName?: string
-    hordeUseTrusted?: boolean
-    hordeWorkers?: string[]
-
-    scaleUrl?: string
-    scaleApiKey?: string
-    scaleApiKeySet?: boolean
-
-    claudeApiKey?: string
-    claudeApiKeySet?: boolean
-
-    elevenLabsApiKey?: string
-    elevenLabsApiKeySet?: boolean
-
-    featherlessApiKey?: string
-    featherlessApiKeySet?: boolean
-
-    arliApiKey?: string
-    arliApiKeySet?: boolean
-
-    defaultAdapter: AIAdapter
-    defaultPresets?: { [key in AIAdapter]?: string }
-    defaultPreset?: string
-    chargenPreset?: string
-
-    createdAt?: string
-
-    speechtotext?: {
-      enabled: boolean
-      autoSubmit: boolean
-      autoRecord: boolean
-    }
-
-    texttospeech?: TTSSettings
-
-    images?: ImageSettings & {}
-
-    imageDefaults?: {
-      size: boolean
-      affixes: boolean
-      negative: boolean
-      sampler: boolean
-      guidance: boolean
-      steps: boolean
-    }
-    useRecommendedImages?: string // 'all' | 'except-(size|affix|negative)' | 'none'
-
-    adapterConfig?: { [key in AIAdapter]?: Record<string, any> }
-
-    ui?: UISettings
-
-    sub?: {
-      type?: SubscriptionType
-      tierId: string
-      level: number
-      last?: string
-    }
-
-    manualSub?: {
-      tierId: string
-      level: number
-      expiresAt: string
-    }
-
-    patreonUserId?: string | null
-    patreon?: {
-      access_token: string
-      refresh_token: string
-      expires_in: number
-      scope: string
-      token_type: string
-      expires: string
-      user: Patreon.User
-      tier?: Patreon.Tier
-      member?: Patreon.Member
-      sub?: {
-        tierId: string
-        level: number
-      }
-    }
-
-    google?: {
-      sub: any
-      email: any
-    }
-
-    billing?: {
-      status: 'active' | 'cancelled'
-      cancelling?: boolean
-      validUntil: string
-      lastRenewed: string
-      customerId: string
-      subscriptionId: string
-      lastChecked?: string
-    }
-    stripeSessions?: string[]
-
-    banned?: {
-      at: Date
-      reason: string
-    }
-
-    banHistory?: Array<{ at: Date; reason: string }>
-
-    resetCode?: string
-  }
+  export interface User extends 
+    UserAuthentication,
+    UserAIServices,
+    UserSubscription,
+    UserMedia,
+    UserPreferences {}
 
   export interface ApiKey {
     _id: string

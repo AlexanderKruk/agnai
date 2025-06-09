@@ -123,7 +123,7 @@ export function useCharacterBg(src: 'layout' | 'page') {
       'background-color': isChat() ? undefined : '',
     }
 
-    const isBg = state.ui.viewMode?.startsWith('background')
+    const isBg = state.ui?.viewMode?.startsWith('background')
     const char = chars.chars.map[chat.active?.char?._id!]
 
     const chatImage = chat.active?.chat.background

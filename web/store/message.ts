@@ -590,7 +590,7 @@ export const msgStore = createStore<MsgState>(
           res = await botGen
             .generate({ signal, kind: mode, text: message })
             .catch((err) => ({ error: err.message, result: undefined }))
-          if ('result' in res && !res.result.generating) {
+          if ('result' in res && !res.result?.generating) {
             yield { partial: undefined, waiting: undefined }
           }
 

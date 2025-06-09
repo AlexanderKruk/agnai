@@ -1,10 +1,9 @@
-// Legacy user store - now re-exports from focused stores
+// Legacy user store - backwards compatibility facade
 import { EVENTS, events } from '../emitter'
 import { authStore, AuthState } from './authStore'
 import { subscriptionStore, SubscriptionState } from './subscriptionStore'
 import { uiStore, UIState } from './uiStore'
 import { userConfigStore, UserConfigState } from './userConfigStore'
-import { getUserSubscriptionTier } from '/common/util'
 import { AppSchema } from '../../common/types/schema'
 import { subscribe } from './socket'
 import { defaultUIsettings } from '/common/types/ui'
@@ -13,88 +12,87 @@ import { createStore } from './create'
 // Combined state type for backwards compatibility
 export type UserState = AuthState & SubscriptionState & UIState & UserConfigState
 
-// Create initial state by combining all stores
+// Create initial state - start with empty state
 function initCombinedState(): UserState {
-  return {
-    ...authStore.getState(),
-    ...subscriptionStore.getState(),
-    ...uiStore.getState(),
-    ...userConfigStore.getState(),
-  }
+  return {} as UserState
 }
 
 export const userStore = createStore<UserState>(
   'user',
   initCombinedState()
 )((get, set) => {
-  // Subscribe to all individual stores and update combined state
-  authStore.subscribe((authState) => {
-    set({ ...get(), ...authState })
-  })
-  
-  subscriptionStore.subscribe((subState) => {
-    set({ ...get(), ...subState })
-  })
-  
-  uiStore.subscribe((uiState) => {
-    set({ ...get(), ...uiState })
-  })
-  
-  userConfigStore.subscribe((configState) => {
-    set({ ...get(), ...configState })
-  })
+  // Initialize immediately without setTimeout to avoid timing issues
+  try {
+    const combinedState = {
+      ...authStore.getState(),
+      ...subscriptionStore.getState(),
+      ...uiStore.getState(),
+      ...userConfigStore.getState(),
+    }
+    set(combinedState)
+    
+    // Subscribe to all individual stores for ongoing synchronization
+    authStore.subscribe((authState) => {
+      set({ ...get(), ...authState })
+    })
+    
+    subscriptionStore.subscribe((subState) => {
+      set({ ...get(), ...subState })
+    })
+    
+    uiStore.subscribe((uiState) => {
+      set({ ...get(), ...uiState })
+    })
+    
+    userConfigStore.subscribe((configState) => {
+      set({ ...get(), ...configState })
+    })
+  } catch (error) {
+    console.warn('Failed to initialize user store:', error)
+  }
 
   return {
-    // Auth methods
-    login: authStore.login,
-    register: authStore.register,
-    logout: authStore.logout,
-    handleGoogleCallback: authStore.handleGoogleCallback,
-    unlinkGoogleAccount: authStore.unlinkGoogleAccount,
-    resetPassword: authStore.resetPassword,
-    changePassword: authStore.changePassword,
-    remoteLogin: authStore.remoteLogin,
-    thirdPartyLogin: authStore.thirdPartyLogin,
-    createApiKey: authStore.createApiKey,
-    deleteAccount: authStore.deleteAccount,
-
-    // Subscription methods
-    getTiers: subscriptionStore.getTiers,
-    startCheckout: subscriptionStore.startCheckout,
-    finishCheckout: subscriptionStore.finishCheckout,
-    stopSubscription: subscriptionStore.stopSubscription,
-    resumeSubscription: subscriptionStore.resumeSubscription,
-    modifySubscription: subscriptionStore.modifySubscription,
-    retrieveSubscription: subscriptionStore.retrieveSubscription,
-    validateSubscription: subscriptionStore.validateSubscription,
-    subscriptionStatus: subscriptionStore.subscriptionStatus,
-    verifyPatreon: subscriptionStore.verifyPatreon,
-    unverifyPatreon: subscriptionStore.unverifyPatreon,
-    syncPatreonAccount: subscriptionStore.syncPatreonAccount,
-
-    // UI methods
-    saveUI: uiStore.saveUI,
-    saveCustomUI: uiStore.saveCustomUI,
-    tryCustomUI: uiStore.tryCustomUI,
-    tryUI: uiStore.tryUI,
-    receiveUI: uiStore.receiveUI,
-    setBackground: uiStore.setBackground,
-
-    // Config methods
-    modal: userConfigStore.modal,
-    revealApiKey: userConfigStore.revealApiKey,
-    generateApiKey: userConfigStore.generateApiKey,
-    getProfile: userConfigStore.getProfile,
-    removeProfileAvatar: userConfigStore.removeProfileAvatar,
-    getConfig: userConfigStore.getConfig,
-    updateProfile: userConfigStore.updateProfile,
-    updateConfig: userConfigStore.updateConfig,
-    updatePartialConfig: userConfigStore.updatePartialConfig,
-    updateService: userConfigStore.updateService,
-    deleteKey: userConfigStore.deleteKey,
-    clearGuestState: userConfigStore.clearGuestState,
-    novelLogin: userConfigStore.novelLogin,
-    hordeStats: userConfigStore.hordeStats,
+    // Legacy methods for critical backwards compatibility  
+    async setState(state: UserState, update: Partial<UserState>) {
+      set(update)
+    },
+    
+    // Delegate core auth methods
+    async login(state: UserState, username: string, password: string, onSuccess?: (token: string) => void) {
+      return authStore.login(username, password, onSuccess)
+    },
+    
+    async logout(state: UserState) {
+      return authStore.logout()
+    },
+    
+    async register(state: UserState, newUser: any, onSuccess?: () => void) {
+      return authStore.register(newUser, onSuccess)
+    },
+    
+    // Delegate core config methods
+    async updateConfig(state: UserState, data: any, onSuccess?: () => void) {
+      return userConfigStore.updateConfig(data, onSuccess)
+    },
+    
+    async getConfig(state: UserState) {
+      return userConfigStore.getConfig()
+    },
+    
+    // Delegate core UI methods
+    async saveUI(state: UserState, ui: any, onSuccess?: any) {
+      return uiStore.saveUI(ui, onSuccess)
+    },
+    
+    // Delegate core subscription methods
+    async getTiers(state: UserState) {
+      return subscriptionStore.getTiers()
+    },
+    
+    // Add missing modal method
+    async modal(state: UserState, modal?: any) {
+      return userConfigStore.modal(modal)
+    },
   }
 })
 
@@ -120,7 +118,7 @@ events.on(EVENTS.init, (init) => {
     init.user?.manualSub ||
     init.user?.stripeSessions?.length
   ) {
-    subscriptionStore.retrieveSubscription({}, init.user, true)
+    subscriptionStore.retrieveSubscription(true, init.user)
   }
 
   if (init.user?._id !== 'anon') {
@@ -133,9 +131,9 @@ events.on(EVENTS.init, (init) => {
    * While introducing persisted UI settings, we'll automatically persist settings that the user has in local storage
    */
   if (!init.user || !init.user.ui) {
-    uiStore.saveUI({}, defaultUIsettings)
+    uiStore.saveUI(defaultUIsettings)
   } else {
-    uiStore.receiveUI({}, init.user.ui)
+    uiStore.receiveUI(init.user.ui)
 
     if (!init.user.disableLTM) {
       // embedApi.initSimiliary(false) // Removed to avoid circular dependency
@@ -144,7 +142,7 @@ events.on(EVENTS.init, (init) => {
 })
 
 subscribe('ui-update', { ui: 'any' }, (body) => {
-  uiStore.receiveUI({}, body.ui)
+  uiStore.receiveUI(body.ui)
 })
 
 function getUserType(user: AppSchema.User): import('/common/types/admin').UserType {

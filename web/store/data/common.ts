@@ -9,6 +9,7 @@ import { AppSchema } from '/common/types'
 import { deepClone } from '/common/util'
 import { getBotsForChat } from '/web/pages/Chat/util'
 import { getUserPreset } from '/web/shared/adapter'
+import { userConfigStore } from '../userConfigStore'
 
 export type GenerateEntities = Awaited<ReturnType<typeof getPromptEntities>>
 
@@ -117,7 +118,7 @@ async function getGuestEntities() {
   const { active } = getStore('chat').getState()
   if (!active) return
   const { msgs, messageHistory } = getStore('messages').getState()
-  const { attachments } = getStore('attachments').getState()
+  const { attachments } = getStore('attachmentStore').getState()
 
   const chat = active.chat
   const char = active.char
@@ -162,8 +163,12 @@ function getAuthedPromptEntities() {
   const { active, chatProfiles: members } = getStore('chat').getState()
   if (!active) return
 
-  const { profile, user } = getStore('user').getState()
-  if (!profile || !user) return
+  // Get user data directly from userConfigStore to avoid synchronization issues
+  const userConfigState = userConfigStore.getState()
+  
+  if (!userConfigState.profile || !userConfigState.user) return
+  
+  const { profile, user } = userConfigState
 
   const chat = active.chat
   const char = active.char
@@ -172,8 +177,16 @@ function getAuthedPromptEntities() {
     .getState()
     .books.list.find((book) => book._id === chat.memoryId)
 
-  const { msgs, messageHistory } = getStore('messages').getState()
-  const { attachments } = getStore('attachments').getState()
+  const messagesStore = getStore('messages')
+  const attachmentStoreInstance = getStore('attachmentStore')
+  
+  // If stores aren't available, return undefined and let the caller handle it
+  if (!messagesStore || !attachmentStoreInstance) {
+    return undefined
+  }
+  
+  const { msgs, messageHistory } = messagesStore.getState()
+  const { attachments } = attachmentStoreInstance.getState()
   const settings = getActivePreset(chat, user)!
   const scenarios = getStore('scenario')
     .getState()
