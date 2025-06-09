@@ -10,28 +10,19 @@ import { imageApi } from './data/image'
 import { userStore } from './user'
 import { localApi } from './data/storage'
 import { chatStore } from './chat'
-import { voiceApi } from './data/voice'
-import { VoiceSettings, VoiceWebSynthesisSettings } from '../../common/types/texttospeech-schema'
-import { defaultCulture } from '../shared/CultureCodes'
-import { createSpeech, isNativeSpeechSupported, stopSpeech } from '../shared/Audio/speech'
 import { eventStore } from './event'
 import { exclude, findOne, replace } from '/common/util'
-import {
-  ChatTree,
-  removeChatTreeNodes,
-  resolveChatPath,
-  sortAsc,
-  toChatGraph,
-  updateChatTreeNode,
-} from '/common/chat'
+import { sortAsc, toChatGraph, updateChatTreeNode, removeChatTreeNodes, resolveChatPath } from '/common/chat'
 import { embedApi } from './embeddings'
 import { JsonField, TickHandler } from '/common/prompt'
 import { HordeCheck } from '/common/horde-gen'
 import { botGen, GenerateOpts } from './data/bot-generate'
+import { voiceStore } from './voiceStore'
+import { attachmentStore } from './attachmentStore'
+import { chatGraphStore } from './chatGraphStore'
 
 const SOFT_PAGE_SIZE = 20
 
-export type VoiceState = 'generating' | 'playing'
 
 type SendModes =
   | 'send'
@@ -70,8 +61,6 @@ export type MsgState = {
     phase: 'thinking' | 'typing'
   }
   nextLoading: boolean
-  imagesSaved: boolean
-  speaking: { messageId: string; status: VoiceState } | undefined
   lastInference?: {
     requestId: string
     chatId: string
@@ -91,12 +80,6 @@ export type MsgState = {
    */
   // images: Record<ChatId, AppSchema.ChatMessage[]>
 
-  /** Attachments, mapped by Chat ID  */
-  attachments: Record<string, { image: string } | undefined>
-  graph: {
-    tree: ChatTree
-    root: string
-  }
 }
 
 const initState: MsgState = {
@@ -105,44 +88,14 @@ const initState: MsgState = {
   messageHistory: [],
   msgs: [],
   nextLoading: false,
-  imagesSaved: false,
   waiting: undefined,
   partial: undefined,
   retrying: undefined,
-  speaking: undefined,
   queue: [],
   textBeforeGenMore: undefined,
   canImageCaption: false,
-  attachments: {},
-  graph: {
-    tree: {},
-    root: '',
-  },
 }
 
-export async function getMessageImages(messageId: string) {
-  const cached = await storage
-    .getItem(`message-images-${messageId}`)
-    .then((res) => (res ? JSON.parse(res) : []))
-
-  return cached as string[]
-}
-
-export async function deleteCachedMessageImage(messageId: string, cacheId: string) {
-  await storage.removeItem(cacheId)
-  const ids = await getMessageImages(messageId)
-  const filtered = ids.filter((i) => i !== cacheId)
-
-  await storage.setItem(`message-images-${messageId}`, JSON.stringify(filtered))
-
-  // console.log(`[cache] image deleted: `, cacheId)
-}
-
-async function addMessageImage(messageId: string, cacheId: string) {
-  const prev = await getMessageImages(messageId)
-  if (prev.includes(cacheId)) return
-  await storage.setItem(`message-images-${messageId}`, JSON.stringify(prev.concat(cacheId)))
-}
 
 export const msgStore = createStore<MsgState>(
   'messages',
@@ -202,12 +155,6 @@ export const msgStore = createStore<MsgState>(
   )
 
   return {
-    setAttachment({ attachments }, chatId: string, base64: string) {
-      return { attachments: { ...attachments, [chatId]: { image: base64 } } }
-    },
-    removeAttachment({ attachments }, chatId: string) {
-      return { attachments: { ...attachments, [chatId]: undefined } }
-    },
     async *getNextMessages({ msgs, messageHistory, activeChatId, nextLoading }) {
       if (nextLoading) return
 
@@ -730,63 +677,11 @@ export const msgStore = createStore<MsgState>(
 
       updateMsgParents(activeChatId, parents)
     },
-    stopSpeech() {
-      stopSpeech()
-      return { speaking: undefined }
-    },
     setTyping(state: MsgState, characterId: string, messageId: string, phase: 'thinking' | 'typing') {
       return { typing: { characterId, messageId, phase } }
     },
     clearTyping(state: MsgState) {
       return { typing: undefined }
-    },
-    async *textToSpeech(
-      { activeChatId, msgs },
-      messageId: string,
-      text: string,
-      voice: VoiceSettings,
-      culture?: string
-    ) {
-      stopSpeech()
-
-      if (!voice.service) {
-        yield { speaking: undefined }
-        return
-      }
-
-      yield { speaking: { messageId, status: 'generating' } }
-
-      if (voice.service === 'webspeechsynthesis') {
-        if (!isNativeSpeechSupported()) {
-          toastStore.error(`Speech synthesis not supported on this browser`)
-          return
-        }
-
-        try {
-          await playVoiceFromBrowser(voice, text, culture ?? defaultCulture, messageId)
-        } catch (e: any) {
-          toastStore.error(`Failed to play web speech synthesis: ${e.message}`)
-        }
-
-        return
-      }
-
-      const msg = msgs.find((m) => m._id === messageId)
-      if (msg?.voiceUrl) {
-        playVoiceFromUrl(activeChatId, messageId, msg.voiceUrl, voice.rate)
-        return
-      }
-
-      const res = await voiceApi.chatTextToSpeech({
-        chatId: activeChatId,
-        messageId,
-        text,
-        voice,
-        culture,
-      })
-      if (res.error) {
-        toastStore.error(`Failed to request text to speech: ${res.error}`)
-      }
     },
     async *createImage(
       { msgs, activeChatId, activeCharId, waiting },
@@ -925,69 +820,7 @@ async function handleImage(body: {
   }
 }
 
-async function playVoiceFromUrl(
-  chatId: string,
-  messageId: string,
-  url: string,
-  rate: number | undefined
-) {
-  if (chatId != msgStore.getState().activeChatId) {
-    msgStore.setState({ speaking: undefined })
-    return
-  }
-  try {
-    const audio = await createSpeech({ kind: 'remote', url })
 
-    audio.addEventListener('error', (e) => {
-      console.error(e)
-      toastStore.error(`Error playing URL: ${e.message}`)
-      const msgs = msgStore.getState().msgs
-      const msg = msgs.find((m) => m._id === messageId)
-      if (!msg) return
-      const nextMsgs = msgs.map((m) => (m._id === msg._id ? { ...m, voiceUrl: undefined } : m))
-      msgStore.setState({ speaking: undefined, msgs: nextMsgs })
-    })
-    audio.addEventListener('playing', () => {
-      const msgs = msgStore.getState().msgs
-      const msg = msgs.find((m) => m._id === messageId)
-      if (!msg) return
-      const nextMsgs = msgs.map((m) => (m._id === msg._id ? { ...m, voiceUrl: url } : m))
-      msgStore.setState({ speaking: { messageId, status: 'playing' }, msgs: nextMsgs })
-    })
-    audio.addEventListener('ended', () => {
-      msgStore.setState({ speaking: undefined })
-    })
-    msgStore.setState({ speaking: { messageId, status: 'generating' } })
-    audio.play(rate)
-  } catch (e: any) {
-    toastStore.error(`Error playing URL: ${e.message}`)
-    msgStore.setState({ speaking: undefined })
-  }
-}
-
-async function playVoiceFromBrowser(
-  voice: VoiceWebSynthesisSettings,
-  text: string,
-  culture: string,
-  messageId: string
-) {
-  const user = userStore.getState().user
-  if (!user || user?.texttospeech?.enabled === false) return
-  const filterAction = user.texttospeech?.filterActions ?? true
-  const audio = await createSpeech({ kind: 'native', voice, text, culture, filterAction })
-
-  audio.addEventListener('error', (e) => {
-    toastStore.error(`Error playing web speech: ${e.message}`)
-    msgStore.setState({ speaking: undefined })
-  })
-
-  audio.addEventListener('playing', () =>
-    msgStore.setState({ speaking: { messageId, status: 'playing' } })
-  )
-  audio.addEventListener('ended', () => msgStore.setState({ speaking: undefined }))
-
-  audio.play(voice.rate)
-}
 
 subscribe(
   'message-partial',
