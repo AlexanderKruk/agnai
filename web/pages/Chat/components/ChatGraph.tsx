@@ -2,7 +2,7 @@ import cyto from 'cytoscape'
 import dagre from 'cytoscape-dagre'
 import { Component, createEffect, createSignal, on, onCleanup } from 'solid-js'
 import { ChatNode, ChatTree } from '/common/chat'
-import { msgStore, settingStore } from '/web/store'
+import { msgStore, settingStore, chatGraphStore } from '/web/store'
 import { getSettingColor } from '/web/shared/colors'
 import { FeatureFlags } from '/web/store/flags'
 import { AppSchema } from '/common/types'
@@ -28,7 +28,7 @@ export const ChatGraph: Component<{
 }> = (props) => {
   let cyRef: any
 
-  const graph = msgStore((s) => s.graph)
+  const graph = chatGraphStore((s) => s.graph)
   const flags = settingStore((s) => s.flags)
 
   createEffect(() => {

@@ -1,4 +1,4 @@
-import type { AppSchema } from './types'
+import type { AppSchema, TokenCounter } from './types'
 import {
   GOOGLE_LIMITS,
   NOVEL_MODELS,
@@ -217,4 +217,58 @@ export function getContextLimit(
       // Returning configuredMax - genAmount is a safe default.
       return configuredMax - genAmount;
   }
+}
+
+/**
+ * Remove lines from a body of text that contains line breaks
+ */
+export async function trimTokens(opts: {
+  input: string | string[]
+  start: 'top' | 'bottom'
+  encoder: TokenCounter
+  tokenLimit: number
+}) {
+  const text = Array.isArray(opts.input) ? opts.input.slice() : opts.input.split('\n')
+  if (opts.start === 'bottom') text.reverse()
+
+  let tokens = 0
+  let output: string[] = []
+
+  for (const line of text) {
+    tokens += await opts.encoder(line)
+    if (tokens > opts.tokenLimit) break
+
+    if (opts.start === 'top') output.push(line)
+    else output.unshift(line)
+  }
+
+  return output
+}
+
+/**
+ * Resolve scenario for the chat based on chat, main character and scenario settings.
+ */
+export function resolveScenario(
+  chat: AppSchema.Chat,
+  mainChar: AppSchema.Character,
+  books: AppSchema.ScenarioBook[]
+) {
+  if (chat.overrides) return chat.scenario || ''
+
+  let result = mainChar.scenario
+
+  for (const book of books) {
+    if (book.overwriteCharacterScenario) {
+      result = book.text || ''
+      break
+    }
+  }
+
+  for (const book of books) {
+    if (!book.overwriteCharacterScenario) {
+      result += `\n${book.text}`
+    }
+  }
+
+  return result.trim()
 }

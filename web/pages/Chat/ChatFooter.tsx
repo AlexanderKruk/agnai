@@ -3,7 +3,7 @@ import { CircleX, VenetianMask } from 'lucide-solid'
 import Button from '../../shared/Button'
 import { CharacterPill } from '../../shared/CharacterPill'
 import { characterStore, chatStore, settingStore, userStore } from '../../store'
-import { msgStore } from '../../store'
+import { msgStore, attachmentStore } from '../../store'
 import InputBar from './components/InputBar'
 import { TypingIndicator } from './components/TypingIndicator'
 import { ContextState } from '/web/store/context'
@@ -19,7 +19,8 @@ export const ChatFooter: Component<{
   onTypingStart?: () => void
 }> = (props) => {
   const user = userStore()
-  const msgs = msgStore((s) => ({ waiting: s.waiting, attachments: s.attachments }))
+  const msgs = msgStore((s) => ({ waiting: s.waiting }))
+  const attachments = attachmentStore((s) => s.attachments)
   const chars = characterStore((s) => ({ botMap: s.characters.map }))
   const chats = chatStore((s) => ({
     opts: s.opts,
@@ -33,7 +34,7 @@ export const ChatFooter: Component<{
   const [ooc, setOoc] = createSignal<boolean>()
   const attachment = createMemo(() => {
     if (!props.ctx.chat) return
-    const attachment = msgs.attachments[props.ctx.chat._id]
+    const attachment = attachments[props.ctx.chat._id]
     if (!attachment) return
     return attachment.image
   })
@@ -94,7 +95,7 @@ export const ChatFooter: Component<{
           <div class="flex h-[40x] items-center gap-2 pl-4">
             <img src={attachment()} class="h-[40px] rounded-md" />
             <div class="icon-button">
-              <CircleX size={16} onClick={() => msgStore.removeAttachment(props.ctx?.chat?._id!)} />
+              <CircleX size={16} onClick={() => attachmentStore.removeAttachment(props.ctx?.chat?._id!)} />
             </div>
           </div>
         </Show>

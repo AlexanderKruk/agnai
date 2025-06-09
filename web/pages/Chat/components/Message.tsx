@@ -35,7 +35,8 @@ import {
 import { BOT_REPLACE, SELF_REPLACE } from '../../../../common/prompt'
 import { AppSchema } from '../../../../common/types/schema'
 import AvatarIcon, { CharacterAvatar } from '../../../shared/AvatarIcon'
-import { chatStore, userStore, msgStore, toastStore, ChatState, VoiceState } from '../../../store'
+import { chatStore, userStore, msgStore, toastStore, ChatState, VoiceState, voiceStore } from '../../../store'
+import { stopSpeech } from '../../../store/voiceStore'
 import { markdown } from '../../../shared/markdown'
 import Button, { ButtonSchema } from '/web/shared/Button'
 import { ContextState, useAppContext } from '/web/store/context'
@@ -668,13 +669,13 @@ const Message: Component<MessageProps> = (props) => {
                   </Match>
 
                   <Match when={props.voice === 'generating'}>
-                    <div class="animate-pulse cursor-pointer" onClick={msgStore.stopSpeech}>
+                    <div class="animate-pulse cursor-pointer" onClick={stopSpeech}>
                       <AvatarIcon format={format()} Icon={DownloadCloud} />
                     </div>
                   </Match>
 
                   <Match when={props.voice === 'playing'}>
-                    <div class="animate-pulse cursor-pointer" onClick={msgStore.stopSpeech}>
+                    <div class="animate-pulse cursor-pointer" onClick={stopSpeech}>
                       <AvatarIcon format={format()} Icon={PauseCircle} bot />
                     </div>
                   </Match>

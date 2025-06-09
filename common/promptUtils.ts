@@ -75,14 +75,14 @@ export type BuildPromptOpts = {
   retry?: AppSchema.ChatMessage
   continue?: string
   members: AppSchema.Profile[]
-  characters: Record<string, AppSchema.Character>
+  characters?: Record<string, AppSchema.Character>
   impersonate?: AppSchema.Character
   settings?: Partial<AppSchema.GenSettings>
-  lastMessage: string
-  chatEmbeds: Memory.UserEmbed<{ name: string }>[]
-  userEmbeds: Memory.UserEmbed[]
+  lastMessage?: string
+  chatEmbeds?: Memory.UserEmbed<{ name: string }>[]
+  userEmbeds?: Memory.UserEmbed[]
   book?: AppSchema.MemoryBook
-  jsonValues: Record<string, any>
+  jsonValues?: Record<string, any>
   contextBuffer?: number
 }
 

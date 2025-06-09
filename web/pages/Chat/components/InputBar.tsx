@@ -37,7 +37,7 @@ import {
   characterStore,
   ChatMessageExt,
 } from '../../../store'
-import { msgStore } from '../../../store'
+import { msgStore, voiceStore, attachmentStore } from '../../../store'
 import { SpeechRecognitionRecorder } from './SpeechRecognitionRecorder'
 import { Toggle } from '/web/shared/Toggle'
 import { defaultCulture } from '/web/shared/CultureCodes'
@@ -204,11 +204,12 @@ const InputBar: Component<{
     const char = ctx.allBots[lastTextMsg.characterId]
     if (!char?.voice) return
 
-    msgStore.textToSpeech(
+    voiceStore.textToSpeech(
       lastTextMsg._id,
       lastTextMsg.msg,
       char.voice,
-      props.char?.culture || defaultCulture
+      props.char?.culture || defaultCulture,
+      props.chat._id
     )
     setMenu(false)
   }
@@ -256,7 +257,7 @@ const InputBar: Component<{
       return
     }
 
-    msgStore.setAttachment(props.chat._id, buffer.content)
+    attachmentStore.setAttachment(props.chat._id, buffer.content)
     setMenu(false)
   }
 

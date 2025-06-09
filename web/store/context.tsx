@@ -13,6 +13,7 @@ import { getRgbaFromVar } from '../shared/colors'
 import { MsgState, msgStore } from './message'
 import { ChatTree } from '/common/chat'
 import { presetStore } from './presets'
+import { chatGraphStore } from './chatGraphStore'
 import { getChatPreset } from '/common/prompt'
 
 export type ContextState = {
@@ -169,7 +170,7 @@ export function ContextProvider(props: { children: any }) {
       handle: handle(),
       trimSentences: users.ui.trimSentences ?? false,
       promptHistory: chats.promptHistory,
-      chatTree: msgs.graph.tree,
+      chatTree: chatGraphStore.getState().graph.tree,
       waiting: msgs.waiting,
       status: msgs.hordeStatus,
       preset: preset(),

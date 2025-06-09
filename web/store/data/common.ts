@@ -116,7 +116,8 @@ export function replaceUniversalTags(prompt: string, format?: ModelFormat) {
 async function getGuestEntities() {
   const { active } = getStore('chat').getState()
   if (!active) return
-  const { msgs, messageHistory, attachments } = getStore('messages').getState()
+  const { msgs, messageHistory } = getStore('messages').getState()
+  const { attachments } = getStore('attachments').getState()
 
   const chat = active.chat
   const char = active.char
@@ -171,7 +172,8 @@ function getAuthedPromptEntities() {
     .getState()
     .books.list.find((book) => book._id === chat.memoryId)
 
-  const { msgs, messageHistory, attachments } = getStore('messages').getState()
+  const { msgs, messageHistory } = getStore('messages').getState()
+  const { attachments } = getStore('attachments').getState()
   const settings = getActivePreset(chat, user)!
   const scenarios = getStore('scenario')
     .getState()

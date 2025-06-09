@@ -12,7 +12,7 @@ import {
 import { Mic } from 'lucide-solid'
 import Button from '../../../shared/Button'
 import { defaultCulture } from '../../../shared/CultureCodes'
-import { msgStore, toastStore, userStore } from '../../../store'
+import { msgStore, toastStore, userStore, voiceStore } from '../../../store'
 import { AppSchema } from '../../../../common/types/schema'
 import { createDebounce } from '/web/shared/util'
 
@@ -184,27 +184,31 @@ export const SpeechRecognitionRecorder: Component<{
     props.onText(value)
   })
 
-  const unsub = msgStore.subscribe((state) => {
-    if (state.speaking && isListening()) {
+  const voiceUnsub = voiceStore.subscribe((voiceState) => {
+    if (voiceState.speaking && isListening()) {
       setPendingRecord(true)
       speechRecognition()?.abort()
       setIsListening(false)
       return
     }
+  })
 
+  const msgUnsub = msgStore.subscribe((msgState) => {
+    const voiceState = voiceStore.getState()
+    
     if (
       !settings.enabled ||
       isListening() ||
       !pendingRecord() ||
-      state.speaking ||
-      state.partial ||
-      state.waiting ||
-      state.msgs.length === 0
+      voiceState.speaking ||
+      msgState.partial ||
+      msgState.waiting ||
+      msgState.msgs.length === 0
     ) {
       return
     }
 
-    const lastMsg = state.msgs[state.msgs.length - 1]
+    const lastMsg = msgState.msgs[msgState.msgs.length - 1]
     if (!lastMsg?.characterId) return
     setPendingRecord(false)
     speechRecognition()?.start()
@@ -212,7 +216,8 @@ export const SpeechRecognitionRecorder: Component<{
   })
 
   onCleanup(() => {
-    unsub()
+    voiceUnsub()
+    msgUnsub()
   })
 
   const toggleListening = () => {
