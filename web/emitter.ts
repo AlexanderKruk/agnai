@@ -21,6 +21,7 @@ export const EVENTS = {
   chatClosed: 'chat-closed',
   userBanned: 'user-banned',
   userTypingStarted: 'user-typing-started',
+  refreshUserConfig: 'refresh-user-config',
 } as const
 
 type EventType = (typeof EVENTS)[keyof typeof EVENTS]
