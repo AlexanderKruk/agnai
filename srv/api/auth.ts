@@ -1,7 +1,6 @@
 import { NextFunction } from 'express'
 import { AppRequest, errors } from './wrap'
-import { store } from '../db'
-import { verifyJwt } from '../db/user'
+import { authService } from '../auth'
 
 export const loggedIn: any = (req: AppRequest, _: any, next: NextFunction) => {
   if (!req.user?.userId) return next(errors.Unauthorized)
@@ -21,35 +20,35 @@ export const apiKeyUsage: any = async (req: AppRequest, _: any, next: NextFuncti
 
   key = key.replace('Bearer ', '')
 
-  try {
-    const payload = verifyJwt(key)
+  // Try JWT token first
+  const jwtResult = await authService.validateJwtToken(key)
+  if (jwtResult.isValid && jwtResult.context) {
+    const { context } = jwtResult
+    req.userId = context.userId
+    req.authed = context.user
+    req.log.setBindings({ user: context.user.username || 'anonymous' })
+    return next()
+  }
 
-    if (payload?.username) {
-      req.userId = (payload as any).userId
-      const user = await store.users.getUser(req.userId)
-      req.authed = user! || {}
-      req.log.setBindings({ user: (payload as any)?.username || 'anonymous' })
-      return next()
-    }
-  } catch (ex) {}
-
-  const access = await store.users.validateApiAccess(key)
-  if (!access) {
+  // Try API key
+  const apiKeyResult = await authService.validateApiKey(key)
+  if (!apiKeyResult.isValid || !apiKeyResult.context) {
     return next(errors.Unauthorized)
   }
 
-  req.userId = access.user._id
+  const { context } = apiKeyResult
+  req.userId = context.userId
 
   req.user = {
-    admin: access.user.admin,
+    admin: context.user.admin,
     exp: Infinity,
     iat: 0,
-    userId: access.user._id,
-    username: access.user.username,
+    userId: context.user._id,
+    username: context.user.username,
   }
 
-  req.authed = access.user
-  req.log.setBindings({ user: access.user.username, guest: undefined })
+  req.authed = context.user
+  req.log.setBindings({ user: context.user.username, guest: undefined })
 
   next()
 }
