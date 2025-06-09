@@ -2,7 +2,6 @@ import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
 import { config } from '../config'
 import { AppSchema } from '../../common/types/schema'
-import { defaultChars } from '../../common/characters'
 
 const ALGO = 'aes-192-cbc'
 const KEY = crypto.scryptSync(config.jwtSecret, 'salt', 24)

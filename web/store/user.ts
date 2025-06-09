@@ -41,8 +41,10 @@ export const userStore = createStore<UserState>(
         ...userConfigStore.getState(),
       }
       set(combinedState)
+      return combinedState
     } catch (error) {
       console.warn('Failed to resync user store:', error)
+      return {}
     }
   }
   
@@ -58,44 +60,213 @@ export const userStore = createStore<UserState>(
   return {
     // Legacy methods for critical backwards compatibility  
     async setState(state: UserState, update: Partial<UserState>) {
-      set(update)
+      return update
     },
     
     // Delegate core auth methods
     async login(state: UserState, username: string, password: string, onSuccess?: (token: string) => void) {
-      return authStore.login(username, password, onSuccess)
+      await authStore.login(username, password, onSuccess)
+      return resync()
     },
     
     async logout(state: UserState) {
-      return authStore.logout()
+      await authStore.logout()
+      return resync()
     },
     
     async register(state: UserState, newUser: any, onSuccess?: () => void) {
-      return authStore.register(newUser, onSuccess)
+      await authStore.register(newUser, onSuccess)
+      return resync()
     },
     
     // Delegate core config methods
     async updateConfig(state: UserState, data: any, onSuccess?: () => void) {
-      return userConfigStore.updateConfig(data, onSuccess)
+      await userConfigStore.updateConfig(data, onSuccess)
+      return resync()
     },
     
     async getConfig(state: UserState) {
-      return userConfigStore.getConfig()
+      await userConfigStore.getConfig()
+      return resync()
     },
     
     // Delegate core UI methods
     async saveUI(state: UserState, ui: any, onSuccess?: any) {
-      return uiStore.saveUI(ui, onSuccess)
+      await uiStore.saveUI(ui, onSuccess)
+      return resync()
     },
     
     // Delegate core subscription methods
     async getTiers(state: UserState) {
-      return subscriptionStore.getTiers()
+      await subscriptionStore.getTiers()
+      return resync()
     },
     
     // Add missing modal method
     async modal(state: UserState, modal?: any) {
-      return userConfigStore.modal(modal)
+      await userConfigStore.modal(modal)
+      return resync()
+    },
+    
+    // Add missing methods from the original user store
+    async updatePartialConfig(state: UserState, data: any, onSuccess?: () => void) {
+      await userConfigStore.updatePartialConfig(data, onSuccess)
+      return resync()
+    },
+    
+    async deleteKey(state: UserState, key: string) {
+      await userConfigStore.deleteKey(key)
+      return resync()
+    },
+    
+    async updateService(state: UserState, service: string, data: any) {
+      await userConfigStore.updateService(service, data)
+      return resync()
+    },
+    
+    async clearGuestState(state: UserState) {
+      await userConfigStore.clearGuestState()
+      return resync()
+    },
+    
+    async verifyPatreon(state: UserState, onSuccess?: (error?: any) => void) {
+      await subscriptionStore.verifyPatreon(onSuccess)
+      return resync()
+    },
+    
+    async unverifyPatreon(state: UserState) {
+      await subscriptionStore.unverifyPatreon()
+      return resync()
+    },
+    
+    async validateSubscription(state: UserState) {
+      await subscriptionStore.validateSubscription()
+      return resync()
+    },
+    
+    async setBackground(state: UserState, background: string) {
+      await uiStore.setBackground(background)
+      return resync()
+    },
+    
+    async tryCustomUI(state: UserState, ui: any) {
+      await uiStore.tryCustomUI(ui)
+      return resync()
+    },
+    
+    async saveCustomUI(state: UserState, ui: any) {
+      await uiStore.saveCustomUI(ui)
+      return resync()
+    },
+    
+    async tryUI(state: UserState, ui: any) {
+      await uiStore.tryUI(ui)
+      return resync()
+    },
+    
+    // Additional auth methods
+    async handleGoogleCallback(state: UserState, token: any) {
+      await authStore.handleGoogleCallback(token)
+      return resync()
+    },
+    
+    async thirdPartyLogin(state: UserState, data: any) {
+      await authStore.thirdPartyLogin(data)
+      return resync()
+    },
+    
+    async createApiKey(state: UserState, data: any) {
+      await authStore.createApiKey(data)
+      return resync()
+    },
+    
+    async resetPassword(state: UserState, data: any) {
+      await authStore.resetPassword(data)
+      return resync()
+    },
+    
+    // Profile management methods
+    async updateProfile(state: UserState, data: any) {
+      await userConfigStore.updateProfile(data)
+      return resync()
+    },
+    
+    async getProfile(state: UserState) {
+      await userConfigStore.getProfile()
+      return resync()
+    },
+    
+    async unlinkGoogleAccount(state: UserState) {
+      await authStore.unlinkGoogleAccount()
+      return resync()
+    },
+    
+    async removeProfileAvatar(state: UserState) {
+      await userConfigStore.removeProfileAvatar()
+      return resync()
+    },
+    
+    async changePassword(state: UserState, data: any) {
+      await authStore.changePassword(data)
+      return resync()
+    },
+    
+    async deleteAccount(state: UserState) {
+      await authStore.deleteAccount()
+      return resync()
+    },
+    
+    // Subscription management methods
+    async finishCheckout(state: UserState, data: any) {
+      await subscriptionStore.finishCheckout(data)
+      return resync()
+    },
+    
+    async startCheckout(state: UserState, tierId: string) {
+      await subscriptionStore.startCheckout(tierId)
+      return resync()
+    },
+    
+    async subscriptionStatus(state: UserState) {
+      await subscriptionStore.subscriptionStatus()
+      return resync()
+    },
+    
+    async modifySubscription(state: UserState, data: any) {
+      await subscriptionStore.modifySubscription(data)
+      return resync()
+    },
+    
+    async resumeSubscription(state: UserState) {
+      await subscriptionStore.resumeSubscription()
+      return resync()
+    },
+    
+    async stopSubscription(state: UserState) {
+      await subscriptionStore.stopSubscription()
+      return resync()
+    },
+    
+    // API key management
+    async revealApiKey(state: UserState, key: string) {
+      await userConfigStore.revealApiKey(key)
+      return resync()
+    },
+    
+    async generateApiKey(state: UserState, key: string) {
+      await userConfigStore.generateApiKey(key)
+      return resync()
+    },
+    
+    // Service-specific methods
+    async hordeStats(state: UserState) {
+      await userConfigStore.hordeStats()
+      return resync()
+    },
+    
+    async novelLogin(state: UserState, username: string, password: string) {
+      await userConfigStore.novelLogin(username, password)
+      return resync()
     },
   }
 })
@@ -122,7 +293,7 @@ events.on(EVENTS.init, (init) => {
     init.user?.manualSub ||
     init.user?.stripeSessions?.length
   ) {
-    subscriptionStore.retrieveSubscription(true, init.user)
+    subscriptionStore.retrieveSubscription(init.user)
   }
 
   if (init.user?._id !== 'anon') {

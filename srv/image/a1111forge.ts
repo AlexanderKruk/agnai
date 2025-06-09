@@ -3,8 +3,6 @@ import { ImageAdapter, ImageRequestOpts } from './types';
 import { SD_SAMPLER, SD_SAMPLER_REV } from '../../common/image';
 import { A1111ForgeApiSettings, ImageSettings } from '../../common/types/image-schema'; // Updated import for A1111ForgeApiSettings
 import { logger } from '../middleware';
-import { AppSchema } from '/common/types/schema';
-import { fixImagePrompt } from '/common/image-prompt';
 
 // Default settings specific to A1111Forge if any, or rely on user-set ones.
 const defaultA1111ForgeSettings: A1111ForgeApiSettings = {
