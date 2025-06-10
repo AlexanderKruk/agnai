@@ -13,7 +13,7 @@ const ElevenLabsSettings: Component<{
       
       <ApiKeyManager
         service="elevenlabs"
-        user={props.state}
+        user={props.state as any}
         setter={props.setter}
         keyField="elevenLabsApiKey"
         setField="elevenLabsApiKeySet"

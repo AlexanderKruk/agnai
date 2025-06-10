@@ -165,13 +165,13 @@ export const userStore = createStore<UserState>(
     },
     
     // Additional auth methods
-    async handleGoogleCallback(state: UserState, token: any) {
-      await authStore.handleGoogleCallback(token)
+    async handleGoogleCallback(state: UserState, action: 'login' | 'link', data: { credential: string }, success?: () => void) {
+      await authStore.handleGoogleCallback(state, action, data, success)
       return resync()
     },
     
-    async thirdPartyLogin(state: UserState, data: any) {
-      await authStore.thirdPartyLogin(data)
+    async thirdPartyLogin(state: UserState, onSuccess: (token: string) => void) {
+      await authStore.thirdPartyLogin(state, onSuccess)
       return resync()
     },
     
@@ -180,8 +180,8 @@ export const userStore = createStore<UserState>(
       return resync()
     },
     
-    async resetPassword(state: UserState, data: any) {
-      await authStore.resetPassword(data)
+    async resetPassword(state: UserState, code: string, username: string, password: string, confirm: string, onSuccess: () => void) {
+      await authStore.resetPassword(state, code, username, password, confirm, onSuccess)
       return resync()
     },
     
@@ -217,8 +217,8 @@ export const userStore = createStore<UserState>(
     },
     
     // Subscription management methods
-    async finishCheckout(state: UserState, data: any) {
-      await subscriptionStore.finishCheckout(data)
+    async finishCheckout(state: UserState, sessionId: string, checkoutState: string, onSuccess?: Function) {
+      await subscriptionStore.finishCheckout(state, sessionId, checkoutState, onSuccess)
       return resync()
     },
     

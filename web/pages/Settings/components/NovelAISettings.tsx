@@ -1,9 +1,10 @@
-import { Component } from 'solid-js'
+import { Component, Accessor, Setter } from 'solid-js'
 import Select from '../../../shared/Select'
 import Divider from '/web/shared/Divider'
 import { SetStoreFunction } from 'solid-js/store/types/store'
 import { ApiKeyManager } from '../../../shared/ApiKeyManager'
 import { UserSettings } from '../util'
+import { userStore } from '../../../store'
 
 const NovelAISettings: Component<{
   state: UserSettings
