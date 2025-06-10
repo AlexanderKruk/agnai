@@ -372,8 +372,8 @@ export const createImage = handle(async ({ body, userId, socketId, log }) => {
   return { success: true, requestId }
 })
 
-router.post('/image', createImage)
 router.use(loggedIn)
+router.post('/image', createImage)
 router.post('/', createCharacter)
 router.get('/', getCharacters)
 router.post('/:id/update', editPartCharacter)

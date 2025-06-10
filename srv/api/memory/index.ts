@@ -1,25 +1,13 @@
-import { Router } from 'express'
 import { assertValid } from '/common/valid'
 import { store } from '../../db'
-import { loggedIn } from '../auth'
 import { handle } from '../wrap'
+import { createStandardRouter } from '../middleware'
+import { memory } from '../validation'
 
-const router = Router()
+const router = createStandardRouter('authenticated')
 
-const validEntry = {
-  name: 'string',
-  weight: 'number',
-  priority: 'number',
-  entry: 'string',
-  enabled: 'boolean',
-  keywords: ['string'],
-} as const
-
-export const validBook = {
-  name: 'string',
-  description: 'string?',
-  entries: [validEntry],
-} as const
+// Export for use in other modules
+export const validBook = memory.book
 
 const getUserBooks = handle(async ({ userId }) => {
   const books = await store.memory.getBooks(userId!)
@@ -27,7 +15,7 @@ const getUserBooks = handle(async ({ userId }) => {
 })
 
 const createBook = handle(async ({ body, userId }) => {
-  assertValid(validBook, body)
+  assertValid(memory.book, body)
 
   const newBook = await store.memory.createBook(userId!, body)
 
@@ -36,7 +24,7 @@ const createBook = handle(async ({ body, userId }) => {
 
 const updateBook = handle(async ({ body, userId, params }) => {
   const id = params.id
-  assertValid(validBook, body)
+  assertValid(memory.book, body)
   await store.memory.updateBook(userId!, id!, body)
 
   return { success: true }
@@ -47,9 +35,9 @@ const removeBook = handle(async ({ userId, params }) => {
   return { success: true }
 })
 
-router.get('/', loggedIn, getUserBooks)
-router.post('/', loggedIn, createBook)
-router.put('/:id', loggedIn, updateBook)
-router.delete('/:id', loggedIn, removeBook)
+router.get('/', getUserBooks)
+router.post('/', createBook)
+router.put('/:id', updateBook)
+router.delete('/:id', removeBook)
 
 export default router
