@@ -1,13 +1,18 @@
-import type { AIAdapter, ChatAdapter, ThirdPartyFormat } from '../adapters'
+import type { ChatAdapter } from '../adapters'
 import * as Memory from './memory'
 import type { GenerationPreset } from '../presets'
 import type { ImageSettings } from './image-schema'
-import type { TTSSettings } from './texttospeech-schema'
-import type { UISettings } from './ui'
 import * as Saga from './saga'
 import * as Library from './library'
 import * as Preset from './presets'
 import * as Admin from './admin'
+import type { 
+  UserAuthentication, 
+  UserAIServices, 
+  UserSubscription, 
+  UserMedia, 
+  UserPreferences 
+} from './user'
 
 export type AllDoc =
   | AppSchema.Announcement
@@ -60,7 +65,7 @@ export namespace AppSchema {
 
   export type ChatMode = 'standard' | 'adventure'
 
-  export interface Token {
+  export type Token = {
     userId: string
     username: string
     admin: boolean
@@ -68,7 +73,7 @@ export namespace AppSchema {
     exp: number
   }
 
-  export interface Profile {
+  export type Profile = {
     _id: string
     kind: 'profile'
     userId: string
@@ -76,152 +81,13 @@ export namespace AppSchema {
     avatar?: string
   }
 
-  export interface User {
-    _id: string
+  export type User = UserAuthentication &
+    UserAIServices &
+    UserSubscription &
+    UserMedia &
+    UserPreferences
 
-    updatedAt?: string
-
-    /** Date ISO string of last seen announcement */
-    announcement?: string
-
-    kind: 'user'
-    username: string
-    hash: string
-    apiKey?: string
-
-    admin: boolean
-    role?: 'moderator' | 'admin'
-
-    disableLTM?: boolean
-
-    novelApiKey: string
-    novelModel: string
-    novelVerified?: boolean
-    useLocalPipeline: boolean
-
-    koboldUrl: string
-    thirdPartyFormat: ThirdPartyFormat
-    thirdPartyPassword: string
-    thirdPartyPasswordSet?: boolean
-    oobaUrl: string
-
-    mistralKey?: string
-    mistralKeySet?: boolean
-
-    oaiKey: string
-    oaiKeySet?: boolean
-
-    userHordeKey?: string
-    hordeKey: string
-    hordeModel: string | string[]
-    hordeName?: string
-    hordeUseTrusted?: boolean
-    hordeWorkers?: string[]
-
-    scaleUrl?: string
-    scaleApiKey?: string
-    scaleApiKeySet?: boolean
-
-    claudeApiKey?: string
-    claudeApiKeySet?: boolean
-
-    elevenLabsApiKey?: string
-    elevenLabsApiKeySet?: boolean
-
-    featherlessApiKey?: string
-    featherlessApiKeySet?: boolean
-
-    arliApiKey?: string
-    arliApiKeySet?: boolean
-
-    defaultAdapter: AIAdapter
-    defaultPresets?: { [key in AIAdapter]?: string }
-    defaultPreset?: string
-    chargenPreset?: string
-
-    createdAt?: string
-
-    speechtotext?: {
-      enabled: boolean
-      autoSubmit: boolean
-      autoRecord: boolean
-    }
-
-    texttospeech?: TTSSettings
-
-    images?: ImageSettings & {}
-
-    imageDefaults?: {
-      size: boolean
-      affixes: boolean
-      negative: boolean
-      sampler: boolean
-      guidance: boolean
-      steps: boolean
-    }
-    useRecommendedImages?: string // 'all' | 'except-(size|affix|negative)' | 'none'
-
-    adapterConfig?: { [key in AIAdapter]?: Record<string, any> }
-
-    ui?: UISettings
-
-    sub?: {
-      type?: SubscriptionType
-      tierId: string
-      level: number
-      last?: string
-    }
-
-    manualSub?: {
-      tierId: string
-      level: number
-      expiresAt: string
-    }
-
-    patreonUserId?: string | null
-    patreon?: {
-      access_token: string
-      refresh_token: string
-      expires_in: number
-      scope: string
-      token_type: string
-      expires: string
-      user: Patreon.User
-      tier?: Patreon.Tier
-      member?: Patreon.Member
-      sub?: {
-        tierId: string
-        level: number
-      }
-    }
-
-    google?: {
-      sub: any
-      email: any
-    }
-
-    billing?: {
-      status: 'active' | 'cancelled'
-      cancelling?: boolean
-      validUntil: string
-      lastRenewed: string
-      customerId: string
-      subscriptionId: string
-      lastChecked?: string
-    }
-    stripeSessions?: string[]
-
-    banned?: {
-      at: Date
-      reason: string
-    }
-
-    banHistory?: Array<{ at: Date; reason: string }>
-
-    resetCode?: string
-  }
-
-  export interface ApiKey {
+  export type ApiKey = {
     _id: string
     kind: 'apikey'
 
@@ -236,22 +102,22 @@ export namespace AppSchema {
     enabled: boolean
   }
 
-  export interface SagaField {
+  export type SagaField = {
     name: string
     label: string
     visible: boolean
     type: 'string' | 'number' | 'boolean'
   }
 
-  export interface SagaTemplate extends Saga.Template {
+  export type SagaTemplate = Saga.Template & {
     kind: 'saga-template'
   }
 
-  export interface SagaSession extends Saga.Session {
+  export type SagaSession = Saga.Session & {
     kind: 'saga-session'
   }
 
-  export interface Chat {
+  export type Chat = {
     _id: string
     kind: 'chat'
     mode?: 'standard' | 'adventure' | 'companion'
@@ -293,7 +159,7 @@ export namespace AppSchema {
     localSettings?: { bgFormat?: 'contain' | 'cover' | 'auto' }
   }
 
-  export interface ChatMember {
+  export type ChatMember = {
     _id: string
     kind: 'chat-member'
     chatId: string
@@ -303,7 +169,7 @@ export namespace AppSchema {
 
   export type ChatAction = { emote: string; action: string }
 
-  export interface ChatMessage {
+  export type ChatMessage = {
     _id: string
     kind: 'chat-message'
     chatId: string
@@ -337,7 +203,7 @@ export namespace AppSchema {
 
   export type ScenarioEventType = 'world' | 'character' | 'hidden' | 'ooc'
 
-  export interface ChatInvite {
+  export type ChatInvite = {
     _id: string
     kind: 'chat-invite'
     byUserId: string
@@ -348,7 +214,7 @@ export namespace AppSchema {
     state: 'pending' | 'rejected' | 'accepted'
   }
 
-  export interface ChatLock {
+  export type ChatLock = {
     kind: 'chat-lock'
 
     /** Chat ID, Unique */
@@ -364,7 +230,7 @@ export namespace AppSchema {
     lockId: string
   }
 
-  export interface ScenarioBook {
+  export type ScenarioBook = {
     kind: 'scenario'
     _id: string
     userId: string
@@ -377,7 +243,7 @@ export namespace AppSchema {
     states: string[]
   }
 
-  export interface ScenarioEvent<T extends ScenarioEventTrigger = ScenarioEventTrigger> {
+  export type ScenarioEvent<T extends ScenarioEventTrigger = ScenarioEventTrigger> = {
     /** The state this  */
     name: string
     requires: string[]
@@ -393,34 +259,34 @@ export namespace AppSchema {
     | ScenarioOnChatOpened
     | ScenarioOnCharacterMessageRx
 
-  export interface ScenarioOnGreeting {
+  export type ScenarioOnGreeting = {
     kind: 'onGreeting'
   }
 
-  export interface ScenarioOnManual {
+  export type ScenarioOnManual = {
     kind: 'onManualTrigger'
     probability: number
   }
 
-  export interface ScenarioOnChatOpened {
+  export type ScenarioOnChatOpened = {
     kind: 'onChatOpened'
     awayHours: number
   }
 
-  export interface ScenarioOnCharacterMessageRx {
+  export type ScenarioOnCharacterMessageRx = {
     kind: 'onCharacterMessageReceived'
     minMessagesSinceLastEvent: number
   }
 
   export type ScenarioTriggerKind = ScenarioEventTrigger['kind']
 
-  export interface VoiceDefinition {
+  export type VoiceDefinition = {
     id: string
     label: string
     previewUrl?: string
   }
 
-  export interface VoiceModelDefinition {
+  export type VoiceModelDefinition = {
     id: string
     label: string
   }

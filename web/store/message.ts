@@ -10,28 +10,18 @@ import { imageApi } from './data/image'
 import { userStore } from './user'
 import { localApi } from './data/storage'
 import { chatStore } from './chat'
-import { voiceApi } from './data/voice'
-import { VoiceSettings, VoiceWebSynthesisSettings } from '../../common/types/texttospeech-schema'
-import { defaultCulture } from '../shared/CultureCodes'
-import { createSpeech, isNativeSpeechSupported, stopSpeech } from '../shared/Audio/speech'
 import { eventStore } from './event'
 import { exclude, findOne, replace } from '/common/util'
-import {
-  ChatTree,
-  removeChatTreeNodes,
-  resolveChatPath,
-  sortAsc,
-  toChatGraph,
-  updateChatTreeNode,
-} from '/common/chat'
 import { embedApi } from './embeddings'
 import { JsonField, TickHandler } from '/common/prompt'
 import { HordeCheck } from '/common/horde-gen'
 import { botGen, GenerateOpts } from './data/bot-generate'
+import { voiceStore } from './voiceStore'
+import { attachmentStore, getMessageImages, addMessageImage } from './attachmentStore'
+import { chatGraphStore, calculateLeafId, getFullMessagePath, getRecentMessages } from './chatGraphStore'
 
 const SOFT_PAGE_SIZE = 20
 
-export type VoiceState = 'generating' | 'playing'
 
 type SendModes =
   | 'send'
@@ -70,8 +60,6 @@ export type MsgState = {
     phase: 'thinking' | 'typing'
   }
   nextLoading: boolean
-  imagesSaved: boolean
-  speaking: { messageId: string; status: VoiceState } | undefined
   lastInference?: {
     requestId: string
     chatId: string
@@ -91,12 +79,6 @@ export type MsgState = {
    */
   // images: Record<ChatId, AppSchema.ChatMessage[]>
 
-  /** Attachments, mapped by Chat ID  */
-  attachments: Record<string, { image: string } | undefined>
-  graph: {
-    tree: ChatTree
-    root: string
-  }
 }
 
 const initState: MsgState = {
@@ -105,44 +87,14 @@ const initState: MsgState = {
   messageHistory: [],
   msgs: [],
   nextLoading: false,
-  imagesSaved: false,
   waiting: undefined,
   partial: undefined,
   retrying: undefined,
-  speaking: undefined,
   queue: [],
   textBeforeGenMore: undefined,
   canImageCaption: false,
-  attachments: {},
-  graph: {
-    tree: {},
-    root: '',
-  },
 }
 
-export async function getMessageImages(messageId: string) {
-  const cached = await storage
-    .getItem(`message-images-${messageId}`)
-    .then((res) => (res ? JSON.parse(res) : []))
-
-  return cached as string[]
-}
-
-export async function deleteCachedMessageImage(messageId: string, cacheId: string) {
-  await storage.removeItem(cacheId)
-  const ids = await getMessageImages(messageId)
-  const filtered = ids.filter((i) => i !== cacheId)
-
-  await storage.setItem(`message-images-${messageId}`, JSON.stringify(filtered))
-
-  // console.log(`[cache] image deleted: `, cacheId)
-}
-
-async function addMessageImage(messageId: string, cacheId: string) {
-  const prev = await getMessageImages(messageId)
-  if (prev.includes(cacheId)) return
-  await storage.setItem(`message-images-${messageId}`, JSON.stringify(prev.concat(cacheId)))
-}
 
 export const msgStore = createStore<MsgState>(
   'messages',
@@ -157,7 +109,7 @@ export const msgStore = createStore<MsgState>(
   })
 
   events.on(EVENTS.init, (init) => {
-    msgStore.setState({ imagesSaved: init.config.imagesSaved })
+    attachmentStore.setImagesSaved(init.config.imagesSaved)
   })
 
   events.on(EVENTS.clearMsgs, (chatId: string) => {
@@ -172,29 +124,19 @@ export const msgStore = createStore<MsgState>(
       leafId?: string
       messages: AppSchema.ChatMessage[]
     }) => {
-      data.messages.sort(sortAsc)
-      const graph = toChatGraph(data.messages)
-
-      let leaf = data.leafId || data.messages.slice(-1)[0]?._id || ''
-
-      // If the leaf has been deleted then the path won't load
-      // So, if the leaf doesn't exist, use the most recent message
-      if (data.leafId) {
-        const node = graph.tree[data.leafId]
-        if (!node) {
-          leaf = data.messages.slice(-1)[0]?._id || ''
-        }
-      }
-
-      const fullPath = resolveChatPath(graph.tree, leaf)
-      const recent = fullPath.splice(-SOFT_PAGE_SIZE)
+      // Build graph in chatGraphStore
+      chatGraphStore.buildGraphFromMessages(data.messages)
+      
+      // Calculate leaf and get message path using chatGraphStore utilities
+      const leaf = calculateLeafId(data.messages, data.leafId)
+      const fullPath = getFullMessagePath(chatGraphStore.getState().graph.tree, leaf)
+      const { recent, history } = getRecentMessages(fullPath, SOFT_PAGE_SIZE)
 
       msgStore.setState({
         activeCharId: data.characterId,
         activeChatId: data.chatId,
-        messageHistory: fullPath,
+        messageHistory: history,
         msgs: recent,
-        graph,
       })
 
       embedApi.embedChat(data.chatId, data.messages)
@@ -202,12 +144,6 @@ export const msgStore = createStore<MsgState>(
   )
 
   return {
-    setAttachment({ attachments }, chatId: string, base64: string) {
-      return { attachments: { ...attachments, [chatId]: { image: base64 } } }
-    },
-    removeAttachment({ attachments }, chatId: string) {
-      return { attachments: { ...attachments, [chatId]: undefined } }
-    },
     async *getNextMessages({ msgs, messageHistory, activeChatId, nextLoading }) {
       if (nextLoading) return
 
@@ -242,7 +178,7 @@ export const msgStore = createStore<MsgState>(
     },
 
     async *editMessageProp(
-      { msgs, graph },
+      { msgs },
       msgId: string,
       update: Partial<AppSchema.ChatMessage>,
       onSuccess?: Function
@@ -258,11 +194,12 @@ export const msgStore = createStore<MsgState>(
       if (res.result) {
         const next = { ...prev, ...update, voiceUrl: undefined }
         const nextMsgs = replace(msgId, msgs, next)
-        const tree = updateChatTreeNode(graph.tree, next)
+        
+        // Update graph in chatGraphStore
+        chatGraphStore.updateTreeNode(next)
 
         yield {
           msgs: nextMsgs,
-          graph: { ...graph, tree },
         }
         onSuccess?.()
       }
@@ -366,7 +303,7 @@ export const msgStore = createStore<MsgState>(
       }
     },
 
-    async *editMessage({ msgs, graph }, msgId: string, msg: string, onSuccess?: Function) {
+    async *editMessage({ msgs }, msgId: string, msg: string, onSuccess?: Function) {
       const prev = findOne(msgId, msgs)
       if (!prev) return toastStore.error(`Cannot find message`)
 
@@ -376,10 +313,12 @@ export const msgStore = createStore<MsgState>(
       }
       if (res.result) {
         const nextMsgs = replace(msgId, msgs, { msg, voiceUrl: undefined })
-        const tree = updateChatTreeNode(graph.tree, { ...prev, msg })
+        
+        // Update graph in chatGraphStore
+        chatGraphStore.updateTreeNode({ ...prev, msg })
+        
         yield {
           msgs: nextMsgs,
-          graph: { tree, root: graph.root },
         }
         onSuccess?.()
       }
@@ -460,7 +399,7 @@ export const msgStore = createStore<MsgState>(
       if (res.result) onSuccess?.()
     },
 
-    async *fork({ graph: { tree }, msgs, messageHistory }, messageId: 'root' | string) {
+    async *fork({ msgs, messageHistory }, messageId: 'root' | string) {
       if (messageId === 'root') {
         const first = messageHistory[0] || msgs[0]
 
@@ -471,9 +410,12 @@ export const msgStore = createStore<MsgState>(
 
         messageId = first._id
       }
-      const path = resolveChatPath(tree, messageId)
-      const page = path.splice(-SOFT_PAGE_SIZE)
-      yield { msgs: page, messageHistory: path }
+      
+      // Get path from chatGraphStore
+      const tree = chatGraphStore.getState().graph.tree
+      const path = getFullMessagePath(tree, messageId)
+      const { recent, history } = getRecentMessages(path, SOFT_PAGE_SIZE)
+      yield { msgs: recent, messageHistory: history }
     },
 
     async *retry({ msgs, activeCharId }, chatId: string, messageId?: string) {
@@ -648,7 +590,7 @@ export const msgStore = createStore<MsgState>(
           res = await botGen
             .generate({ signal, kind: mode, text: message })
             .catch((err) => ({ error: err.message, result: undefined }))
-          if ('result' in res && !res.result.generating) {
+          if ('result' in res && !res.result?.generating) {
             yield { partial: undefined, waiting: undefined }
           }
 
@@ -698,7 +640,7 @@ export const msgStore = createStore<MsgState>(
 
       msgStore.swapMessage(msgId, position, onSuccess)
     },
-    async deleteMessages({ msgs, activeChatId, graph }, fromId: string, deleteOne?: boolean) {
+    async deleteMessages({ msgs, activeChatId }, fromId: string, deleteOne?: boolean) {
       const index = msgs.findIndex((m) => m._id === fromId)
       if (index === -1) {
         return toastStore.error(`Cannot delete message: Message not found`)
@@ -706,7 +648,9 @@ export const msgStore = createStore<MsgState>(
 
       const parents: any = {}
       if (deleteOne) {
-        const node = graph.tree[fromId]
+        // Get node from chatGraphStore
+        const tree = chatGraphStore.getState().graph.tree
+        const node = tree[fromId]
 
         if (node) {
           const children = node.children
@@ -730,63 +674,11 @@ export const msgStore = createStore<MsgState>(
 
       updateMsgParents(activeChatId, parents)
     },
-    stopSpeech() {
-      stopSpeech()
-      return { speaking: undefined }
-    },
     setTyping(state: MsgState, characterId: string, messageId: string, phase: 'thinking' | 'typing') {
       return { typing: { characterId, messageId, phase } }
     },
     clearTyping(state: MsgState) {
       return { typing: undefined }
-    },
-    async *textToSpeech(
-      { activeChatId, msgs },
-      messageId: string,
-      text: string,
-      voice: VoiceSettings,
-      culture?: string
-    ) {
-      stopSpeech()
-
-      if (!voice.service) {
-        yield { speaking: undefined }
-        return
-      }
-
-      yield { speaking: { messageId, status: 'generating' } }
-
-      if (voice.service === 'webspeechsynthesis') {
-        if (!isNativeSpeechSupported()) {
-          toastStore.error(`Speech synthesis not supported on this browser`)
-          return
-        }
-
-        try {
-          await playVoiceFromBrowser(voice, text, culture ?? defaultCulture, messageId)
-        } catch (e: any) {
-          toastStore.error(`Failed to play web speech synthesis: ${e.message}`)
-        }
-
-        return
-      }
-
-      const msg = msgs.find((m) => m._id === messageId)
-      if (msg?.voiceUrl) {
-        playVoiceFromUrl(activeChatId, messageId, msg.voiceUrl, voice.rate)
-        return
-      }
-
-      const res = await voiceApi.chatTextToSpeech({
-        chatId: activeChatId,
-        messageId,
-        text,
-        voice,
-        culture,
-      })
-      if (res.error) {
-        toastStore.error(`Failed to request text to speech: ${res.error}`)
-      }
     },
     async *createImage(
       { msgs, activeChatId, activeCharId, waiting },
@@ -832,10 +724,13 @@ export const msgStore = createStore<MsgState>(
 })
 
 setInterval(() => {
-  const { waiting, retrying, graph } = msgStore.getState()
+  const { waiting, retrying } = msgStore.getState()
   const id = waiting?.messageId || retrying?._id
   if (!id) return
-  if (!retrying && graph.tree[id]) return
+  
+  // Check if message exists in chatGraphStore
+  const tree = chatGraphStore.getState().graph.tree
+  if (!retrying && tree[id]) return
 
   publish({ type: 'message-ready', messageId: id, updatedAt: retrying?.updatedAt })
 }, 4000)
@@ -878,7 +773,8 @@ async function handleImage(body: {
   let { chatId, image, messageId, requestId } = body
   if (!messageId) return
 
-  const { msgs, imagesSaved, activeChatId } = msgStore.getState()
+  const { msgs, activeChatId } = msgStore.getState()
+  const { imagesSaved } = attachmentStore.getState()
 
   const isImageUrl =
     image.startsWith('/asset') ||
@@ -925,69 +821,7 @@ async function handleImage(body: {
   }
 }
 
-async function playVoiceFromUrl(
-  chatId: string,
-  messageId: string,
-  url: string,
-  rate: number | undefined
-) {
-  if (chatId != msgStore.getState().activeChatId) {
-    msgStore.setState({ speaking: undefined })
-    return
-  }
-  try {
-    const audio = await createSpeech({ kind: 'remote', url })
 
-    audio.addEventListener('error', (e) => {
-      console.error(e)
-      toastStore.error(`Error playing URL: ${e.message}`)
-      const msgs = msgStore.getState().msgs
-      const msg = msgs.find((m) => m._id === messageId)
-      if (!msg) return
-      const nextMsgs = msgs.map((m) => (m._id === msg._id ? { ...m, voiceUrl: undefined } : m))
-      msgStore.setState({ speaking: undefined, msgs: nextMsgs })
-    })
-    audio.addEventListener('playing', () => {
-      const msgs = msgStore.getState().msgs
-      const msg = msgs.find((m) => m._id === messageId)
-      if (!msg) return
-      const nextMsgs = msgs.map((m) => (m._id === msg._id ? { ...m, voiceUrl: url } : m))
-      msgStore.setState({ speaking: { messageId, status: 'playing' }, msgs: nextMsgs })
-    })
-    audio.addEventListener('ended', () => {
-      msgStore.setState({ speaking: undefined })
-    })
-    msgStore.setState({ speaking: { messageId, status: 'generating' } })
-    audio.play(rate)
-  } catch (e: any) {
-    toastStore.error(`Error playing URL: ${e.message}`)
-    msgStore.setState({ speaking: undefined })
-  }
-}
-
-async function playVoiceFromBrowser(
-  voice: VoiceWebSynthesisSettings,
-  text: string,
-  culture: string,
-  messageId: string
-) {
-  const user = userStore.getState().user
-  if (!user || user?.texttospeech?.enabled === false) return
-  const filterAction = user.texttospeech?.filterActions ?? true
-  const audio = await createSpeech({ kind: 'native', voice, text, culture, filterAction })
-
-  audio.addEventListener('error', (e) => {
-    toastStore.error(`Error playing web speech: ${e.message}`)
-    msgStore.setState({ speaking: undefined })
-  })
-
-  audio.addEventListener('playing', () =>
-    msgStore.setState({ speaking: { messageId, status: 'playing' } })
-  )
-  audio.addEventListener('ended', () => msgStore.setState({ speaking: undefined }))
-
-  audio.play(voice.rate)
-}
 
 subscribe(
   'message-partial',
@@ -1019,7 +853,7 @@ subscribe(
     json: 'any?',
   },
   async (body) => {
-    const { msgs, activeChatId, graph } = msgStore.getState()
+    const { msgs, activeChatId } = msgStore.getState()
     const { characters } = getStore('character').getState()
     const { active } = getStore('chat').getState()
 
@@ -1060,9 +894,11 @@ subscribe(
     const nextMsgs = replace(body.messageId, msgs, nextMsg)
     const replacement = { ...prev, ...nextMsg }
 
+    // Update graph in chatGraphStore
+    chatGraphStore.updateTreeNode(replacement)
+    
     msgStore.setState({
       msgs: nextMsgs,
-      graph: { ...graph, tree: updateChatTreeNode(graph.tree, replacement) },
     })
 
     if (active.chat._id !== body.chatId || !char) return
@@ -1071,7 +907,8 @@ subscribe(
     if (body.adapter === 'image' || !voice || !user) return
     const canSpeak = (user?.texttospeech?.enabled ?? true) && !char.voiceDisabled
     if (canSpeak && active.char.userId === user._id) {
-      msgStore.textToSpeech(body.messageId, body.message, voice, char.culture ?? defaultCulture)
+      // TODO: Implement textToSpeech in voiceStore
+      // voiceStore.textToSpeech(body.messageId, body.message, voice, char.culture ?? defaultCulture)
     }
   }
 )
@@ -1110,13 +947,15 @@ async function onMessageReceived(body: {
   retry?: boolean
   json?: any
 }) {
-  const { msgs, activeChatId, graph } = msgStore.getState()
+  const { msgs, activeChatId } = msgStore.getState()
   if (activeChatId !== body.chatId) return
 
   const msg = body.msg as AppSchema.ChatMessage
   const user = userStore.getState().user
 
-  if (graph.tree[msg._id]) {
+  // Check if message already exists in chatGraphStore
+  const tree = chatGraphStore.getState().graph.tree
+  if (tree[msg._id]) {
     console.log('message-created: already received')
     return
   }
@@ -1125,8 +964,11 @@ async function onMessageReceived(body: {
 
   const isUserMsg = !!msg.userId
 
-  const isRetry = !!graph.tree[msg._id]
-  const tree = updateChatTreeNode(graph.tree, msg)
+  const isRetry = !!tree[msg._id]
+  
+  // Update graph in chatGraphStore
+  chatGraphStore.updateTreeNode(msg)
+  
   const nextMsgs = isRetry
     ? msgs.map((m) => (m._id === msg._id ? msg : m))
     : msgs.filter((m) => m._id !== msg._id).concat(msg)
@@ -1140,22 +982,21 @@ async function onMessageReceived(body: {
       messageId: body.msg._id,
     },
     textBeforeGenMore: undefined,
-    graph: {
-      tree,
-      root: graph.root,
-    },
   })
 
   // If the message is from a user don't clear the "waiting for response" flags
   if (isUserMsg && !body.generate) {
-    msgStore.setState({ msgs: nextMsgs, speaking: speech?.speaking })
+    msgStore.setState({ msgs: nextMsgs })
+    // Set speaking state in voiceStore if needed
+    if (speech?.speaking) {
+      voiceStore.setState({ speaking: speech.speaking })
+    }
   } else {
     msgStore.setState({
       msgs: nextMsgs,
       partial: undefined,
       waiting: undefined,
       retrying: undefined,
-      speaking: speech?.speaking,
     })
   }
 
@@ -1172,7 +1013,8 @@ async function onMessageReceived(body: {
   if (body.msg.adapter === 'image') return
 
   if (speech && !isUserMsg) {
-    msgStore.textToSpeech(msg._id, msg.msg, speech.voice, speech?.culture)
+    // TODO: Implement textToSpeech in voiceStore
+    // voiceStore.textToSpeech(msg._id, msg.msg, speech.voice, speech?.culture)
   }
 
   onCharacterMessageReceived(msg)
@@ -1245,13 +1087,13 @@ subscribe('voice-generating', { chatId: 'string', messageId: 'string' }, (body) 
   if (activeChatId != body.chatId) return
   const { user } = userStore.getState()
   if (user?.texttospeech?.enabled === false) return
-  msgStore.setState({ speaking: { messageId: body.messageId, status: 'generating' } })
+  voiceStore.setState({ speaking: { messageId: body.messageId, status: 'generating' } })
 })
 
 subscribe('voice-failed', { chatId: 'string', error: 'string' }, (body) => {
   const activeChatId = msgStore.getState().activeChatId
   if (activeChatId != body.chatId) return
-  msgStore.setState({ speaking: undefined })
+  voiceStore.setState({ speaking: undefined })
   toastStore.error(body.error)
 })
 
@@ -1259,8 +1101,10 @@ subscribe(
   'voice-generated',
   { chatId: 'string', messageId: 'string', url: 'string', rate: 'number?' },
   (body) => {
-    if (msgStore.getState().speaking?.messageId != body.messageId) return
-    playVoiceFromUrl(body.chatId, body.messageId, body.url, body.rate)
+    const speaking = voiceStore.getState().speaking
+    if (speaking?.messageId != body.messageId) return
+    // TODO: Implement playVoiceFromUrl in voiceStore
+    // playVoiceFromUrl(body.chatId, body.messageId, body.url, body.rate)
   }
 )
 
@@ -1286,14 +1130,13 @@ subscribe('message-warning', { warning: 'string' }, (body) => {
 
 subscribe('messages-deleted', { ids: ['string'] }, (body) => {
   const ids = new Set(body.ids)
-  const { msgs, graph } = msgStore.getState()
+  const { msgs } = msgStore.getState()
+
+  // Remove nodes from chatGraphStore
+  chatGraphStore.removeTreeNodes(body.ids)
 
   msgStore.setState({
     msgs: msgs.filter((msg) => !ids.has(msg._id)),
-    graph: {
-      tree: removeChatTreeNodes(graph.tree, body.ids),
-      root: graph.root,
-    },
   })
 })
 
@@ -1306,7 +1149,7 @@ const updateMsgSub = (body: {
   actions: any
   extras?: string[]
 }) => {
-  const { msgs, graph, waiting } = msgStore.getState()
+  const { msgs, waiting } = msgStore.getState()
   const prev = findOne(body.messageId, msgs)
 
   if (!prev) return
@@ -1325,13 +1168,12 @@ const updateMsgSub = (body: {
   const wait =
     waiting?.chatId === body.chatId || waiting?.messageId === body.messageId ? undefined : waiting
 
+  // Update graph in chatGraphStore
+  chatGraphStore.updateTreeNode(next)
+  
   msgStore.setState({
     msgs: nextMsgs,
     waiting: wait,
-    graph: {
-      tree: updateChatTreeNode(graph.tree, next),
-      root: graph.root,
-    },
   })
 }
 
@@ -1340,13 +1182,10 @@ subscribe('message-parents', { chatId: 'string', parents: 'any' }, (body) => {
 })
 
 function updateMsgParents(chatId: string, parents: Record<string, string>, deleteIds?: string[]) {
-  const { messageHistory, msgs, activeChatId, graph } = msgStore.getState()
+  const { messageHistory, msgs, activeChatId } = msgStore.getState()
   if (activeChatId !== chatId) return
 
-  let tree = { ...graph.tree }
-
-  let modified = false
-
+  // Update message parent relationships
   const nextMsgs = msgs.map((msg) => {
     if (!parents[msg._id]) return msg
     return { ...msg, parent: parents[msg._id] }
@@ -1357,45 +1196,27 @@ function updateMsgParents(chatId: string, parents: Record<string, string>, delet
     return { ...msg, parent: parents[msg._id] }
   })
 
+  // Update all parent relationships in chatGraphStore
   for (const [descId, parentId] of Object.entries(parents)) {
     if (typeof parentId !== 'string') continue
+    const tree = chatGraphStore.getState().graph.tree
     const descendant = tree[descId]
     if (!descendant) continue
 
-    if (descendant.msg.parent === parentId) {
-      continue
-    }
-
-    modified = true
-    const nextDesc = { ...descendant.msg, parent: parentId }
-    tree = updateChatTreeNode(tree, nextDesc)
-    tree[nextDesc._id].children = new Set(descendant.children)
-
-    const parent = tree[parentId]
-    if (parent) {
-      parent.children.add(nextDesc._id)
+    if (descendant.msg.parent !== parentId) {
+      const nextDesc = { ...descendant.msg, parent: parentId }
+      chatGraphStore.updateTreeNode(nextDesc)
     }
   }
 
-  // The caller will immediately update the tree when deleting messages
-  // This prevents this function running twice due to the 'message-parents' subscription
-  if (!modified && !deleteIds) {
-    return
-  }
-
+  // Remove deleted messages from chatGraphStore
   if (deleteIds) {
-    for (const id of deleteIds) {
-      delete tree[id]
-    }
+    chatGraphStore.removeTreeNodes(deleteIds)
   }
 
   msgStore.setState({
     msgs: nextMsgs,
     messageHistory: nextHist,
-    graph: {
-      tree,
-      root: graph.root,
-    },
   })
 }
 
@@ -1473,7 +1294,7 @@ subscribe(
   'guest-message-created',
   { msg: 'any', chatId: 'string', continue: 'boolean?', requestId: 'string?' },
   async (body) => {
-    const { activeChatId, retrying, graph, msgs } = msgStore.getState()
+    const { activeChatId, retrying, msgs } = msgStore.getState()
     if (activeChatId !== body.chatId) return
 
     if (retrying) {
@@ -1492,12 +1313,19 @@ subscribe(
     )
     await localApi.saveMessages(body.chatId, next)
 
+    // Update graph in chatGraphStore
+    chatGraphStore.updateTreeNode(msg)
+    
+    // Set speaking state in voiceStore if needed
+    if (speech?.speaking) {
+      voiceStore.setState({ speaking: speech.speaking })
+    }
+    
     msgStore.setState({
       msgs: exclude(msgs, [body.msg._id]).concat(msg),
       retrying: undefined,
       partial: undefined,
       waiting: undefined,
-      speaking: speech?.speaking,
       lastInference: {
         requestId: body.requestId!,
         text: body.msg.msg,
@@ -1506,13 +1334,10 @@ subscribe(
         messageId: body.msg._id,
       },
       textBeforeGenMore: undefined,
-      graph: {
-        tree: updateChatTreeNode(graph.tree, msg),
-        root: graph.root,
-      },
     })
 
-    if (speech) msgStore.textToSpeech(msg._id, msg.msg, speech.voice, speech?.culture)
+    // TODO: Implement textToSpeech in voiceStore
+    // if (speech) voiceStore.textToSpeech(msg._id, msg.msg, speech.voice, speech?.culture)
 
     onCharacterMessageReceived(msg)
   }

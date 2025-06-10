@@ -57,7 +57,6 @@ import {
   useResizeObserver,
   useWindowSize,
 } from './shared/hooks'
-import WizardIcon from './icons/WizardIcon'
 import { soundEmitter } from './shared/Audio/playable-events'
 import Tooltip from './shared/Tooltip'
 // import { DiscordDarkIcon, DiscordLightIcon } from './icons/DiscordIcon'

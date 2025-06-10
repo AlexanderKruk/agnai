@@ -13,6 +13,11 @@ import type { adminStore } from './admin'
 import type { presetStore } from './presets'
 import type { scenarioStore } from './scenario'
 import type { audioStore } from './audio'
+import type { attachmentStore } from './attachmentStore'
+import type { authStore } from './authStore'
+import type { subscriptionStore } from './subscriptionStore'
+import type { uiStore } from './uiStore'
+import type { userConfigStore } from './userConfigStore'
 
 type StoreMap = {
   user: typeof userStore
@@ -27,6 +32,11 @@ type StoreMap = {
   presets: typeof presetStore
   scenario: typeof scenarioStore
   audio: typeof audioStore
+  attachments: typeof attachmentStore
+  authStore: typeof authStore
+  subscriptionStore: typeof subscriptionStore
+  uiStore: typeof uiStore
+  userConfigStore: typeof userConfigStore
 }
 
 type HandlerReturn<S> =

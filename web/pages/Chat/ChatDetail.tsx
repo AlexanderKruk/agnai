@@ -14,7 +14,7 @@ import ChatExport from './ChatExport'
 import Button from '../../shared/Button'
 import { getAssetUrl, setComponentPageTitle, sticky } from '../../shared/util'
 import { characterStore, chatStore, settingStore, userStore } from '../../store'
-import { msgStore } from '../../store'
+import { msgStore, voiceStore } from '../../store'
 import Message from './components/Message'
 import PromptModal from './components/PromptModal'
 import DeleteMsgModal from './DeleteMsgModal'
@@ -72,10 +72,13 @@ const ChatDetail: Component = () => {
     msgs: s.msgs,
     partial: s.partial,
     waiting: s.waiting,
-    speaking: s.speaking,
     retrying: s.retrying,
     inference: s.lastInference,
     textBeforeGenMore: s.textBeforeGenMore,
+  }))
+  
+  const voice = voiceStore((s) => ({
+    speaking: s.speaking,
   }))
 
   const showPane = useValidChatPane()
@@ -504,7 +507,7 @@ const ChatDetail: Component = () => {
                     isPaneOpen={pane.showing()}
                     textBeforeGenMore={msgs.textBeforeGenMore}
                     voice={
-                      msg()._id === msgs.speaking?.messageId ? msgs.speaking.status : undefined
+                      msg()._id === voice.speaking?.messageId ? voice.speaking.status : undefined
                     }
                   >
                     {isOwner() && retries()?.list?.length! > 1 && i === indexOfLastRPMessage() && (

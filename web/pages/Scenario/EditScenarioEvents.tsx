@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp, Plus, Save, X } from 'lucide-solid'
 import { useNavigate } from '@solidjs/router'
 import TextInput from '../../shared/TextInput'
 import { AppSchema, NewScenario } from '/common/types'
-import Accordian from '/web/shared/Accordian'
+import Accordion from '/web/shared/Accordion'
 import Select, { Option } from '/web/shared/Select'
 import RangeInput from '/web/shared/RangeInput'
 import TagInput from '/web/shared/TagInput'
@@ -208,7 +208,7 @@ const EditScenarioEvents: Component<{
           <Match when={true}>
             <Index each={props.state.entries}>
               {(entry, index) => (
-                <Accordian
+                <Accordion
                   open={!entry().text}
                   title={
                     <div class={`mb-1 flex w-full items-start justify-between gap-2`}>
@@ -375,7 +375,7 @@ const EditScenarioEvents: Component<{
                       </Match>
                     </Switch>
                   </div>
-                </Accordian>
+                </Accordion>
               )}
             </Index>
           </Match>
@@ -400,7 +400,7 @@ export default EditScenarioEvents
 
 const EventsHelp: Component = () => {
   return (
-    <Accordian
+    <Accordion
       class="mb-2 bg-[var(--bg-800)]"
       open={false}
       titleClickOpen
@@ -477,6 +477,6 @@ const EventsHelp: Component = () => {
         </ul>
         <p>When multiple events can run, they will be randomly selected.</p>
       </div>
-    </Accordian>
+    </Accordion>
   )
 }

@@ -1,5 +1,5 @@
 import { Component, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
-import { attributes, getRandomBody, manifest } from '/web/asset/sprite'
+import { attributes, getRandomBody, manifest } from '../../asset/sprite'
 import PageHeader from '../PageHeader'
 import Button from '../Button'
 import { ArrowLeft, ArrowRight, Dices } from 'lucide-solid'
@@ -9,7 +9,7 @@ import { ColorPickerV2 } from '../ColorPicker'
 import { FullSprite, SpriteAttr } from '/common/types/sprite'
 import { calcBounds, getAttrColor, getColorProp } from './hooks'
 import AvatarCanvas from './Canvas'
-import { Page } from '/web/Layout'
+import { Page } from '../../Layout'
 
 const AvatarBuilder: Component<{
   body?: FullSprite

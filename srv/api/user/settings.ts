@@ -19,6 +19,7 @@ import { UI } from '/common/types'
 import { getLanguageModels } from '/srv/adapter/replicate'
 import { getUser, toSafeUser } from '/srv/db/user'
 import { getCachedTiers } from '/srv/db/subscriptions'
+import { createDeleteKeyHandler } from './api-key-manager'
 
 export const getInitialLoad = handle(async ({ userId, query }) => {
   const replicate = await getLanguageModels()
@@ -69,87 +70,17 @@ export const generateApiKey = handle(async ({ userId }) => {
   return { apiKey: key }
 })
 
-export const deleteScaleKey = handle(async ({ userId }) => {
-  await store.users.updateUser(userId!, {
-    scaleApiKey: '',
-  })
-
-  return { success: true }
-})
-
-export const deleteClaudeKey = handle(async ({ userId }) => {
-  await store.users.updateUser(userId!, {
-    claudeApiKey: '',
-  })
-
-  return { success: true }
-})
-
-export const deleteThirdPartyPassword = handle(async ({ userId }) => {
-  await store.users.updateUser(userId!, {
-    thirdPartyPassword: '',
-  })
-
-  return { success: true }
-})
-
-export const deleteHordeKey = handle(async ({ userId }) => {
-  await store.users.updateUser(userId!, {
-    hordeKey: '',
-    hordeName: '',
-  })
-
-  return { success: true }
-})
-
-export const deleteNovelKey = handle(async ({ userId }) => {
-  await store.users.updateUser(userId!, {
-    novelApiKey: '',
-    novelVerified: false,
-  })
-
-  return { success: true }
-})
-
-export const deleteOaiKey = handle(async ({ userId }) => {
-  await store.users.updateUser(userId!, {
-    oaiKey: '',
-  })
-
-  return { success: true }
-})
-
-export const deleteMistralKey = handle(async ({ userId }) => {
-  await store.users.updateUser(userId!, {
-    mistralKey: '',
-  })
-
-  return { success: true }
-})
-
-export const deleteFeatherlessKey = handle(async ({ userId }) => {
-  await store.users.updateUser(userId!, {
-    featherlessApiKey: '',
-  })
-
-  return { success: true }
-})
-
-export const deleteArliKey = handle(async ({ userId }) => {
-  await store.users.updateUser(userId!, {
-    arliApiKey: '',
-  })
-
-  return { success: true }
-})
-
-export const deleteElevenLabsKey = handle(async ({ userId }) => {
-  await store.users.updateUser(userId!, {
-    elevenLabsApiKey: '',
-  })
-
-  return { success: true }
-})
+// Generic API key deletion handlers - replaces 10 duplicate functions
+export const deleteScaleKey = createDeleteKeyHandler('scale')
+export const deleteClaudeKey = createDeleteKeyHandler('claude')
+export const deleteThirdPartyPassword = createDeleteKeyHandler('third-party')
+export const deleteHordeKey = createDeleteKeyHandler('horde')
+export const deleteNovelKey = createDeleteKeyHandler('novel')
+export const deleteOaiKey = createDeleteKeyHandler('openai')
+export const deleteMistralKey = createDeleteKeyHandler('mistral')
+export const deleteFeatherlessKey = createDeleteKeyHandler('featherless')
+export const deleteArliKey = createDeleteKeyHandler('arli')
+export const deleteElevenLabsKey = createDeleteKeyHandler('elevenlabs')
 
 export const updateUI = handle(async ({ userId, body }) => {
   assertValid(UI.uiGuard, body, true)

@@ -13,7 +13,7 @@ import { getActiveBots } from './util'
 import Divider from '/web/shared/Divider'
 import Convertible from '../../shared/Mode/Convertible'
 import { CreateCharacterForm } from '../Character/CreateCharacterForm'
-import Accordian from '/web/shared/Accordian'
+import Accordion from '/web/shared/Accordion'
 
 type View = 'list' | 'invite_user' | 'add_character' | 'temp_character'
 
@@ -233,7 +233,7 @@ const ParticipantsList: Component<{
       </For>
 
       <Show when={temps().deleted.length > 0}>
-        <Accordian
+        <Accordion
           open={false}
           title={<span class="text-600">Deleted Temporary Characters</span>}
           class="bg-800"
@@ -250,7 +250,7 @@ const ParticipantsList: Component<{
               />
             )}
           </For>
-        </Accordian>
+        </Accordion>
       </Show>
 
       <ConfirmModal

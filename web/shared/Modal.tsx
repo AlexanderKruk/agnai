@@ -7,7 +7,7 @@ import { markdown } from './markdown'
 import { Portal } from 'solid-js/web'
 import { useMobileDetect } from './hooks'
 
-interface Props {
+type Props = {
   title?: string | JSX.Element
   show: boolean
   children?: JSX.Element

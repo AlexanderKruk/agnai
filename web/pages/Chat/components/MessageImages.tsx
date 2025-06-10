@@ -2,8 +2,8 @@ import { Component, createEffect, createSignal, For, on, onMount, JSX } from 'so
 import { AppSchema } from '/common/types'
 import { getAssetUrl, storage } from '/web/shared/util'
 import { settingStore } from '/web/store/settings'
-import { deleteCachedMessageImage, getMessageImages, msgStore } from '/web/store/message'
-import { PlusCircle } from 'lucide-solid'
+import { msgStore } from '/web/store/message'
+import { deleteCachedMessageImage, getMessageImages } from '/web/store/attachmentStore'
 import { ButtonSchema } from '/web/shared/Button'
 
 type MessageImage = {

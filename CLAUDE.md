@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Agnai is an AI Roleplay Chat platform built with SolidJS frontend and Express.js backend. Users create and interact with personalized AI characters using various AI services (OpenAI, Claude, NovelAI, etc.). The platform supports group conversations, memory/lore books for context, and image generation.
+PornAI is an AI Roleplay Chat platform built with SolidJS frontend and Express.js backend. Users create and interact with personalized AI characters using various AI services (OpenAI, Claude, NovelAI, etc.). The platform supports group conversations, memory/lore books for context, and image generation.
 
 **Tech Stack:**
 - Frontend: SolidJS, TailwindCSS, Zustand, TypeScript

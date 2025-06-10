@@ -1,14 +1,11 @@
-import { Router } from 'express'
 import { assertValid } from '/common/valid'
 import { store } from '../db'
-import { isAdmin, loggedIn } from './auth'
 import { StatusError, handle } from './wrap'
 import { getLiveCounts, sendAll } from './ws/redis'
 import { encryptText } from '../db/util'
+import { createStandardRouter } from './middleware'
 
-const router = Router()
-
-router.use(loggedIn, isAdmin)
+const router = createStandardRouter('admin')
 
 const searchUsers = handle(async (req) => {
   const { body } = req

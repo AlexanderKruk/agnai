@@ -36,7 +36,7 @@ import { ContextProvider } from './store/context'
 import MemoryGuide from './pages/Guides/Memory'
 import NovelGuide from './pages/Guides/NovelAI'
 import { ImageModal } from './pages/Chat/ImageModal'
-import { CheckoutCancel, CheckoutSuccess } from './pages/Profile/Checkout'
+import { CheckoutCancel, CheckoutSuccess } from './pages/Profile/components/Checkout'
 import { markdown } from './shared/markdown'
 import SoundsPage from './pages/Sounds'
 import PatreonOauth from './pages/Settings/PatreonOauth'
@@ -76,8 +76,8 @@ const App: Component = () => {
       <Route path="/oauth/patreon" component={PatreonOauth} />
       <Route path="/profile" component={() => <ProfilePage />} />
       <Route path="/settings" component={() => <Settings />} />
-      <Route path="/memory" component={lazy(() => import('./pages/Memory/Library'))} />
-      <Route path="/memory/:id" component={lazy(() => import('./pages/Memory/EditMemoryPage'))} />
+      <Route path="/memory" component={lazy(() => import('./pages/Memory/components/Library'))} />
+      <Route path="/memory/:id" component={lazy(() => import('./pages/Memory/components/EditMemoryPage'))} />
       <Route path="/terms-of-service" component={lazy(() => import('./pages/TermsOfService'))} />
       <Route path="/checkout">
         <Route path="/success" component={CheckoutSuccess} />
@@ -91,27 +91,27 @@ const App: Component = () => {
       <Show when={state.loggedIn}>
         <Route path="/invites" component={lazy(() => import('./pages/Invite/InvitesPage'))} />
         <Show when={state.user?.admin}>
-          <Route path="/admin/metrics" component={lazy(() => import('./pages/Admin/Metrics'))} />
+          <Route path="/admin/metrics" component={lazy(() => import('./pages/Admin/components/Metrics'))} />
 
           <Route
             path="/admin/configuration"
-            component={lazy(() => import('./pages/Admin/Configuration'))}
+            component={lazy(() => import('./pages/Admin/components/Configuration'))}
           />
 
-          <Route path="/admin/users" component={lazy(() => import('./pages/Admin/UsersPage'))} />
+          <Route path="/admin/users" component={lazy(() => import('./pages/Admin/components/UsersPage'))} />
           <Route
             path="/admin/subscriptions"
-            component={lazy(() => import('./pages/Admin/SubscriptionList'))}
+            component={lazy(() => import('./pages/Admin/components/SubscriptionList'))}
           />
           <Route
             path="/admin/subscriptions/:id"
-            component={lazy(() => import('./pages/Admin/SubscriptionModel'))}
+            component={lazy(() => import('./pages/Admin/components/SubscriptionModel'))}
           />
           <Route
             path={['/admin/announcements', '/admin/announcements/:id']}
-            component={lazy(() => import('./pages/Admin/Announcements'))}
+            component={lazy(() => import('./pages/Admin/components/Announcements'))}
           />
-          <Route path="/admin/tiers/:id" component={lazy(() => import('./pages/Admin/Tiers'))} />
+          <Route path="/admin/tiers/:id" component={lazy(() => import('./pages/Admin/components/Tiers'))} />
         </Show>
       </Show>
       <Show when={cfg.config.canAuth}>
@@ -134,7 +134,7 @@ const Layout: Component<{ children?: any }> = (props) => {
   const maxW = createMemo((): string => {
     if (pane.showing()) return 'max-w-full'
 
-    return getMaxChatWidth(state.ui.chatWidth)
+    return getMaxChatWidth(state.ui?.chatWidth || 'fill')
   })
   const rootModals = rootModalStore()
 

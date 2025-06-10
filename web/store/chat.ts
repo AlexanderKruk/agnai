@@ -1,4 +1,5 @@
-import { createPromptParts, Prompt, resolveScenario } from '../../common/prompt'
+import { createPromptParts, resolveScenario } from '../../common/prompt'
+import type { Prompt } from '../../common/promptUtils'
 import { getEncoder } from '../../common/tokenize'
 import { AppSchema } from '../../common/types/schema'
 import { EVENTS, events } from '../emitter'

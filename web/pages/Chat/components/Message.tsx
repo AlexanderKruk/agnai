@@ -5,20 +5,12 @@ import {
   CheckCheck,
   DownloadCloud,
   PauseCircle,
-  Pencil,
-  RefreshCw,
-  Repeat1,
-  Terminal,
-  Trash,
   Delete,
   X,
   Zap,
-  Split,
-  Braces,
   ImagePlus,
 } from 'lucide-solid'
 import {
-  Accessor,
   Component,
   createMemo,
   createSignal,
@@ -28,7 +20,6 @@ import {
   onCleanup,
   onMount,
   Show,
-  Signal,
   Switch,
   createEffect,
 } from 'solid-js'
@@ -36,22 +27,22 @@ import { BOT_REPLACE, SELF_REPLACE } from '../../../../common/prompt'
 import { AppSchema } from '../../../../common/types/schema'
 import AvatarIcon, { CharacterAvatar } from '../../../shared/AvatarIcon'
 import { chatStore, userStore, msgStore, toastStore, ChatState, VoiceState } from '../../../store'
+import { stopSpeech } from '../../../store/voiceStore'
 import { markdown } from '../../../shared/markdown'
-import Button, { ButtonSchema } from '/web/shared/Button'
+import Button from '/web/shared/Button'
 import { ContextState, useAppContext } from '/web/store/context'
 import { hydrateTemplate, trimSentence } from '/common/util'
 import { EVENTS, events } from '/web/emitter'
 import TextInput from '/web/shared/TextInput'
-import { Card, Pill } from '/web/shared/Card'
+import { Card } from '/web/shared/Card'
 import { FeatureFlags } from '/web/store/flags'
 import { ChatTree } from '/common/chat'
 import { Portal } from 'solid-js/web'
-import { UI } from '/common/types'
-import { LucideProps } from 'lucide-solid/dist/types/types'
-import { createStore } from 'solid-js/store'
 import { RelativeSpinner } from '/web/shared/Loading'
 import { LogProbs } from './LogProbs'
 import { MessageImages } from './MessageImages'
+import { MessageEditor } from './MessageEditor'
+import { MessageActions } from './MessageActions'
 
 /**
  * Advanced Universal Emoji Text Splitter
@@ -503,22 +494,44 @@ const Message: Component<MessageProps> = (props) => {
         }
       };
     }
-    
-    // Set up global typing interrupt handler
-    const interruptHandler = () => {
-      const interrupt = interruptFn();
-      // Only interrupt if it's NOT the first message (index !== 0)
-      if (props.index !== 0 && shouldUseLineByLine() && interrupt) {
-        interrupt();
-      }
-    };
-    
-    // Listen for global typing start events
-    events.on(EVENTS.userTypingStarted, interruptHandler);
-    
-    onCleanup(() => {
-      events.removeListener(EVENTS.userTypingStarted, interruptHandler);
-    });
+  })
+
+  // Set up global typing interrupt handler
+  // Only add for the last message to avoid memory leaks
+  createEffect(() => {
+    // Only the last message should listen for typing interrupts to avoid multiple listeners
+    if (props.last && props.index !== 0 && shouldUseLineByLine()) {
+      const interruptHandler = () => {
+        // When typing starts, interrupt ALL line-by-line rendering, not just this message
+        // We emit a custom event that all messages can listen for
+        const event = new CustomEvent('interrupt-line-by-line');
+        document.dispatchEvent(event);
+      };
+      
+      events.on(EVENTS.userTypingStarted, interruptHandler);
+      
+      onCleanup(() => {
+        events.removeListener(EVENTS.userTypingStarted, interruptHandler);
+      });
+    }
+  })
+
+  // Each message listens for the custom interrupt event
+  createEffect(() => {
+    if (props.index !== 0 && shouldUseLineByLine()) {
+      const handleInterrupt = () => {
+        const interrupt = interruptFn();
+        if (interrupt) {
+          interrupt();
+        }
+      };
+      
+      document.addEventListener('interrupt-line-by-line', handleInterrupt);
+      
+      onCleanup(() => {
+        document.removeEventListener('interrupt-line-by-line', handleInterrupt);
+      });
+    }
   })
   
   onCleanup(() => obs().disconnect())
@@ -668,13 +681,13 @@ const Message: Component<MessageProps> = (props) => {
                   </Match>
 
                   <Match when={props.voice === 'generating'}>
-                    <div class="animate-pulse cursor-pointer" onClick={msgStore.stopSpeech}>
+                    <div class="animate-pulse cursor-pointer" onClick={stopSpeech}>
                       <AvatarIcon format={format()} Icon={DownloadCloud} />
                     </div>
                   </Match>
 
                   <Match when={props.voice === 'playing'}>
-                    <div class="animate-pulse cursor-pointer" onClick={msgStore.stopSpeech}>
+                    <div class="animate-pulse cursor-pointer" onClick={stopSpeech}>
                       <AvatarIcon format={format()} Icon={PauseCircle} bot />
                     </div>
                   </Match>
@@ -789,7 +802,7 @@ const Message: Component<MessageProps> = (props) => {
                 >
                   <Show when={showCharacterInfo()}>
                     <Show when={user.user?.admin}>
-                      <MessageOptions
+                      <MessageActions
                         index={props.index}
                         ui={user.ui}
                         msg={props.msg}
@@ -938,7 +951,7 @@ const Message: Component<MessageProps> = (props) => {
                 </Match>
 
                 <Match when={edit() && props.msg.json}>
-                  <JsonEdit msg={props.msg} update={(next) => setJsonValues(next)} />
+                  <MessageEditor msg={props.msg} update={(next) => setJsonValues(next)} />
                 </Match>
                 <Match when={edit()}>
                   <div
@@ -972,224 +985,9 @@ function anonymizeText(text: string, profile: AppSchema.Profile, i: number) {
   return text.replace(new RegExp(profile.handle.trim(), 'gi'), 'User ' + (i + 1))
 }
 
-const JsonEdit: Component<{
-  msg: SplitMessage
-  update: (next: any) => void
-}> = (props) => {
-  const entries = createMemo(() => Object.keys(props.msg.json?.values || {}))
-  const [editing, setEditing] = createStore<Record<string, string>>(props.msg.json?.values || {})
+// JsonEdit component moved to MessageEditor.tsx
 
-  onMount(() => {
-    props.update(props.msg.json?.values || {})
-  })
-
-  return (
-    <div class="flex flex-col gap-2">
-      <For each={entries()}>
-        {(key) => (
-          <div class="flex flex-col">
-            <Pill type="bg" small opacity={0.5} class="rounded-b-none rounded-t-md">
-              {key}
-            </Pill>
-            <div
-              ref={(r) => (r.innerText = editing[key])}
-              class="msg-edit-text-box rounded-md rounded-tl-none border border-[var(--bg-500)] p-1"
-              contentEditable={true}
-              onKeyUp={(ev: any) => {
-                setEditing(key, ev.target.innerText)
-                props.update(editing)
-              }}
-            ></div>
-          </div>
-        )}
-      </For>
-    </div>
-  )
-}
-
-const MessageOptions: Component<{
-  index: number
-  msg: SplitMessage
-  ui: UI.UISettings
-  tts: boolean
-  edit: Accessor<boolean>
-  startEdit: () => void
-  last?: boolean
-  partial?: string
-  show: Signal<boolean>
-  textBeforeGenMore?: string
-  onRemove: () => void
-  showMore: Signal<boolean>
-}> = (props) => {
-  const closer = (action: () => void) => {
-    return () => {
-      action()
-      props.showMore[1](false)
-    }
-  }
-
-  const logic = createMemo(() => {
-    const items: Record<
-      UI.MessageOption,
-      {
-        key: UI.MessageOption
-        outer: { outer: boolean; pos: number }
-        label: string
-        class: string
-        onClick: () => void
-        show: boolean
-        schema?: ButtonSchema
-        icon: (props: LucideProps) => JSX.Element
-      }
-    > = {
-      prompt: {
-        key: 'prompt',
-        label: 'Prompt',
-        class: 'prompt-btn',
-        outer: props.ui.msgOptsInline.prompt,
-        show: !!props.msg.characterId && props.msg.adapter !== 'image',
-        onClick: () => !props.partial && chatStore.computePrompt(props.msg, true),
-        icon: Terminal,
-      },
-
-      image: {
-        key: 'image',
-        label: 'Generate Image',
-        class: 'image-btn',
-        outer: props.ui.msgOptsInline.image,
-        show: !!props.msg.characterId && !props.msg.system && !props.msg.event && props.msg.adapter !== 'image' && !props.partial && !props.msg.json,
-        onClick: () => {
-          msgStore.createImage(props.msg._id, false, props.msg.msg)
-        },
-        icon: ImagePlus,
-      },
-
-      edit: {
-        key: 'edit',
-        label: 'Edit',
-        class: 'edit-btn',
-        outer: props.ui.msgOptsInline.edit,
-        show: !props.msg.characterId && props.msg.adapter !== 'image' && !props.partial,
-        onClick: props.startEdit,
-        icon: Pencil,
-      },
-
-      fork: {
-        key: 'fork',
-        label: 'Fork',
-        class: 'fork-btn',
-        show: !props.last,
-        outer: props.ui.msgOptsInline.fork,
-        onClick: () => !props.partial && msgStore.fork(props.msg._id),
-        icon: Split,
-      },
-
-      regen: {
-        key: 'regen',
-        class: 'refresh-btn',
-        label: 'Regenerate',
-        outer: props.ui.msgOptsInline.regen,
-        show:
-          (props.last || (props.msg.adapter === 'image' && !!props.msg.imagePrompt)) &&
-          !!props.msg.characterId,
-        onClick: () => !props.partial && retryMessage(props.msg, props.msg),
-        icon: RefreshCw,
-      },
-
-      'schema-regen': {
-        key: 'schema-regen',
-        class: 'refresh-btn',
-        label: 'Schema Regen',
-        outer: props.ui.msgOptsInline['schema-regen'],
-        show:
-          window.flags.reschema &&
-          ((props.msg.json && props.last) ||
-            (props.msg.adapter === 'image' && !!props.msg.imagePrompt)) &&
-          !!props.msg.characterId,
-        onClick: () => !props.partial && retryJsonSchema(props.msg, props.msg),
-        icon: Braces,
-      },
-
-      trash: {
-        key: 'trash',
-        label: 'Delete',
-        show: true,
-        outer: props.ui.msgOptsInline.trash,
-        onClick: props.onRemove,
-        class: 'delete-btn',
-        schema: 'red',
-        icon: Trash,
-      },
-    }
-
-    return items
-  })
-
-  const order = createMemo(() => {
-    logic()
-
-    return Object.entries(props.ui.msgOptsInline)
-      .sort((l, r) => l[1].pos - r[1].pos)
-      .map(([key, item]) => ({ key: key as UI.MessageOption, ...item }))
-  })
-
-  return (
-    <div class="mr-3 flex items-center gap-4 text-sm">
-      <div class="contents" id={`outer-${props.msg._id}`}></div>
-
-      <For each={order()}>
-        {(item) => {
-          const def = logic()[item.key]
-
-          return (
-            <Show when={def.outer.outer && def.show}>
-              <MessageOption
-                id={props.msg._id}
-                onClick={closer(def.onClick)}
-                class={def.class}
-                label={def.label}
-              >
-                {def.icon({ size: 18 })}
-              </MessageOption>
-            </Show>
-          )
-        }}
-      </For>
-
-      <Show
-        when={
-          (props.last || (props.msg.adapter === 'image' && props.msg.imagePrompt)) &&
-          props.msg.characterId &&
-          !!props.textBeforeGenMore
-        }
-      >
-        <div
-          class="icon-button"
-          onClick={() => !props.partial && msgStore.continuation(props.msg.chatId, undefined, true)}
-        >
-          <Repeat1 size={18} />
-        </div>
-      </Show>
-
-      <Show when={props.last && !props.msg.characterId}>
-        <div
-          class="icon-button"
-          onClick={() => !props.partial && msgStore.resend(props.msg.chatId, props.msg._id)}
-        >
-          <RefreshCw size={18} />
-        </div>
-      </Show>
-
-      <div
-        class="icon-button"
-        onClick={props.onRemove}
-        title="Delete"
-      >
-        <Trash size={18} />
-      </div>
-    </div>
-  )
-}
+// MessageOptions component moved to MessageActions.tsx
 
 const MessageOption: Component<{
   class?: string;
