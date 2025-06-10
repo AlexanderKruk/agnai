@@ -93,7 +93,8 @@ export const userStore = createStore<UserState>(
     
     // Delegate core UI methods
     async saveUI(state: UserState, ui: any, onSuccess?: any) {
-      await uiStore.saveUI(ui, onSuccess)
+      await uiStore.saveUI(state, ui)
+      if (onSuccess) onSuccess()
       return resync()
     },
     
@@ -110,8 +111,8 @@ export const userStore = createStore<UserState>(
     },
     
     // Add missing methods from the original user store
-    async updatePartialConfig(state: UserState, data: any, onSuccess?: () => void) {
-      await userConfigStore.updatePartialConfig(data, onSuccess)
+    async updatePartialConfig(state: UserState, data: any, quiet?: boolean) {
+      await userConfigStore.updatePartialConfig(state, data, quiet)
       return resync()
     },
     
@@ -249,13 +250,13 @@ export const userStore = createStore<UserState>(
     },
     
     // API key management
-    async revealApiKey(state: UserState, key: string) {
-      await userConfigStore.revealApiKey(key)
+    async revealApiKey(state: UserState, cb: (key: string) => void) {
+      await userConfigStore.revealApiKey(state, cb)
       return resync()
     },
     
-    async generateApiKey(state: UserState, key: string) {
-      await userConfigStore.generateApiKey(key)
+    async generateApiKey(state: UserState, cb: (key: string) => void) {
+      await userConfigStore.generateApiKey(state, cb)
       return resync()
     },
     
@@ -265,8 +266,8 @@ export const userStore = createStore<UserState>(
       return resync()
     },
     
-    async novelLogin(state: UserState, username: string, password: string) {
-      await userConfigStore.novelLogin(username, password)
+    async novelLogin(state: UserState, key: string, onComplete: (err?: boolean) => void) {
+      await userConfigStore.novelLogin(state, key, onComplete)
       return resync()
     },
   }
