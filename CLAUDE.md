@@ -158,3 +158,6 @@ npm run model         # Full model setup and start
 - WebSocket debugging via browser dev tools
 - API request/response inspection in Network tab
 - State debugging with Redux DevTools (for Zustand)
+
+## Development Best Practices
+- Commit every big feature and run tests before commit
