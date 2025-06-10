@@ -2,7 +2,7 @@ import { Component } from 'solid-js'
 import { Card } from '../../../shared/Card'
 import { Toggle } from '../../../shared/Toggle'
 import Select from '../../../shared/Select'
-import VoicePicker from './VoicePicker'
+import { VoicePicker } from './VoicePicker'
 import { CultureCodes } from '../../../shared/CultureCodes'
 
 export interface VoiceTabProps {

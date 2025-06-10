@@ -2,8 +2,8 @@ import { Component, createSignal, createEffect, Suspense, Show, createResource }
 import { asyncFrame } from '../util'
 import { WIDTH, HEIGHT, getColorProp } from './hooks'
 import { FullSprite, SpriteAttr } from '/common/types/sprite'
-import { attributes, manifest } from '/web/asset/sprite'
-import { imageApi } from '/web/store/data/image'
+import { attributes, manifest } from '../../asset/sprite'
+import { imageApi } from '../../store/data/image'
 import { parseHex } from '../colors'
 
 export { AvatarCanvas as default }

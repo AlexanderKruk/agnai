@@ -1,13 +1,8 @@
-import { Component } from 'solid-js'
-import { RootModal } from '/web/shared/Modal'
-import { getAssetUrl } from '/web/shared/util'
+/**
+ * Avatar Modal Component
+ * 
+ * This is a lightweight wrapper that re-exports the shared AvatarModal component.
+ * The actual implementation has been moved to /web/shared/Avatar/ for reusability.
+ */
 
-export const AvatarModal: Component<{ url?: string; close: () => void }> = (props) => {
-  return (
-    <RootModal show={!!props.url} close={props.close} maxWidth="half" fixedHeight>
-      <div class="flex justify-center p-4">
-        <img class="rounded-md" src={getAssetUrl(props.url!)} />
-      </div>
-    </RootModal>
-  )
-}
+export { AvatarModal } from '/web/shared/Avatar/AvatarModal'

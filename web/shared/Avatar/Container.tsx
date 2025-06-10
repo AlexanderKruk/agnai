@@ -1,7 +1,7 @@
 import { Component, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
 import { EmoteType, FullSprite } from '/common/types/sprite'
 import AvatarCanvas from './Canvas'
-import { getEmoteExpressions } from '/web/asset/sprite'
+import { getEmoteExpressions } from '../../asset/sprite'
 import { calcBounds } from './hooks'
 import { asyncFrame, createDebounce } from '../util'
 

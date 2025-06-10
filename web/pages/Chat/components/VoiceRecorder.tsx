@@ -1,7 +1,7 @@
 import { Component, Switch, Match } from 'solid-js'
 import { Send } from 'lucide-solid'
 import Button from '../../../shared/Button'
-import { SpeechRecognitionRecorder } from './SpeechRecognitionRecorder'
+import { SpeechRecognitionRecorder } from '../../../shared/Voice/VoiceIndex'
 
 export interface VoiceRecorderProps {
   hasText: boolean
