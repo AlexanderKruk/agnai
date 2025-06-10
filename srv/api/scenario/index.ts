@@ -1,12 +1,11 @@
-import { Router } from 'express'
 import { store } from '../../db'
-import { loggedIn } from '../auth'
-import { errors, handle } from '../wrap'
+import { errors } from '../wrap'
 import { assertValid } from '/common/valid'
-import { AppSchema, NewScenario } from '/common/types'
+import { AppSchema } from '/common/types'
+import { scenario } from '../validation'
+import { createCrudApi } from '../shared/crud-controller'
 
-const router = Router()
-
+// Scenario-specific validation triggers
 const validateOnGreetingTrigger = {
   kind: 'string',
 } as const
@@ -26,72 +25,42 @@ const validateOnCharacterMessageReceivedTrigger = {
   minMessagesSinceLastEvent: 'number',
 } as const
 
-const validEntry = {
-  name: 'string',
-  requires: ['string'],
-  assigns: ['string'],
-  type: 'string',
-  text: 'string',
-  trigger: 'any',
-} as const
+// Create scenario store adapter
+const scenarioStore = {
+  getMany: (userId: string) => store.scenario.getScenarios(userId),
+  getOne: async (id: string) => {
+    const scenario = await store.scenario.getScenario(id)
+    return scenario || null
+  },
+  create: (userId: string, data: any) => store.scenario.createScenario(userId, data),
+  update: (userId: string, id: string, data: any) => store.scenario.updateScenario(userId, id, data),
+  delete: (userId: string, id: string) => store.scenario.deleteScenario(userId, id)
+}
 
-const validScenario = {
-  name: 'string',
-  states: ['string'],
-  description: 'string?',
-  text: 'string',
-  overwriteCharacterScenario: 'boolean',
-  instructions: 'string?',
-  entries: [validEntry],
-} as const
-
-const getUserScenarios = handle(async ({ userId }) => {
-  const scenarios = await store.scenario.getScenarios(userId!)
-  return { scenarios }
+// Create CRUD API with scenario-specific validation
+const { router } = createCrudApi({
+  entityName: 'scenario',
+  store: scenarioStore,
+  validation: {
+    create: scenario.create,
+    update: scenario.update
+  },
+  collectionKey: 'scenarios',
+  requireOwnership: true,
+  customValidator: assertScenario
+}, {
+  includeGetById: true  // Scenarios need individual get endpoint
 })
-
-const getScenario = handle(async ({ userId, params }) => {
-  const id = params.id
-  const scenario = await store.scenario.getScenario(id!)
-  if (scenario?.userId !== userId) throw errors.Unauthorized
-  return scenario
-})
-
-const createScenario = handle(async ({ body, userId }) => {
-  assertScenario(body)
-
-  const newScenario = await store.scenario.createScenario(userId!, body as NewScenario)
-
-  return newScenario
-})
-
-const updateScenario = handle(async ({ body, userId, params }) => {
-  const id = params.id
-  assertScenario(body)
-  await store.scenario.updateScenario(userId!, id!, body)
-
-  return { success: true }
-})
-
-const removeScenario = handle(async ({ userId, params }) => {
-  await store.scenario.deleteScenario(userId, params.id)
-  return { success: true }
-})
-
-router.get('/', loggedIn, getUserScenarios)
-router.post('/', loggedIn, createScenario)
-router.get('/:id', loggedIn, getScenario)
-router.put('/:id', loggedIn, updateScenario)
-router.delete('/:id', loggedIn, removeScenario)
 
 export default router
 
 function assertScenario(body: any) {
-  assertValid(validScenario, body)
+  assertValid(scenario.create, body)
   body.entries = body.entries.map((entry: any) => ({
     ...entry,
     trigger: assertTrigger(entry.trigger),
   }))
+  return body
 }
 
 function assertTrigger(body: any) {

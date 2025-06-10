@@ -1,43 +1,31 @@
-import { assertValid } from '/common/valid'
 import { store } from '../../db'
-import { handle } from '../wrap'
-import { createStandardRouter } from '../middleware'
 import { memory } from '../validation'
+import { createCrudApi } from '../shared/crud-controller'
 
-const router = createStandardRouter('authenticated')
+// Create memory book store adapter
+const memoryStore = {
+  getMany: (userId: string) => store.memory.getBooks(userId),
+  getOne: async (id: string) => {
+    const book = await store.memory.getBook(id)
+    return book || null
+  },
+  create: (userId: string, data: any) => store.memory.createBook(userId, data),
+  update: (userId: string, id: string, data: any) => store.memory.updateBook(userId, id, data),
+  delete: (userId: string, id: string) => store.memory.deleteBook(userId, id)
+}
+
+// Create CRUD API with standardized patterns
+const { router } = createCrudApi({
+  entityName: 'memory book',
+  store: memoryStore,
+  validation: {
+    create: memory.book,
+    update: memory.book
+  },
+  collectionKey: 'books'
+})
 
 // Export for use in other modules
 export const validBook = memory.book
-
-const getUserBooks = handle(async ({ userId }) => {
-  const books = await store.memory.getBooks(userId!)
-  return { books }
-})
-
-const createBook = handle(async ({ body, userId }) => {
-  assertValid(memory.book, body)
-
-  const newBook = await store.memory.createBook(userId!, body)
-
-  return newBook
-})
-
-const updateBook = handle(async ({ body, userId, params }) => {
-  const id = params.id
-  assertValid(memory.book, body)
-  await store.memory.updateBook(userId!, id!, body)
-
-  return { success: true }
-})
-
-const removeBook = handle(async ({ userId, params }) => {
-  await store.memory.deleteBook(userId, params.id)
-  return { success: true }
-})
-
-router.get('/', getUserBooks)
-router.post('/', createBook)
-router.put('/:id', updateBook)
-router.delete('/:id', removeBook)
 
 export default router

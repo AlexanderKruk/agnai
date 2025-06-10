@@ -152,23 +152,34 @@ export const chat = {
 } as const
 
 /** Scenario validations */
+const scenarioEntry = {
+  name: 'string',
+  requires: ['string'],
+  assigns: ['string'],
+  type: 'string',
+  text: 'string',
+  trigger: 'any'
+} as const
+
 export const scenario = {
   create: {
     name: 'string',
+    states: ['string'],
     description: 'string?',
     text: 'string',
+    overwriteCharacterScenario: 'boolean',
     instructions: 'string?',
-    greeting: 'string?',
-    tags: ['string?']
+    entries: [scenarioEntry]
   },
   
   update: {
     name: 'string?',
+    states: ['string?'],
     description: 'string?',
     text: 'string?',
+    overwriteCharacterScenario: 'boolean?',
     instructions: 'string?',
-    greeting: 'string?',
-    tags: ['string?']
+    entries: [scenarioEntry]
   }
 } as const
 
