@@ -11,7 +11,7 @@ import { Plus, Trash } from 'lucide-solid'
 import { ImageModel } from '/common/types/admin'
 import { SD_SAMPLER, SD_SAMPLER_OPTS } from '/common/image'
 import Select from '/web/shared/Select'
-import Accordian from '/web/shared/Accordian'
+import Accordion from '/web/shared/Accordion'
 
 type Threshold = { steps: number; cfg: number; height: number; width: number }
 type InitThreshold = ImageModel['init']
@@ -120,7 +120,7 @@ const Model: Component<{
   remove: (index: number) => void
 }> = (props) => {
   return (
-    <Accordian title={props.item.desc} titleClickOpen open={false}>
+    <Accordion title={props.item.desc} titleClickOpen open={false}>
       <Card
         bg="bg-900"
         bgOpacity={1}
@@ -321,6 +321,6 @@ const Model: Component<{
           </Card>
         </div>
       </Card>
-    </Accordian>
+    </Accordion>
   )
 }

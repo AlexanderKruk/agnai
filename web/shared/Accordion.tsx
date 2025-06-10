@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronUp } from 'lucide-solid'
 import { Component, createMemo, createSignal, JSX, Show } from 'solid-js'
 
-const Accordian: Component<{
+const Accordion: Component<{
   title: string | JSX.Element
   children: JSX.Element
   open?: boolean
@@ -40,4 +40,4 @@ const Accordian: Component<{
   )
 }
 
-export default Accordian
+export default Accordion

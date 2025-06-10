@@ -4,7 +4,7 @@ import Button from '/web/shared/Button'
 import { Card } from '/web/shared/Card'
 import { FormLabel } from '/web/shared/FormLabel'
 import TextInput from '/web/shared/TextInput'
-import Accordian from '/web/shared/Accordian'
+import Accordion from '/web/shared/Accordion'
 import { EventId, Sound, SoundId, SoundpackId } from '/web/shared/Audio/soundpack'
 import { audioStore } from '/web/store'
 import { SoundPreview, getSoundSource } from './SoundPreview'
@@ -83,7 +83,7 @@ const BackgroundAmbience: Component<{
 }> = (props) => {
   return (
     <div class="flex w-full flex-row gap-5">
-      <Accordian title={props.sound?.name} open={false} class="grow">
+      <Accordion title={props.sound?.name} open={false} class="grow">
         <TextInput
           fieldName="audioBgSound"
           type="text"
@@ -92,7 +92,7 @@ const BackgroundAmbience: Component<{
           parentClass="grow"
           value={getSoundSource(props.sound)}
         />
-      </Accordian>
+      </Accordion>
       <SoundPreview sound={props.sound} />
     </div>
   )
@@ -105,7 +105,7 @@ const RandomAmbientEvent: Component<{
 }> = (props) => {
   return (
     <div class="flex w-full flex-row gap-5">
-      <Accordian title={props.sound?.name} open={false} class="grow">
+      <Accordion title={props.sound?.name} open={false} class="grow">
         <TextInput
           fieldName="audioBgSound"
           type="text"
@@ -132,7 +132,7 @@ const RandomAmbientEvent: Component<{
             parentClass="grow"
           />
         </div>
-      </Accordian>
+      </Accordion>
       <SoundPreview sound={props.sound} />
     </div>
   )
@@ -144,7 +144,7 @@ const InteractionSoundEffect: Component<{
 }> = (props) => {
   return (
     <div class="flex w-full flex-row gap-5">
-      <Accordian
+      <Accordion
         title={`${getEventDescription(props.eventId)} - ${props.sound?.name}`}
         open={false}
       >
@@ -156,7 +156,7 @@ const InteractionSoundEffect: Component<{
           parentClass="grow"
           value={getSoundSource(props.sound)}
         />
-      </Accordian>
+      </Accordion>
       <SoundPreview sound={props.sound} />
     </div>
   )

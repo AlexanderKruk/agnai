@@ -1,7 +1,7 @@
 import { Plus, X } from 'lucide-solid'
 import { Component, createEffect, createMemo, createSignal, Index, on } from 'solid-js'
 import { AppSchema } from '../../../common/types/schema'
-import Accordian from '../../shared/Accordian'
+import Accordion from '../../shared/Accordion'
 import Button from '../../shared/Button'
 import Divider from '../../shared/Divider'
 import { FormLabel } from '../../shared/FormLabel'
@@ -158,7 +158,7 @@ const EntryCard: Component<{
   )
 
   return (
-    <Accordian
+    <Accordion
       open={missingFieldsInEntry(props.entry).length > 0}
       class={cls()}
       title={
@@ -233,7 +233,7 @@ const EntryCard: Component<{
           }}
         />
       </div>
-    </Accordian>
+    </Accordion>
   )
 }
 

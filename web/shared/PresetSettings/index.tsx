@@ -10,7 +10,7 @@ import { presetStore, settingStore } from '../../store'
 import { Card } from '../Card'
 import { getUsableServices, storage } from '../util'
 import { createStore } from 'solid-js/store'
-import Accordian from '../Accordian'
+import Accordion from '../Accordion'
 import { ServiceOption } from '../../pages/Settings/components/RegisteredSettings'
 import { getServiceTempConfig } from '../adapter'
 import Tabs from '../Tabs'
@@ -216,7 +216,7 @@ const TempSettings: Component<{ service?: AIAdapter }> = (props) => {
 
   return (
     <Show when={settings.values.length}>
-      <Accordian title={<b>{ADAPTER_LABELS[props.service!]} Settings</b>} titleClickOpen open>
+      <Accordion title={<b>{ADAPTER_LABELS[props.service!]} Settings</b>} titleClickOpen open>
         <For each={settings.values}>
           {(opt) => (
             <ServiceOption
@@ -233,7 +233,7 @@ const TempSettings: Component<{ service?: AIAdapter }> = (props) => {
             />
           )}
         </For>
-      </Accordian>
+      </Accordion>
     </Show>
   )
 }
