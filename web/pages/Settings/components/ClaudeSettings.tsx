@@ -1,8 +1,6 @@
 import { Component } from 'solid-js'
-import TextInput from '../../../shared/TextInput'
-import { userStore } from '../../../store'
-import Button from '../../../shared/Button'
 import { SetStoreFunction } from 'solid-js/store'
+import { ApiKeyManager } from '../../../shared/ApiKeyManager'
 import { UserSettings } from '../util'
 
 const ClaudeSettings: Component<{
@@ -10,23 +8,15 @@ const ClaudeSettings: Component<{
   setter: SetStoreFunction<UserSettings>
 }> = (props) => {
   return (
-    <>
-      <TextInput
-        label="Claude Key"
-        helperText="Valid Claude Key."
-        placeholder={
-          props.state.claudeApiKeySet
-            ? 'Claude key is set'
-            : 'E.g. sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        }
-        type="password"
-        value={props.state.claudeApiKey}
-        onChange={(ev) => props.setter('claudeApiKey', ev.currentTarget.value)}
-      />
-      <Button schema="red" class="w-max" onClick={() => userStore.deleteKey('claude')}>
-        Delete Claude Key
-      </Button>
-    </>
+    <ApiKeyManager
+      service="claude"
+      user={props.state}
+      setter={props.setter}
+      keyField="claudeApiKey"
+      setField="claudeApiKeySet"
+      helperText="Valid Claude Key."
+      placeholder="E.g. sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    />
   )
 }
 
