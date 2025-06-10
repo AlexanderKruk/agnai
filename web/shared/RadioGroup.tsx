@@ -1,6 +1,6 @@
 import { Component, For, JSX } from 'solid-js'
 
-export interface RadioOption {
+export type RadioOption = {
   /** Value of the item */
   id: string
 

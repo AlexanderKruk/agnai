@@ -4,7 +4,7 @@ import { AutoComplete, AutoCompleteOption } from '/web/shared/AutoComplete'
 
 type AvailableTag = string | { label: string; value: string }
 
-interface TagInputProps {
+type TagInputProps = {
   fieldName?: string
   availableTags: AvailableTag[]
   value?: string[]

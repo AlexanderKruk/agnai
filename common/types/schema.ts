@@ -65,7 +65,7 @@ export namespace AppSchema {
 
   export type ChatMode = 'standard' | 'adventure'
 
-  export interface Token {
+  export type Token = {
     userId: string
     username: string
     admin: boolean
@@ -73,7 +73,7 @@ export namespace AppSchema {
     exp: number
   }
 
-  export interface Profile {
+  export type Profile = {
     _id: string
     kind: 'profile'
     userId: string
@@ -81,14 +81,13 @@ export namespace AppSchema {
     avatar?: string
   }
 
-  export interface User extends 
-    UserAuthentication,
-    UserAIServices,
-    UserSubscription,
-    UserMedia,
-    UserPreferences {}
+  export type User = UserAuthentication &
+    UserAIServices &
+    UserSubscription &
+    UserMedia &
+    UserPreferences
 
-  export interface ApiKey {
+  export type ApiKey = {
     _id: string
     kind: 'apikey'
 
@@ -103,22 +102,22 @@ export namespace AppSchema {
     enabled: boolean
   }
 
-  export interface SagaField {
+  export type SagaField = {
     name: string
     label: string
     visible: boolean
     type: 'string' | 'number' | 'boolean'
   }
 
-  export interface SagaTemplate extends Saga.Template {
+  export type SagaTemplate = Saga.Template & {
     kind: 'saga-template'
   }
 
-  export interface SagaSession extends Saga.Session {
+  export type SagaSession = Saga.Session & {
     kind: 'saga-session'
   }
 
-  export interface Chat {
+  export type Chat = {
     _id: string
     kind: 'chat'
     mode?: 'standard' | 'adventure' | 'companion'
@@ -160,7 +159,7 @@ export namespace AppSchema {
     localSettings?: { bgFormat?: 'contain' | 'cover' | 'auto' }
   }
 
-  export interface ChatMember {
+  export type ChatMember = {
     _id: string
     kind: 'chat-member'
     chatId: string
@@ -170,7 +169,7 @@ export namespace AppSchema {
 
   export type ChatAction = { emote: string; action: string }
 
-  export interface ChatMessage {
+  export type ChatMessage = {
     _id: string
     kind: 'chat-message'
     chatId: string
@@ -204,7 +203,7 @@ export namespace AppSchema {
 
   export type ScenarioEventType = 'world' | 'character' | 'hidden' | 'ooc'
 
-  export interface ChatInvite {
+  export type ChatInvite = {
     _id: string
     kind: 'chat-invite'
     byUserId: string
@@ -215,7 +214,7 @@ export namespace AppSchema {
     state: 'pending' | 'rejected' | 'accepted'
   }
 
-  export interface ChatLock {
+  export type ChatLock = {
     kind: 'chat-lock'
 
     /** Chat ID, Unique */
@@ -231,7 +230,7 @@ export namespace AppSchema {
     lockId: string
   }
 
-  export interface ScenarioBook {
+  export type ScenarioBook = {
     kind: 'scenario'
     _id: string
     userId: string
@@ -244,7 +243,7 @@ export namespace AppSchema {
     states: string[]
   }
 
-  export interface ScenarioEvent<T extends ScenarioEventTrigger = ScenarioEventTrigger> {
+  export type ScenarioEvent<T extends ScenarioEventTrigger = ScenarioEventTrigger> = {
     /** The state this  */
     name: string
     requires: string[]
@@ -260,34 +259,34 @@ export namespace AppSchema {
     | ScenarioOnChatOpened
     | ScenarioOnCharacterMessageRx
 
-  export interface ScenarioOnGreeting {
+  export type ScenarioOnGreeting = {
     kind: 'onGreeting'
   }
 
-  export interface ScenarioOnManual {
+  export type ScenarioOnManual = {
     kind: 'onManualTrigger'
     probability: number
   }
 
-  export interface ScenarioOnChatOpened {
+  export type ScenarioOnChatOpened = {
     kind: 'onChatOpened'
     awayHours: number
   }
 
-  export interface ScenarioOnCharacterMessageRx {
+  export type ScenarioOnCharacterMessageRx = {
     kind: 'onCharacterMessageReceived'
     minMessagesSinceLastEvent: number
   }
 
   export type ScenarioTriggerKind = ScenarioEventTrigger['kind']
 
-  export interface VoiceDefinition {
+  export type VoiceDefinition = {
     id: string
     label: string
     previewUrl?: string
   }
 
-  export interface VoiceModelDefinition {
+  export type VoiceModelDefinition = {
     id: string
     label: string
   }
