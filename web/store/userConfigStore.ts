@@ -8,6 +8,7 @@ import { storage } from '../shared/util'
 import { AIAdapter } from '/common/adapters'
 import type { FindUserResponse } from '/common/horde-gen'
 import { embedApi } from './embeddings'
+import { deleteApiKey as secureDeleteApiKey, type SupportedService } from '../shared/api-key-manager'
 
 export type UserConfigState = {
   user?: AppSchema.User
@@ -131,67 +132,15 @@ export const userConfigStore = createStore<UserConfigState>(
       }
     },
 
-    async deleteKey(
-      { user },
-      kind:
-        | 'novel'
-        | 'horde'
-        | 'openai'
-        | 'scale'
-        | 'claude'
-        | 'third-party'
-        | 'elevenlabs'
-        | 'mistral'
-        | 'featherless'
-        | 'arli'
-    ) {
-      const res = await usersApi.deleteApiKey(kind)
-      if (res.error) return toastStore.error(`Failed to update settings: ${res.error}`)
-
-      if (!user) return
-      toastStore.success('Key removed')
+    async deleteKey({ user }, service: SupportedService) {
+      const result = await secureDeleteApiKey(service, user)
       
-      const updates: Partial<AppSchema.User> = {}
-      
-      switch (kind) {
-        case 'novel':
-          updates.novelApiKey = ''
-          updates.novelVerified = false
-          break
-        case 'horde':
-          updates.hordeKey = ''
-          updates.hordeName = ''
-          break
-        case 'claude':
-          updates.claudeApiKey = ''
-          updates.claudeApiKeySet = false
-          break
-        case 'third-party':
-          updates.thirdPartyPassword = ''
-          break
-        case 'elevenlabs':
-          updates.elevenLabsApiKey = ''
-          updates.elevenLabsApiKeySet = false
-          break
-        case 'openai':
-          updates.oaiKey = ''
-          updates.oaiKeySet = false
-          break
-        case 'mistral':
-          updates.mistralKey = ''
-          updates.mistralKeySet = false
-          break
-        case 'featherless':
-          updates.featherlessApiKey = ''
-          updates.featherlessApiKeySet = false
-          break
-        case 'arli':
-          updates.arliApiKey = ''
-          updates.arliApiKeySet = false
-          break
+      if (result.success && result.updatedUser) {
+        return { user: result.updatedUser }
       }
-
-      return { user: { ...user, ...updates } }
+      
+      // If no updated user returned, keep current state
+      return {}
     },
 
     async clearGuestState() {
