@@ -8,7 +8,7 @@ import { Card } from '/web/shared/Card'
 import { getStrictForm } from '/web/shared/util'
 import Button from '/web/shared/Button'
 import Select from '/web/shared/Select'
-import { TierCard } from '../Profile/TierCard'
+import { TierCard } from '../../Profile/components/TierCard'
 import { Page } from '/web/Layout'
 
 export { TiersPage as default }

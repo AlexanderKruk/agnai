@@ -1,9 +1,9 @@
 import { Component, For, Match, Switch, createEffect, createMemo } from 'solid-js'
 import { useTabs } from '/web/shared/Tabs'
 import { setComponentPageTitle } from '/web/shared/util'
-import ScenarioList from '../Scenario/ScenarioList'
-import PromptTemplates from '../PromptTemplates'
-import { BooksTab, EmbedsTab } from './Memory'
+import ScenarioList from '../../Scenario/ScenarioList'
+import PromptTemplates from '../../PromptTemplates'
+import { BooksTab, EmbedsTab } from '../Memory'
 import { useSearchParams } from '@solidjs/router'
 import Button from '/web/shared/Button'
 
