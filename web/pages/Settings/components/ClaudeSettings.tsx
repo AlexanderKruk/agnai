@@ -10,7 +10,7 @@ const ClaudeSettings: Component<{
   return (
     <ApiKeyManager
       service="claude"
-      user={props.state}
+      user={props.state as any}
       setter={props.setter}
       keyField="claudeApiKey"
       setField="claudeApiKeySet"

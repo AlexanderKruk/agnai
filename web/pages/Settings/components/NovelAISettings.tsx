@@ -28,23 +28,11 @@ const NovelAISettings: Component<{
 
       <ApiKeyManager
         service="novel"
-        user={props.state}
+        user={props.state as any}
         setter={props.setter}
         keyField="novelApiKey"
         verifiedField="novelVerified"
-        helperText={
-          <>
-            NEVER SHARE THIS WITH ANYBODY! The token from the NovelAI request authorization.{' '}
-            <a
-              class="link"
-              target="_blank"
-              href="https://github.com/agnaistic/agnai/blob/dev/instructions/novel.md"
-            >
-              Instructions
-            </a>
-            .
-          </>
-        }
+        helperText="NEVER SHARE THIS WITH ANYBODY! The token from the NovelAI request authorization. See instructions: https://github.com/agnaistic/agnai/blob/dev/instructions/novel.md"
         placeholder="Enter your NovelAI API key"
       />
     </>
