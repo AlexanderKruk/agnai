@@ -10,11 +10,10 @@ import {
 } from 'solid-js'
 import { NewCharacter, characterStore, chatStore, userStore } from '../../store'
 import { tagStore } from '../../store'
-import PageHeader from '../../shared/PageHeader'
 import Select, { Option } from '../../shared/Select'
 import TextInput from '../../shared/TextInput'
 import { AppSchema } from '../../../common/types/schema'
-import { Import, Plus, SortAsc, SortDesc, LayoutList, Image, RefreshCcw } from 'lucide-solid'
+import { SortAsc, SortDesc, LayoutList, Image } from 'lucide-solid'
 import { A, useSearchParams, useNavigate } from '@solidjs/router'
 import ImportCharacterModal from '../Character/ImportCharacter'
 import DeleteCharacterModal from '../Character/DeleteCharacter'
@@ -378,7 +377,6 @@ const Characters: Component<{
 
 const EditCharacter: Component<{ char?: AppSchema.Character; close: () => void }> = (props) => {
   const [footer, setFooter] = createSignal<any>()
-  const user = userStore()
   const navigate = useNavigate()
 
   createEffect(() => {

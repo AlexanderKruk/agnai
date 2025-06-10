@@ -89,7 +89,6 @@ export async function generateResponse(
 
   const { prompt, props, entities, chatEmbeds, userEmbeds } = activePrompt
 
-  const jsonSchema = opts.kind === 'chat-query' ? opts.schema : undefined
   const request: GenerateRequestV2 = {
     requestId: v4(),
     kind: opts.kind,
@@ -623,20 +622,6 @@ function getMessageParent(
   }
 }
 
-function removeAvatar<T extends AppSchema.Character | AppSchema.Profile | undefined>(char?: T): T {
-  if (!char) return undefined as T
-  return { ...char, avatar: undefined }
-}
-
-function removeAvatars(chars: Record<string, AppSchema.Character>) {
-  const next: Record<string, AppSchema.Character> = {}
-
-  for (const id in chars) {
-    next[id] = { ...chars[id], avatar: undefined }
-  }
-
-  return next
-}
 
 // Remove sensitive character data from frontend requests to hide from browser network logs
 function removeSensitiveData<T extends AppSchema.Character | AppSchema.Profile | undefined>(char?: T): T {

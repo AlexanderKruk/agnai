@@ -4,21 +4,12 @@ import { clamp } from '/common/util'
 import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from 'lucide-solid'
 import { useDeviceType } from './hooks'
 import { storage } from './util'
-import TextInput from './TextInput'
 
 export const ManualPaginate: Component<{
   pager: Pager
   sticky?: boolean
   size?: 'sm' | 'md' | 'lg'
 }> = (props) => {
-  const onPageSize = (ev: FormEvent) => {
-    const value = +ev.currentTarget.value
-    if (isNaN(value)) return
-    if (value < 0) return
-
-    props.pager.setPageSize(value)
-  }
-
   const btnSize = createMemo(() => 'sm' as const)
 
   const disabled = createMemo(() => props.pager.pages() === 1)

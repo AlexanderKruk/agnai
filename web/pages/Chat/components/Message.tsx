@@ -15,7 +15,6 @@ import {
   createMemo,
   createSignal,
   For,
-  JSX,
   Match,
   onCleanup,
   onMount,
@@ -26,20 +25,14 @@ import {
 import { BOT_REPLACE, SELF_REPLACE } from '../../../../common/prompt'
 import { AppSchema } from '../../../../common/types/schema'
 import AvatarIcon, { CharacterAvatar } from '../../../shared/AvatarIcon'
-import { chatStore, userStore, msgStore, toastStore, ChatState, VoiceState } from '../../../store'
+import { chatStore, userStore, msgStore, ChatState, VoiceState } from '../../../store'
 import { stopSpeech } from '../../../store/voiceStore'
 import { markdown } from '../../../shared/markdown'
 import Button from '/web/shared/Button'
 import { ContextState, useAppContext } from '/web/store/context'
 import { hydrateTemplate, trimSentence } from '/common/util'
 import { EVENTS, events } from '/web/emitter'
-import TextInput from '/web/shared/TextInput'
-import { Card } from '/web/shared/Card'
-import { FeatureFlags } from '/web/store/flags'
-import { ChatTree } from '/common/chat'
-import { Portal } from 'solid-js/web'
 import { RelativeSpinner } from '/web/shared/Loading'
-import { LogProbs } from './LogProbs'
 import { MessageImages } from './MessageImages'
 import { MessageEditor } from './MessageEditor'
 import { MessageActions } from './MessageActions'
@@ -335,13 +328,13 @@ const LineByLineRenderer: Component<{
         msgStore.setTyping(props.characterId, props.messageId, 'thinking')
       }
       
-      const thinkingTimer = addTimer(setTimeout(() => {
+      addTimer(setTimeout(() => {
         // Phase 2: Show typing indicator and "type"
         if (props.characterId) {
           msgStore.setTyping(props.characterId, props.messageId, 'typing')
         }
         
-        const typingTimer = addTimer(setTimeout(() => {
+        addTimer(setTimeout(() => {
           setVisibleLines(prev => prev + 1)
           // Clear typing indicator when line is displayed
           if (props.characterId) {
@@ -385,7 +378,7 @@ const LineByLineRenderer: Component<{
       }
       
       // Phase 1: Reading + thinking delay, then start displaying
-      const startTimer = addTimer(setTimeout(() => {
+      addTimer(setTimeout(() => {
         setHasStarted(true)
         setVisibleLines(1)
         // Show character info when first line is displayed
@@ -639,10 +632,6 @@ const Message: Component<MessageProps> = (props) => {
     return next
   })
 
-  const createImage = () => {
-    msgStore.createImage(props.msg.msg)
-    showOpt[1](false)
-  }
 
   return (
     <div
@@ -989,37 +978,8 @@ function anonymizeText(text: string, profile: AppSchema.Profile, i: number) {
 
 // MessageOptions component moved to MessageActions.tsx
 
-const MessageOption: Component<{
-  class?: string;
-  id: string;
-  onClick: () => void;
-  label: string;
-  children: JSX.Element;
-}> = (props) => {
-  return (
-    <Portal mount={document.querySelector(`#outer-${props.id}`)!}>
-      <div
-        class={`icon-button ${props.class || ''}`}
-        onClick={props.onClick}
-        title={props.label}
-      >
-        {props.children}
-      </div>
-    </Portal>
-  );
-};
 
-function retryMessage(original: AppSchema.ChatMessage, split: SplitMessage) {
-  if (original.adapter !== 'image') {
-    msgStore.retry(split.chatId, original._id)
-  } else {
-    msgStore.createImage(split._id)
-  }
-}
 
-function retryJsonSchema(original: AppSchema.ChatMessage, split: SplitMessage) {
-  msgStore.retrySchema(split.chatId, original._id)
-}
 
 function renderMessage(ctx: ContextState, text: string, isUser: boolean, adapter?: string) {
   // Address unfortunate Showdown bug where spaces in code blocks are replaced with nbsp, except
@@ -1072,114 +1032,7 @@ function parseMessage(msg: string, ctx: ContextState, isUser: boolean, adapter?:
   return parsed
 }
 
-const Meta: Component<{
-  msg: AppSchema.ChatMessage
-  history?: any
-  flags: FeatureFlags
-  tree: ChatTree
-}> = (props) => {
-  if (!props.msg) return null
-  const [prompt, setPrompt] = createSignal(props.msg?.imagePrompt || '')
 
-  const updateImagePrompt = () => {
-    msgStore.editMessageProp(props.msg._id, { imagePrompt: prompt() }, () => {
-      toastStore.success('Image prompt updated')
-    })
-  }
-
-  const descendants = createMemo(() => {
-    const self = props.tree[props.msg._id]
-    if (!self) return []
-
-    return Array.from(self.children.values())
-  })
-
-  const depth = props.tree[props.msg._id]?.depth || -1
-
-  return (
-    <form class="flex w-full flex-col gap-2">
-      <Card>
-        <LogProbs msg={props.msg} />
-        <table class="text-sm">
-          <Show when={props.msg.adapter}>
-            <tr>
-              <td class="pr-2">
-                <b>Adapter</b>
-              </td>
-              <td>{props.msg.adapter}</td>
-            </tr>
-          </Show>
-          <Show when={depth >= 0}>
-            <tr>
-              <td>
-                <b>depth</b>
-              </td>
-              <td>#{depth + 1}</td>
-            </tr>
-          </Show>
-          <Show when={descendants().length > 0 && props.flags.debug}>
-            <tr>
-              <td>
-                <b>descendants</b>
-              </td>
-              <td>
-                {descendants()
-                  .map((d) => d.slice(0, 4))
-                  .join(', ')}
-              </td>
-            </tr>
-          </Show>
-          <For each={Object.entries(props.msg.meta || {}).filter(([key]) => key !== 'probs')}>
-            {([key, value]) => (
-              <tr>
-                <td class="pr-2">
-                  <b>{key}</b>
-                </td>
-                <td>{value as string}</td>
-              </tr>
-            )}
-          </For>
-        </table>
-      </Card>
-
-      <Show when={props.msg.imagePrompt}>
-        <Card>
-          <TextInput
-            helperText={
-              <>
-                Image Prompt -{' '}
-                <span class="link" onClick={updateImagePrompt}>
-                  Save
-                </span>
-              </>
-            }
-            parentClass="text-sm"
-            isMultiline
-            value={prompt()}
-            onChange={(ev) => setPrompt(ev.currentTarget.value)}
-          />
-        </Card>
-      </Show>
-
-      <Show when={props.history}>
-        <pre class="overflow-x-auto whitespace-pre-wrap break-words rounded-sm bg-[var(--bg-700)] p-1 text-sm">
-          <Show
-            when={typeof props.history === 'string'}
-            fallback={JSON.stringify(props.history, null, 2)}
-          >
-            {props.history}
-          </Show>
-        </pre>
-      </Show>
-    </form>
-  )
-}
-
-function canShowMeta(msg: AppSchema.ChatMessage, history: any) {
-  if (!msg) return false
-  if (msg._id === 'partial-response') return false
-  return !!msg.adapter || !!history || (!!msg.meta && Object.keys(msg.meta).length >= 1)
-}
 
 function getMessageContent(ctx: ContextState, props: MessageProps, state: ChatState) {
   const isRetry = props.retrying?._id === props.msg._id

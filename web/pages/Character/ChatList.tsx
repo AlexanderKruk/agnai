@@ -1,7 +1,7 @@
-import { A, useNavigate, useParams } from '@solidjs/router'
+import { A, useParams } from '@solidjs/router'
 import { Component, createEffect, createMemo, createSignal, For, onMount, Show } from 'solid-js'
 import { AllChat, characterStore, chatStore } from '../../store'
-import { Edit, Import, Plus, Trash } from 'lucide-solid'
+import { Trash } from 'lucide-solid'
 import ImportChatModal from './ImportChat'
 import { setComponentPageTitle, toDuration } from '../../shared/util'
 import { ConfirmModal } from '../../shared/Modal'
@@ -22,13 +22,6 @@ import Loading from '/web/shared/Loading'
 import { ManualPaginate, usePagination } from '/web/shared/Paginate'
 import { Page } from '/web/Layout'
 
-const baseSortOptions = [
-  { value: 'chat-updated', label: 'Chat Activity', kind: 'chat' },
-  { value: 'bot-activity', label: 'Bot Activity', kind: 'chat' },
-  { value: 'chat-created', label: 'Chat Created', kind: 'chat' },
-  { value: 'character-name', label: 'Bot Name', kind: 'bot' },
-  { value: 'character-created', label: 'Bot Created', kind: 'bot' },
-]
 
 const CharacterChats: Component = () => {
   const params = useParams()
@@ -56,23 +49,11 @@ const CharacterChats: Component = () => {
     chars: s.allChars.map,
   }))
 
-  const sortOptions = createMemo(() => {
-    const opts = baseSortOptions.slice()
-    const hasCounts = state.chats.some((c) => !!c.messageCount)
-
-    if (hasCounts) {
-      opts.push({ value: 'chat-count', label: 'Chat Counts', kind: 'chat' })
-    }
-
-    return opts
-  })
-
-  const nav = useNavigate()
   const [search, setSearch] = createSignal('')
   const [charId, setCharId] = createSignal<string | undefined>(params.id)
   const [showImport, setImport] = createSignal(false)
   const [sortField, setSortField] = createSignal(cache.sort.field)
-  const [sortDirection, setSortDirection] = createSignal(cache.sort.direction)
+  const [sortDirection] = createSignal(cache.sort.direction)
 
   createEffect(() => {
     if (!params.id) {
@@ -130,30 +111,6 @@ const CharacterChats: Component = () => {
     chatStore.getAllChats()
   })
 
-  const Options = () => (
-    <>
-      <button
-        class={`btn-primary w-full items-center justify-start py-2 sm:w-fit sm:justify-center`}
-        onClick={() => setImport(true)}
-      >
-        <Import /> <span class="hidden sm:inline">Import</span>
-      </button>
-      <Show when={!!params.id}>
-        <button
-          class={`btn-primary w-full items-center justify-start py-2 sm:w-fit sm:justify-center`}
-          onClick={() => nav(`/character/${params.id}/edit`)}
-        >
-          <Edit /> <span class="hidden sm:inline">Edit</span>
-        </button>
-      </Show>
-      <button
-        class={`btn-primary w-full items-center justify-start py-2 sm:w-fit sm:justify-center`}
-        onClick={() => nav(`/chats/create/${params.id || ''}`)}
-      >
-        <Plus /> <span class="hidden sm:inline">New</span>
-      </button>
-    </>
-  )
 
   return (
     <Page class="">

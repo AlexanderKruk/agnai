@@ -130,6 +130,11 @@ const initState: EditorState = {
       sampler: '',
       url: '',
     },
+
+    a1111forge: {
+      sampler: '',
+      url: '',
+    },
   },
   imageOverride: '',
 }

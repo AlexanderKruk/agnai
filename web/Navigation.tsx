@@ -8,7 +8,6 @@ import {
   HeartHandshake,
   HelpCircle,
   Image,
-  Info,
   LogIn,
   MailQuestion,
   Menu,

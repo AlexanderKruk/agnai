@@ -10,7 +10,7 @@ const OpenAISettings: Component<{
   return (
     <ApiKeyManager
       service="openai"
-      user={props.state}
+      user={props.state as any}
       setter={props.setter}
       keyField="oaiKey"
       setField="oaiKeySet"
