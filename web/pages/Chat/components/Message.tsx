@@ -5,20 +5,12 @@ import {
   CheckCheck,
   DownloadCloud,
   PauseCircle,
-  Pencil,
-  RefreshCw,
-  Repeat1,
-  Terminal,
-  Trash,
   Delete,
   X,
   Zap,
-  Split,
-  Braces,
   ImagePlus,
 } from 'lucide-solid'
 import {
-  Accessor,
   Component,
   createMemo,
   createSignal,
@@ -28,28 +20,24 @@ import {
   onCleanup,
   onMount,
   Show,
-  Signal,
   Switch,
   createEffect,
 } from 'solid-js'
 import { BOT_REPLACE, SELF_REPLACE } from '../../../../common/prompt'
 import { AppSchema } from '../../../../common/types/schema'
 import AvatarIcon, { CharacterAvatar } from '../../../shared/AvatarIcon'
-import { chatStore, userStore, msgStore, toastStore, ChatState, VoiceState, voiceStore } from '../../../store'
+import { chatStore, userStore, msgStore, toastStore, ChatState, VoiceState } from '../../../store'
 import { stopSpeech } from '../../../store/voiceStore'
 import { markdown } from '../../../shared/markdown'
-import Button, { ButtonSchema } from '/web/shared/Button'
+import Button from '/web/shared/Button'
 import { ContextState, useAppContext } from '/web/store/context'
 import { hydrateTemplate, trimSentence } from '/common/util'
 import { EVENTS, events } from '/web/emitter'
 import TextInput from '/web/shared/TextInput'
-import { Card, Pill } from '/web/shared/Card'
+import { Card } from '/web/shared/Card'
 import { FeatureFlags } from '/web/store/flags'
 import { ChatTree } from '/common/chat'
 import { Portal } from 'solid-js/web'
-import { UI } from '/common/types'
-import { LucideProps } from 'lucide-solid/dist/types/types'
-import { createStore } from 'solid-js/store'
 import { RelativeSpinner } from '/web/shared/Loading'
 import { LogProbs } from './LogProbs'
 import { MessageImages } from './MessageImages'

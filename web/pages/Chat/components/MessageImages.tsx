@@ -4,7 +4,6 @@ import { getAssetUrl, storage } from '/web/shared/util'
 import { settingStore } from '/web/store/settings'
 import { msgStore } from '/web/store/message'
 import { deleteCachedMessageImage, getMessageImages } from '/web/store/attachmentStore'
-import { PlusCircle } from 'lucide-solid'
 import { ButtonSchema } from '/web/shared/Button'
 
 type MessageImage = {

@@ -5,7 +5,6 @@ import { ChatRightPane, chatStore, settingStore } from '../../store'
 import { ChatModal } from './ChatOptions'
 import { usePaneManager } from '/web/shared/hooks'
 import { ContextState } from '/web/store/context'
-// import { useSubNav } from '/web/subnav'
 import { Nav, UserProfile } from '/web/Navigation'
 import {
   Book,

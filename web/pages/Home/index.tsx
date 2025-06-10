@@ -21,7 +21,6 @@ import WizardIcon from '/web/icons/WizardIcon'
 import Slot from '/web/shared/Slot'
 import { adaptersToOptions } from '/common/adapters'
 import { useRef } from '/web/shared/hooks'
-import { canStartTour, startTour } from '/web/tours'
 
 const enum Sub {
   None,

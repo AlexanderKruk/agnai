@@ -1,17 +1,13 @@
 import { A, useNavigate, useParams } from '@solidjs/router'
 import { Component, createEffect, createMemo, createSignal, For, onMount, Show } from 'solid-js'
 import { AllChat, characterStore, chatStore } from '../../store'
-import PageHeader from '../../shared/PageHeader'
-import { Edit, Import, Plus, Trash, SortAsc, SortDesc } from 'lucide-solid'
+import { Edit, Import, Plus, Trash } from 'lucide-solid'
 import ImportChatModal from './ImportChat'
 import { setComponentPageTitle, toDuration } from '../../shared/util'
 import { ConfirmModal } from '../../shared/Modal'
 import { CharacterAvatar } from '../../shared/AvatarIcon'
 import { AppSchema } from '../../../common/types/schema'
-import Select from '../../shared/Select'
-import Divider from '../../shared/Divider'
 import TextInput from '../../shared/TextInput'
-import Button from '../../shared/Button'
 import CharacterSelect from '../../shared/CharacterSelect'
 import {
   ChatCharacter,
