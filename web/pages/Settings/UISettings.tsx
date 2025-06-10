@@ -47,7 +47,7 @@ const UISettings: Component<{}> = () => {
     if (!results.length) return
     const [result] = results
 
-    userStore.setBackground(result)
+    userStore.setBackground(result.content)
   }
 
   const [tryCustomUI, unsubCustomUi] = createDebounce((update: Partial<UI.CustomUI>) => {
@@ -145,7 +145,7 @@ const UISettings: Component<{}> = () => {
           accept="image/png,image/jpeg,image/jpg"
         />
         <div class="w-full justify-center">
-          <Button disabled={!state.background} onClick={() => userStore.setBackground(null)}>
+          <Button disabled={!state.background} onClick={() => userStore.setBackground('')}>
             <X size={16} />
             Remove
           </Button>

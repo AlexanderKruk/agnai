@@ -12,7 +12,7 @@ const OAuthLogin: Component = (props) => {
 
   const createCode = async () => {
     setState('creating')
-    userStore.createApiKey((err, code) => {
+    userStore.createApiKey((err: any, code: any) => {
       setState('done')
 
       if (err) {

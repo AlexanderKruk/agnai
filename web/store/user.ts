@@ -80,9 +80,9 @@ export const userStore = createStore<UserState>(
     },
     
     // Delegate core config methods
-    async updateConfig(state: UserState, data: any, onSuccess?: () => void) {
-      await userConfigStore.updateConfig(state, data)
-      if (onSuccess) onSuccess()
+    async updateConfig(state: UserState, data: any) {
+      const userConfigState = { user: state.user, profile: state.profile, showProfile: state.showProfile, metadata: state.metadata }
+      await userConfigStore.updateConfig(userConfigState, data)
       return resync()
     },
     
@@ -93,7 +93,7 @@ export const userStore = createStore<UserState>(
     
     // Delegate core UI methods
     async saveUI(state: UserState, ui: any, onSuccess?: any) {
-      await uiStore.saveUI(state, ui)
+      await uiStore.saveUI({ ui: state.ui }, ui)
       if (onSuccess) onSuccess()
       return resync()
     },
@@ -112,7 +112,8 @@ export const userStore = createStore<UserState>(
     
     // Add missing methods from the original user store
     async updatePartialConfig(state: UserState, data: any, quiet?: boolean) {
-      await userConfigStore.updatePartialConfig(state, data, quiet)
+      const userConfigState = { user: state.user, profile: state.profile, showProfile: state.showProfile, metadata: state.metadata }
+      await userConfigStore.updatePartialConfig(userConfigState, data, quiet)
       return resync()
     },
     
@@ -122,7 +123,8 @@ export const userStore = createStore<UserState>(
     },
     
     async updateService(state: UserState, service: string, data: any, onDone?: (err?: any) => void) {
-      await userConfigStore.updateService(state, service, data, onDone)
+      const userConfigState = { user: state.user, profile: state.profile, showProfile: state.showProfile, metadata: state.metadata }
+      await userConfigStore.updateService(userConfigState, service, data, onDone)
       return resync()
     },
     
@@ -132,7 +134,8 @@ export const userStore = createStore<UserState>(
     },
     
     async verifyPatreon(state: UserState, body: any, onDone: (error?: any) => void) {
-      await subscriptionStore.verifyPatreon(state, body, onDone)
+      const subscriptionState = { billingLoading: state.billingLoading, tiers: state.tiers }
+      await subscriptionStore.verifyPatreon(subscriptionState, body, onDone)
       return resync()
     },
     
