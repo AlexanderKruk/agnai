@@ -81,7 +81,8 @@ export const userStore = createStore<UserState>(
     
     // Delegate core config methods
     async updateConfig(state: UserState, data: any, onSuccess?: () => void) {
-      await userConfigStore.updateConfig(data, onSuccess)
+      await userConfigStore.updateConfig(state, data)
+      if (onSuccess) onSuccess()
       return resync()
     },
     
@@ -119,8 +120,8 @@ export const userStore = createStore<UserState>(
       return resync()
     },
     
-    async updateService(state: UserState, service: string, data: any) {
-      await userConfigStore.updateService(service, data)
+    async updateService(state: UserState, service: string, data: any, onDone?: (err?: any) => void) {
+      await userConfigStore.updateService(state, service, data, onDone)
       return resync()
     },
     
@@ -129,8 +130,8 @@ export const userStore = createStore<UserState>(
       return resync()
     },
     
-    async verifyPatreon(state: UserState, onSuccess?: (error?: any) => void) {
-      await subscriptionStore.verifyPatreon(onSuccess)
+    async verifyPatreon(state: UserState, body: any, onDone: (error?: any) => void) {
+      await subscriptionStore.verifyPatreon(state, body, onDone)
       return resync()
     },
     
@@ -196,8 +197,8 @@ export const userStore = createStore<UserState>(
       return resync()
     },
     
-    async unlinkGoogleAccount(state: UserState) {
-      await authStore.unlinkGoogleAccount()
+    async unlinkGoogleAccount(state: UserState, success?: () => void) {
+      await authStore.unlinkGoogleAccount(state, success)
       return resync()
     },
     
@@ -206,8 +207,8 @@ export const userStore = createStore<UserState>(
       return resync()
     },
     
-    async changePassword(state: UserState, data: any) {
-      await authStore.changePassword(data)
+    async changePassword(state: UserState, password: string, onSuccess?: Function) {
+      await authStore.changePassword(state, password, onSuccess)
       return resync()
     },
     
