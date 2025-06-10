@@ -81,8 +81,7 @@ export const userStore = createStore<UserState>(
     
     // Delegate core config methods
     async updateConfig(state: UserState, data: any) {
-      const userConfigState = { user: state.user, profile: state.profile, showProfile: state.showProfile, metadata: state.metadata }
-      await userConfigStore.updateConfig(userConfigState, data)
+      await userConfigStore.updateConfig(data)
       return resync()
     },
     
@@ -93,7 +92,7 @@ export const userStore = createStore<UserState>(
     
     // Delegate core UI methods
     async saveUI(state: UserState, ui: any, onSuccess?: any) {
-      await uiStore.saveUI({ ui: state.ui }, ui)
+      await uiStore.saveUI(ui)
       if (onSuccess) onSuccess()
       return resync()
     },
@@ -112,8 +111,7 @@ export const userStore = createStore<UserState>(
     
     // Add missing methods from the original user store
     async updatePartialConfig(state: UserState, data: any, quiet?: boolean) {
-      const userConfigState = { user: state.user, profile: state.profile, showProfile: state.showProfile, metadata: state.metadata }
-      await userConfigStore.updatePartialConfig(userConfigState, data, quiet)
+      await userConfigStore.updatePartialConfig(data, quiet)
       return resync()
     },
     
@@ -122,9 +120,8 @@ export const userStore = createStore<UserState>(
       return resync()
     },
     
-    async updateService(state: UserState, service: string, data: any, onDone?: (err?: any) => void) {
-      const userConfigState = { user: state.user, profile: state.profile, showProfile: state.showProfile, metadata: state.metadata }
-      await userConfigStore.updateService(userConfigState, service, data, onDone)
+    async updateService(state: UserState, service: any, data: any, onDone?: (err?: any) => void) {
+      await userConfigStore.updateService(service, data, onDone)
       return resync()
     },
     
@@ -134,8 +131,7 @@ export const userStore = createStore<UserState>(
     },
     
     async verifyPatreon(state: UserState, body: any, onDone: (error?: any) => void) {
-      const subscriptionState = { billingLoading: state.billingLoading, tiers: state.tiers }
-      await subscriptionStore.verifyPatreon(subscriptionState, body, onDone)
+      await subscriptionStore.verifyPatreon(body, onDone)
       return resync()
     },
     
@@ -149,7 +145,7 @@ export const userStore = createStore<UserState>(
       return resync()
     },
     
-    async setBackground(state: UserState, background: string) {
+    async setBackground(state: UserState, background: any) {
       await uiStore.setBackground(background)
       return resync()
     },
@@ -171,12 +167,12 @@ export const userStore = createStore<UserState>(
     
     // Additional auth methods
     async handleGoogleCallback(state: UserState, action: 'login' | 'link', data: { credential: string }, success?: () => void) {
-      await authStore.handleGoogleCallback(state, action, data, success)
+      await authStore.handleGoogleCallback(action, data, success)
       return resync()
     },
     
     async thirdPartyLogin(state: UserState, onSuccess: (token: string) => void) {
-      await authStore.thirdPartyLogin(state, onSuccess)
+      await authStore.thirdPartyLogin(onSuccess)
       return resync()
     },
     
@@ -186,7 +182,7 @@ export const userStore = createStore<UserState>(
     },
     
     async resetPassword(state: UserState, code: string, username: string, password: string, confirm: string, onSuccess: () => void) {
-      await authStore.resetPassword(state, code, username, password, confirm, onSuccess)
+      await authStore.resetPassword(code, username, password, confirm, onSuccess)
       return resync()
     },
     
@@ -202,7 +198,7 @@ export const userStore = createStore<UserState>(
     },
     
     async unlinkGoogleAccount(state: UserState, success?: () => void) {
-      await authStore.unlinkGoogleAccount(state, success)
+      await authStore.unlinkGoogleAccount(success)
       return resync()
     },
     
@@ -212,7 +208,7 @@ export const userStore = createStore<UserState>(
     },
     
     async changePassword(state: UserState, password: string, onSuccess?: Function) {
-      await authStore.changePassword(state, password, onSuccess)
+      await authStore.changePassword(password, onSuccess)
       return resync()
     },
     
@@ -223,7 +219,7 @@ export const userStore = createStore<UserState>(
     
     // Subscription management methods
     async finishCheckout(state: UserState, sessionId: string, checkoutState: string, onSuccess?: Function) {
-      await subscriptionStore.finishCheckout(state, sessionId, checkoutState, onSuccess)
+      await subscriptionStore.finishCheckout(sessionId, checkoutState, onSuccess)
       return resync()
     },
     
@@ -254,12 +250,12 @@ export const userStore = createStore<UserState>(
     
     // API key management
     async revealApiKey(state: UserState, cb: (key: string) => void) {
-      await userConfigStore.revealApiKey(state, cb)
+      await userConfigStore.revealApiKey(cb)
       return resync()
     },
     
     async generateApiKey(state: UserState, cb: (key: string) => void) {
-      await userConfigStore.generateApiKey(state, cb)
+      await userConfigStore.generateApiKey(cb)
       return resync()
     },
     
@@ -270,7 +266,7 @@ export const userStore = createStore<UserState>(
     },
     
     async novelLogin(state: UserState, key: string, onComplete: (err?: boolean) => void) {
-      await userConfigStore.novelLogin(state, key, onComplete)
+      await userConfigStore.novelLogin(key, onComplete)
       return resync()
     },
   }

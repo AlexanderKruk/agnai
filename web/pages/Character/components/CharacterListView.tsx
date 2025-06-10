@@ -85,7 +85,6 @@ const CharacterListOptions: Component<{
 }> = (props) => {
   const [listOpts, setListOpts] = createSignal(false)
   const nav = useNavigate()
-  const user = userStore()
 
   return (
     <div>

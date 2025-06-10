@@ -1,15 +1,12 @@
 import { Component, For, Match, Show, Switch, createSignal } from 'solid-js'
 import { CardProps, ViewProps } from './types'
 import Divider from '/web/shared/Divider'
-import { A, useNavigate } from '@solidjs/router'
+import { useNavigate } from '@solidjs/router'
 import AvatarContainer from '/web/shared/Avatar/Container'
 import { getAssetUrl, toDuration } from '/web/shared/util'
 import {
-  ArrowRight,
   Copy,
-  Download,
   MoreVertical,
-  MessageCirclePlus,
   Pencil,
   Star,
   Trash,

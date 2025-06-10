@@ -5,7 +5,7 @@ import {
   SD_SAMPLER,
   SD_SAMPLER_REV,
 } from '../../../../common/image'
-import Select, { Option } from '/web/shared/Select'
+import Select from '/web/shared/Select'
 import TextInput from '/web/shared/TextInput'
 import { settingStore, userStore } from '../../../store'
 import { ImageSettings } from '/common/types/image-schema'

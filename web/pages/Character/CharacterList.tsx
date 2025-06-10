@@ -377,7 +377,6 @@ const Characters: Component<{
 
 const EditCharacter: Component<{ char?: AppSchema.Character; close: () => void }> = (props) => {
   const [footer, setFooter] = createSignal<any>()
-  const user = userStore()
   const navigate = useNavigate()
 
   createEffect(() => {

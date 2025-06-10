@@ -108,7 +108,7 @@ function onMessage(msg: MessageEvent<any>) {
       } else if (payload.type !== 'image-generated') {
         // console.log(`[${new Date().toLocaleTimeString()}]`, JSON.stringify(payload))
       } else {
-        const image = payload.image || ''
+        // const image = payload.image || ''
         // console.log(
         //   `[${new Date().toLocaleTimeString()}]`,
         //   JSON.stringify({
