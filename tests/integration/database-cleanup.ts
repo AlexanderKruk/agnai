@@ -21,7 +21,7 @@ function getCurrentDatabaseName(): string {
 function isTestDatabase(): boolean {
   const dbName = getCurrentDatabaseName()
   const isTest = process.env.NODE_ENV === 'test'
-  const isTestDb = dbName.includes('test') || dbName.includes('integration')
+  const isTestDb = dbName.includes('test') || dbName.includes('integration') || dbName.includes('copy')
   
   return isTest && isTestDb
 }

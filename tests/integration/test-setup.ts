@@ -7,6 +7,7 @@
 import { AppSchema } from '../../common/types/schema'
 import { cleanTestDatabase } from './database-cleanup'
 import { isConnected } from '../../srv/db/client'
+import { testDbManager } from './database-copy'
 
 // Test Environment Configuration
 export const TEST_CONFIG = {
@@ -254,7 +255,9 @@ export async function setupTestEnvironment(): Promise<void> {
   // Use test database configuration
   process.env.DB_HOST = 'localhost'
   process.env.DB_PORT = '27017'
-  process.env.DB_NAME = 'agnai-integration-test'
+  
+  // Create a copy of the agnai database for testing
+  await testDbManager.setup()
   
   // Ensure no public characters are included in tests
   process.env.PUBLIC_CHARACTER_USER_ID = ''
@@ -267,6 +270,9 @@ export async function setupTestEnvironment(): Promise<void> {
 // Test Environment Cleanup Helper
 export async function teardownTestEnvironment(): Promise<void> {
   await testDb.teardown()
+  
+  // Remove the test database copy
+  await testDbManager.cleanup()
   
   // Clean up environment variables
   delete process.env.JWT_SECRET

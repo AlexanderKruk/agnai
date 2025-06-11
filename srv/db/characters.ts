@@ -4,6 +4,7 @@ import { AppSchema } from '../../common/types/schema'
 import { now } from './util'
 import { UpdateFilter } from 'mongodb'
 import { config } from '../config'
+import { StatusError } from '../api/wrap'
 
 export type CharacterUpdate = Partial<
   Pick<
@@ -126,6 +127,12 @@ export async function bulkUpdate(
 }
 
 export async function partialUpdateCharacter(id: string, userId: string, char: CharacterUpdate) {
+  // Check if character exists first
+  const existingChar = await getCharacter(userId, id)
+  if (!existingChar) {
+    throw new StatusError('Character not found', 404)
+  }
+
   // Check if this is a public character (which should be protected)
   if (config.publicCharacterUserId && config.publicCharacterUserId !== userId) {
     const character = await db('character').findOne({ _id: id })
