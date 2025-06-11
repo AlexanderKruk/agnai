@@ -231,6 +231,12 @@ export async function setupTestEnvironment(): Promise<void> {
   process.env.JWT_SECRET = TEST_CONFIG.jwtSecret
   process.env.LOG_LEVEL = 'error' // Reduce log noise in tests
   
+  // For real API endpoint tests, we need MongoDB
+  // Use test database configuration
+  process.env.DB_HOST = 'localhost'
+  process.env.DB_PORT = '27017'
+  process.env.DB_NAME = 'agnai-integration-test'
+  
   // Initialize test database
   await testDb.setup()
   await testDb.seed()
@@ -243,6 +249,9 @@ export async function teardownTestEnvironment(): Promise<void> {
   // Clean up environment variables
   delete process.env.JWT_SECRET
   delete process.env.LOG_LEVEL
+  delete process.env.DB_HOST
+  delete process.env.DB_PORT
+  delete process.env.DB_NAME
 }
 
 // Test Utilities
