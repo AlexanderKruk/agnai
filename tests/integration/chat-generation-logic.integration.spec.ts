@@ -5,7 +5,7 @@
  */
 
 import { expect } from 'chai'
-import { setupTestEnvironment, teardownTestEnvironment, TEST_FIXTURES } from './test-setup'
+import { setupTestEnvironment, teardownTestEnvironment } from './test-setup'
 import { MockUtils } from './mocks/agnai-api-mock'
 
 describe('Chat Generation Logic Integration Tests', () => {

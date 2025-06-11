@@ -7,7 +7,6 @@
 import { expect } from 'chai'
 import { 
   cleanMongoDBBetweenTests, 
-  resetMongoDBBetweenTests,
   cleanTestDatabase,
   isDatabaseClean 
 } from './database-cleanup'

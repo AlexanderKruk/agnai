@@ -9,7 +9,7 @@ import { Express } from 'express'
 import { expect } from 'chai'
 import { AppSchema } from '../../common/types/schema'
 import { TEST_FIXTURES, TestUtils, testDb } from './test-setup'
-import { mockAgnaisticAPI, MockUtils } from './mocks/agnai-api-mock'
+import { MockUtils } from './mocks/agnai-api-mock'
 
 // Test Application Interface
 export interface TestApp {
@@ -239,7 +239,7 @@ export class WebSocketTestHelper {
   }
 
   disconnectAll(): void {
-    for (const [id, socket] of this.connections) {
+    for (const [id] of this.connections) {
       this.disconnect(id)
     }
   }

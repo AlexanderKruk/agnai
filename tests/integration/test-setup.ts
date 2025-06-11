@@ -5,7 +5,7 @@
  */
 
 import { AppSchema } from '../../common/types/schema'
-import { cleanTestDatabase, resetTestDatabase, isDatabaseClean } from './database-cleanup'
+import { cleanTestDatabase } from './database-cleanup'
 import { isConnected } from '../../srv/db/client'
 
 // Test Environment Configuration
@@ -176,35 +176,35 @@ export class MemoryTestDatabase implements TestDatabase {
 
   async resetMongoDB(): Promise<void> {
     if (isConnected()) {
-      await resetTestDatabase()
+      await cleanTestDatabase() // Use cleanTestDatabase instead
     }
   }
 
   async seed(fixtures: Partial<typeof TEST_FIXTURES> = TEST_FIXTURES): Promise<void> {
     // Seed users
     if (fixtures.users) {
-      for (const [key, user] of Object.entries(fixtures.users)) {
+      for (const [, user] of Object.entries(fixtures.users)) {
         this.data.users.set(user._id, user as AppSchema.User)
       }
     }
 
     // Seed characters
     if (fixtures.characters) {
-      for (const [key, character] of Object.entries(fixtures.characters)) {
+      for (const [, character] of Object.entries(fixtures.characters)) {
         this.data.characters.set(character._id, character as any)
       }
     }
 
     // Seed chats
     if (fixtures.chats) {
-      for (const [key, chat] of Object.entries(fixtures.chats)) {
+      for (const [, chat] of Object.entries(fixtures.chats)) {
         this.data.chats.set(chat._id, chat as any)
       }
     }
 
     // Seed messages
     if (fixtures.messages) {
-      for (const [key, message] of Object.entries(fixtures.messages)) {
+      for (const [, message] of Object.entries(fixtures.messages)) {
         this.data.messages.set(message._id, message as AppSchema.ChatMessage)
       }
     }

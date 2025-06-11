@@ -5,6 +5,7 @@
  */
 
 import { db } from '../../srv/db/client'
+import { AllDoc } from '../../common/types/schema'
 
 /**
  * Cleans all test data from MongoDB collections
@@ -16,8 +17,8 @@ export async function cleanTestDatabase(): Promise<void> {
   }
 
   try {
-    // List of collections to clean
-    const collections = [
+    // List of collections to clean - using proper AllDoc['kind'] types
+    const collections: Array<AllDoc['kind']> = [
       'user',
       'profile', 
       'character',
@@ -26,8 +27,8 @@ export async function cleanTestDatabase(): Promise<void> {
       'memory',
       'scenario',
       'gen-setting',
-      'subscription',
-      'admin-setting',
+      'subscription-tier',
+      'announcement',
     ]
 
     // Clean each collection
@@ -61,7 +62,7 @@ export async function cleanMongoDBBetweenTests(): Promise<void> {
  */
 export async function isDatabaseClean(): Promise<boolean> {
   try {
-    const collections = ['user', 'character', 'chat', 'chat-message']
+    const collections: Array<AllDoc['kind']> = ['user', 'character', 'chat', 'chat-message']
     
     for (const collectionName of collections) {
       try {

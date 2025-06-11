@@ -5,7 +5,7 @@
  */
 
 import { expect } from 'chai'
-import { setupTestEnvironment, teardownTestEnvironment, TEST_FIXTURES, testDb } from './test-setup'
+import { setupTestEnvironment, teardownTestEnvironment, testDb } from './test-setup'
 
 describe('Database Operations Logic Integration Tests', () => {
   before(async () => {
