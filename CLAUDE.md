@@ -161,3 +161,4 @@ npm run model         # Full model setup and start
 
 ## Development Best Practices
 - Commit every big feature and run tests before commit
+- Before commit make ts errors check
