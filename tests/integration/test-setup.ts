@@ -170,13 +170,13 @@ export class MemoryTestDatabase implements TestDatabase {
 
   async cleanMongoDB(): Promise<void> {
     if (isConnected()) {
-      await cleanTestDatabase()
+      await cleanTestDatabase() // Now has safety checks built in
     }
   }
 
   async resetMongoDB(): Promise<void> {
     if (isConnected()) {
-      await cleanTestDatabase() // Use cleanTestDatabase instead
+      await cleanTestDatabase() // Now has safety checks built in
     }
   }
 

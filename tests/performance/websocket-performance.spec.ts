@@ -217,9 +217,12 @@ describe('WebSocket Performance Tests', () => {
 
   after(async () => {
     if (server) {
-      await new Promise<void>((resolve) => {
-        server.close(() => resolve())
-      })
+      await Promise.race([
+        new Promise<void>((resolve) => {
+          server.close(() => resolve())
+        }),
+        new Promise<void>((resolve) => setTimeout(resolve, 1000)) // 1 second timeout
+      ])
     }
     await teardownTestEnvironment()
   })
