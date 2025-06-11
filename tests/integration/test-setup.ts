@@ -5,6 +5,8 @@
  */
 
 import { AppSchema } from '../../common/types/schema'
+import { cleanTestDatabase, resetTestDatabase, isDatabaseClean } from './database-cleanup'
+import { isConnected } from '../../srv/db/client'
 
 // Test Environment Configuration
 export const TEST_CONFIG = {
@@ -128,6 +130,8 @@ export interface TestDatabase {
   teardown(): Promise<void>
   clear(): Promise<void>
   seed(fixtures?: Partial<typeof TEST_FIXTURES>): Promise<void>
+  cleanMongoDB?(): Promise<void>
+  resetMongoDB?(): Promise<void>
 }
 
 // Memory Database Implementation for Tests
@@ -159,6 +163,21 @@ export class MemoryTestDatabase implements TestDatabase {
     this.data.characters.clear()
     this.data.chats.clear()
     this.data.messages.clear()
+    
+    // Also clean MongoDB if connected
+    await this.cleanMongoDB()
+  }
+
+  async cleanMongoDB(): Promise<void> {
+    if (isConnected()) {
+      await cleanTestDatabase()
+    }
+  }
+
+  async resetMongoDB(): Promise<void> {
+    if (isConnected()) {
+      await resetTestDatabase()
+    }
   }
 
   async seed(fixtures: Partial<typeof TEST_FIXTURES> = TEST_FIXTURES): Promise<void> {
@@ -237,6 +256,9 @@ export async function setupTestEnvironment(): Promise<void> {
   process.env.DB_PORT = '27017'
   process.env.DB_NAME = 'agnai-integration-test'
   
+  // Ensure no public characters are included in tests
+  process.env.PUBLIC_CHARACTER_USER_ID = ''
+  
   // Initialize test database
   await testDb.setup()
   await testDb.seed()
@@ -252,6 +274,7 @@ export async function teardownTestEnvironment(): Promise<void> {
   delete process.env.DB_HOST
   delete process.env.DB_PORT
   delete process.env.DB_NAME
+  delete process.env.PUBLIC_CHARACTER_USER_ID
 }
 
 // Test Utilities

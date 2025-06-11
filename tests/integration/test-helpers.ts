@@ -316,6 +316,14 @@ export class DatabaseTestHelper {
     await testDb.clear()
   }
 
+  async cleanMongoDB(): Promise<void> {
+    await testDb.cleanMongoDB?.()
+  }
+
+  async resetMongoDB(): Promise<void> {
+    await testDb.resetMongoDB?.()
+  }
+
   async seedDefaults(): Promise<void> {
     await testDb.seed()
   }
@@ -337,7 +345,7 @@ export class IntegrationTestSuite {
 
   // Setup and teardown helpers
   async beforeEach(): Promise<void> {
-    // Clear and seed database
+    // Clear and seed database (both memory and MongoDB)
     await this.database.clearAll()
     await this.database.seedDefaults()
     
