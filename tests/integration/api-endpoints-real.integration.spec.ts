@@ -153,12 +153,12 @@ describe('Real API Endpoints Integration Tests', () => {
         const characterData = {
           name: 'Test Character',
           description: 'A character for API testing',
-          persona: {
+          persona: JSON.stringify({
             kind: 'text',
             attributes: {
               text: 'You are a helpful AI assistant for testing purposes.'
             }
-          },
+          }),
           scenario: 'You are in a test environment.',
           greeting: 'Hello! I am a test character.',
           sampleChat: 'User: Hi\nCharacter: Hello there!'
@@ -175,7 +175,9 @@ describe('Real API Endpoints Integration Tests', () => {
         expect(response.body).to.have.property('description', characterData.description)
         expect(response.body).to.have.property('userId', testUser._id)
         expect(response.body).to.have.property('persona')
-        expect(response.body.persona.attributes.text).to.equal(characterData.persona.attributes.text)
+        
+        const expectedPersona = JSON.parse(characterData.persona)
+        expect(response.body.persona.attributes.text).to.equal(expectedPersona.attributes.text)
 
         // Store character ID for other tests
         testUser.characterId = response.body._id
