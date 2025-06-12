@@ -1,20 +1,8 @@
-# PornAI
-
-> AI Roleplay Chat with Personalized Characters using your favorite AI services.
-
-[Live Version](https://agnai.chat) | [Discord](https://discord.agnai.chat)
-
-Visit the live version at [Agnai.chat](https://agnai.chat).
-
-Based on the early work of [Galatea-UI by PygmalionAI](https://github.com/PygmalionAI/galatea-ui).
-
----
-
 ## Quick Start
 
-**Important!** _MongoDB and Redis are optional! PornAI will run in "Guest Only" mode if MongoDB is not available._
+**Important!** _MongoDB and Redis are optional! Agnai will run in "Guest Only" mode if MongoDB is not available._
 
-PornAI is published as an NPM package and can be installed globally:
+Agnai is published as an NPM package and can be installed globally:
 
 ```sh
 # Install or update:
@@ -103,33 +91,6 @@ Currently supported custom settings:
 
 - `baseEndTokens`: Add extra response end tokens to the base set.
 
-## Default Agnaistic Subscriber API
-
-You can set up default Agnaistic Subscriber API credentials that will be used when users don't provide their own. This prevents the "URL and API key are required" error for users who haven't configured their own API settings.
-
-### Setup via Environment Variables
-
-Add these environment variables to your deployment:
-
-```
-AGNAI_SUBSCRIBER_API_URL=https://api.agnai.chat/v1
-AGNAI_SUBSCRIBER_API_KEY=your_default_api_key_here
-AGNAI_SUBSCRIBER_DEFAULT_PRESET_ID=your_default_preset_id_here # Optional
-```
-
-### Setup via Docker Compose
-
-If using Docker Compose, add to your environment section for the relevant service (e.g., `app`):
-
-```yaml
-environment:
-  # ... other variables ...
-  - AGNAI_SUBSCRIBER_API_URL=https://api.agnai.chat/v1
-  - AGNAI_SUBSCRIBER_API_KEY=your_default_api_key_here
-  - AGNAI_SUBSCRIBER_DEFAULT_PRESET_ID=your_default_preset_id_here # Optional
-```
-
-For more detailed instructions, see `instructions/default-api-config.md`.
 
 ## For Developers
 
@@ -206,48 +167,6 @@ $ pnpm run typecheck
 ```
 
 This project is tested with BrowserStack.
-
-# Public Character Configuration
-
-The application supports a special mode where characters created by a specific user are accessible to all users, and optionally, all users can share the same UI settings.
-
-## How to Use
-1. Set the `PUBLIC_CHARACTER_USER_ID` environment variable in your `.env` file
-2. Find the user ID of the account that will create public characters:
-   - You can find this by looking at the MongoDB database in the `user` collection
-   - Or by checking the network requests in the browser developer tools when logged in as that user
-3. Add that user ID to your `.env` file:
-   ```
-   PUBLIC_CHARACTER_USER_ID=00000000-0000-0000-0000-000000000000
-   ```
-4. Restart the application
-
-## Public Characters
-
-When `PUBLIC_CHARACTER_USER_ID` is configured, characters created by that user become available to all other users as "public characters."
-
-**Key features:**
-- Characters created by the specified user will be visible to all other users
-- Users can create chats with these public characters
-- Public characters are read-only for other users (they can't edit or delete them)
-- Your own characters remain private and only accessible to you
-
-## Shared UI Settings
-
-When `PUBLIC_CHARACTER_USER_ID` is configured, all users will automatically use the same UI settings as the public character user. This ensures a consistent user interface experience across all users.
-
-**How it works:**
-- All users will load the UI settings from the public character user instead of their own
-- When any user changes UI settings, those changes are applied to the public character user and synchronized to all connected users
-- If the public character user doesn't exist or doesn't have UI settings, users will fall back to their individual settings
-
-**Benefits:**
-- Consistent UI experience for all users
-- Centralized UI customization management
-- Automatic synchronization of UI changes across all users
-- Graceful fallback if the public user doesn't exist
-
-**Note:** This feature only affects UI settings (themes, colors, layout preferences, etc.). Other user settings like API keys, presets, and personal data remain private to each individual user.
 
 ## Security Considerations
 - Choose a dedicated account to be the public character creator
